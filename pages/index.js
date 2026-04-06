@@ -29,6 +29,20 @@ const curSym = c => c === 'USD' ? '$' : c === 'GBP' ? '£' : '€';
 const fmt = (n, c='€') => { const v=Number(n); if(!v) return 'N/A'; return v>=1000?`${c}${(v/1000).toFixed(1)}Bn`:`${c}${v}M`; };
 const enrich = (d, i) => ({ ...d, id:i+1, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
 
+// High-contrast color tokens (match globals.css)
+const C = {
+  bg:       '#0d0d0f',
+  bgCard:   '#141418',
+  bgHover:  '#1a1a20',
+  border:   '#2e2e38',
+  borderHi: '#4a4a5a',
+  textHi:   '#f0ece4',
+  textBody: '#c8c0b4',
+  textMid:  '#8a8278',
+  textLo:   '#5a5450',
+  gold:     '#d4a853',
+};
+
 const SOURCE_MODE = {
   live:      { label: 'LIVE · Web Search',  color: '#22c55e' },
   knowledge: { label: 'KNOWLEDGE BASE',     color: '#f59e0b' },
@@ -40,7 +54,7 @@ const SOURCE_MODE = {
 function StatusBadge({ status }) {
   const s = STATUS_STYLE[status] || STATUS_STYLE.Signed;
   return (
-    <span style={{background:s.bg,color:s.color,border:`1px solid ${s.border}`,padding:'2px 7px',fontSize:10,fontWeight:700,letterSpacing:'.1em',fontFamily:"var(--s)",textTransform:'uppercase',whiteSpace:'nowrap'}}>
+    <span style={{background:s.bg,color:s.color,border:`1px solid ${s.border}`,padding:'2px 8px',fontSize:10,fontWeight:700,letterSpacing:'.1em',fontFamily:"var(--s)",textTransform:'uppercase',whiteSpace:'nowrap'}}>
       {status==='Breaking'?'⬤ ':''}{status}
     </span>
   );
@@ -49,7 +63,7 @@ function StatusBadge({ status }) {
 function ModeTag({ mode }) {
   const cfg = SOURCE_MODE[mode] || SOURCE_MODE.archive;
   return (
-    <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.1em',color:cfg.color,border:`1px solid ${cfg.color}44`,padding:'1px 6px',textTransform:'uppercase'}}>
+    <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.1em',color:cfg.color,border:`1px solid ${cfg.color}55`,padding:'2px 8px',textTransform:'uppercase',borderRadius:2}}>
       {cfg.label}
     </span>
   );
@@ -60,22 +74,25 @@ function HeroDeal({ deal, onClick }) {
   return (
     <div onClick={()=>onClick(deal)} style={{background:deal.bg,borderBottom:`4px solid ${deal.accent}`,padding:'44px 48px 38px',cursor:'pointer',position:'relative',overflow:'hidden'}}
       onMouseEnter={e=>e.currentTarget.style.opacity='.93'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
-      <div style={{position:'absolute',inset:0,background:`radial-gradient(ellipse at 80% 0%,${deal.accent}12 0%,transparent 60%)`,pointerEvents:'none'}}/>
+      <div style={{position:'absolute',inset:0,background:`radial-gradient(ellipse at 80% 0%,${deal.accent}18 0%,transparent 60%)`,pointerEvents:'none'}}/>
       <div style={{display:'flex',gap:10,alignItems:'center',marginBottom:14,flexWrap:'wrap'}}>
         <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:800,letterSpacing:'.2em',color:deal.accent}}>{deal.kicker}</span>
         <StatusBadge status={deal.status}/>
       </div>
-      <h2 style={{fontFamily:"var(--d)",fontSize:'clamp(24px,3vw,42px)',fontWeight:800,color:'#f7f2e8',lineHeight:1.15,margin:'0 0 16px',maxWidth:700}}>{deal.headline}</h2>
-      <p style={{fontFamily:"var(--r)",fontSize:15,color:'#7a6b52',lineHeight:1.72,maxWidth:600,margin:'0 0 26px'}}>{deal.summary}</p>
+      <h2 style={{fontFamily:"var(--d)",fontSize:'clamp(24px,3vw,42px)',fontWeight:800,color:C.textHi,lineHeight:1.15,margin:'0 0 16px',maxWidth:700}}>{deal.headline}</h2>
+      <p style={{fontFamily:"var(--r)",fontSize:16,color:C.textBody,lineHeight:1.75,maxWidth:620,margin:'0 0 26px'}}>{deal.summary}</p>
       <div style={{display:'flex',gap:20,alignItems:'center',flexWrap:'wrap'}}>
         <div>
-          <div style={{fontFamily:"var(--s)",fontSize:9,color:'#4a3a25',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>VALUE</div>
+          <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>VALUE</div>
           <div style={{fontFamily:"var(--d)",fontSize:28,fontWeight:800,color:deal.accent}}>{fmt(deal.value,c)}</div>
         </div>
         {[{l:'Type',v:deal.type},{l:'Sector',v:deal.sector},{l:'Source',v:deal.source}].map((m,i)=>(
           <div key={m.l} style={{display:'flex',alignItems:'center',gap:20}}>
-            <div style={{width:1,height:36,background:'#2a2218'}}/>
-            <div><div style={{fontFamily:"var(--s)",fontSize:9,color:'#4a3a25',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>{m.l}</div><div style={{fontFamily:"var(--s)",fontSize:13,fontWeight:500,color:'#c9b99a'}}>{m.v||'—'}</div></div>
+            <div style={{width:1,height:36,background:C.border}}/>
+            <div>
+              <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>{m.l}</div>
+              <div style={{fontFamily:"var(--s)",fontSize:13,fontWeight:600,color:C.textHi}}>{m.v||'—'}</div>
+            </div>
           </div>
         ))}
         <span style={{marginLeft:'auto',fontFamily:"var(--s)",fontSize:11,color:deal.accent,fontWeight:700,letterSpacing:'.06em',borderBottom:`1px solid ${deal.accent}`}}>READ FULL DEAL →</span>
@@ -89,21 +106,21 @@ function DealCard({ deal, onClick }) {
   return (
     <div className="card" onClick={()=>onClick(deal)}>
       <div style={{height:3,background:deal.accent}}/>
-      <div style={{padding:'16px 20px',flexGrow:1,display:'flex',flexDirection:'column',gap:9}}>
+      <div style={{padding:'18px 22px',flexGrow:1,display:'flex',flexDirection:'column',gap:10}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:6}}>
           <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:deal.accent,textTransform:'uppercase'}}>{deal.kicker}</span>
           <StatusBadge status={deal.status}/>
         </div>
-        <h3 style={{fontFamily:"var(--d)",fontSize:16,fontWeight:700,color:'#f7f2e8',lineHeight:1.3,margin:0}}>{deal.headline}</h3>
-        <p style={{fontFamily:"var(--r)",fontSize:12,color:'#5a4e38',lineHeight:1.65,margin:0,flexGrow:1}}>{(deal.summary||'').slice(0,150)}{(deal.summary||'').length>150?'…':''}</p>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',paddingTop:10,borderTop:'1px solid #160e08'}}>
+        <h3 style={{fontFamily:"var(--d)",fontSize:17,fontWeight:700,color:C.textHi,lineHeight:1.3,margin:0}}>{deal.headline}</h3>
+        <p style={{fontFamily:"var(--r)",fontSize:13,color:C.textBody,lineHeight:1.7,margin:0,flexGrow:1}}>{(deal.summary||'').slice(0,160)}{(deal.summary||'').length>160?'…':''}</p>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',paddingTop:10,borderTop:`1px solid ${C.border}`}}>
           <div>
-            <div style={{fontFamily:"var(--s)",fontSize:9,color:'#3a2e20'}}>VALUE</div>
-            <div style={{fontFamily:"var(--d)",fontSize:18,fontWeight:700,color:deal.accent}}>{fmt(deal.value,c)}</div>
+            <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.08em',marginBottom:2}}>VALUE</div>
+            <div style={{fontFamily:"var(--d)",fontSize:19,fontWeight:700,color:deal.accent}}>{fmt(deal.value,c)}</div>
           </div>
           <div style={{textAlign:'right'}}>
-            <div style={{fontFamily:"var(--s)",fontSize:10,color:'#4a3a25'}}>{deal.date}</div>
-            <div style={{fontFamily:"var(--s)",fontSize:10,color:'#3a2e20',marginTop:2}}>{deal.sector}</div>
+            <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid}}>{deal.date}</div>
+            <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textLo,marginTop:2}}>{deal.sector}</div>
           </div>
         </div>
       </div>
@@ -125,8 +142,14 @@ function DealModal({ deal, mode, onClose }) {
         body: JSON.stringify({ deal }),
       });
       const data = await res.json();
-      setAnalysis(data.analysis || 'Unavailable.');
-    } catch { setAnalysis('Analysis could not be generated.'); }
+      if (data.analysis) {
+        setAnalysis(data.analysis);
+      } else if (data.error) {
+        setAnalysis(`Error: ${data.error}`);
+      } else {
+        setAnalysis('Unavailable.');
+      }
+    } catch (e) { setAnalysis(`Error: ${e.message}`); }
     setLoading(false);
   };
 
@@ -228,44 +251,45 @@ export default function Home() {
 
       <div style={{background:'#08050a',minHeight:'100vh'}}>
         {/* MASTHEAD */}
-        <div style={{background:'#0a0808',borderBottom:'3px double #3a2e20'}}>
-          <div style={{borderBottom:'1px solid #160e08',padding:'5px 24px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-            <span style={{fontFamily:"var(--s)",fontSize:10,color:'#3a2e20',letterSpacing:'.08em'}}>
+        <div style={{background:C.bgCard,borderBottom:`3px double ${C.border}`}}>
+          <div style={{borderBottom:`1px solid ${C.border}`,padding:'6px 24px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+            <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,letterSpacing:'.08em'}}>
               {new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase()}
             </span>
             <div style={{display:'flex',gap:10,alignItems:'center'}}>
               <ModeTag mode={mode}/>
-              <span style={{fontFamily:"var(--s)",fontSize:10,color:'#4a3a25'}}>{deals.length} deals · {fmt(totalVol)}</span>
+              <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid}}>{deals.length} deals · {fmt(totalVol)}</span>
             </div>
-            <button onClick={loadDeals} style={{background:'none',border:'1px solid #2a2218',color:'#4a3a25',padding:'3px 10px',fontFamily:"var(--s)",fontSize:10,cursor:'pointer',letterSpacing:'.06em'}}>
+            <button onClick={loadDeals} style={{background:'none',border:`1px solid ${C.border}`,color:C.textMid,padding:'3px 10px',fontFamily:"var(--s)",fontSize:10,cursor:'pointer',letterSpacing:'.06em',transition:'all .15s'}}
+              onMouseEnter={e=>{e.target.style.color=C.gold;e.target.style.borderColor=C.gold}} onMouseLeave={e=>{e.target.style.color=C.textMid;e.target.style.borderColor=C.border}}>
               ↻ REFRESH
             </button>
           </div>
 
-          <div style={{textAlign:'center',padding:'22px 24px 16px',borderBottom:'1px solid #160e08'}}>
-            <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.35em',color:'#3a2e20',marginBottom:8}}>✦ &nbsp; THE CAPITAL MARKETS INTELLIGENCE REVIEW &nbsp; ✦</div>
-            <h1 style={{fontFamily:"var(--d)",fontSize:'clamp(44px,7vw,80px)',fontWeight:800,color:'#f7f2e8',letterSpacing:'-.02em',lineHeight:1,margin:'0 0 6px'}}>MERIDIAN</h1>
-            <p style={{fontFamily:"var(--r)",fontSize:11,color:'#3a2e20',fontStyle:'italic'}}>Deals. Capital. Strategy.</p>
+          <div style={{textAlign:'center',padding:'24px 24px 18px',borderBottom:`1px solid ${C.border}`}}>
+            <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.35em',color:C.textMid,marginBottom:8}}>✦ &nbsp; THE CAPITAL MARKETS INTELLIGENCE REVIEW &nbsp; ✦</div>
+            <h1 style={{fontFamily:"var(--d)",fontSize:'clamp(44px,7vw,80px)',fontWeight:800,color:C.textHi,letterSpacing:'-.02em',lineHeight:1,margin:'0 0 6px'}}>MERIDIAN</h1>
+            <p style={{fontFamily:"var(--r)",fontSize:12,color:C.textMid,fontStyle:'italic'}}>Deals. Capital. Strategy.</p>
           </div>
 
-          {/* Ad banner — leaderboard */}
-          <div style={{padding:'8px 24px',borderBottom:'1px solid #160e08',background:'#0d0a06'}}>
+          {/* Ad banner */}
+          <div style={{padding:'8px 24px',borderBottom:`1px solid ${C.border}`,background:C.bg}}>
             <AdSlot slot="1234567890" format="horizontal" style={{maxWidth:728,margin:'0 auto'}} />
           </div>
 
           {/* Ticker */}
-          <div style={{display:'flex',borderTop:'1px solid #160e08'}}>
-            <div style={{background:'#e63946',padding:'5px 12px',flexShrink:0,display:'flex',alignItems:'center'}}>
+          <div style={{display:'flex',borderTop:`1px solid ${C.border}`}}>
+            <div style={{background:'#e63946',padding:'5px 14px',flexShrink:0,display:'flex',alignItems:'center'}}>
               <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:800,letterSpacing:'.1em',color:'#fff'}}>LIVE</span>
             </div>
-            <div className="ticker-wrap" style={{flex:1,padding:'5px 14px'}}>
+            <div className="ticker-wrap" style={{flex:1,padding:'5px 14px',background:C.bg}}>
               <div className="ticker-inner">
                 {[...deals,...deals].map((d,i)=>(
-                  <span key={i} style={{fontFamily:"var(--s)",fontSize:10,color:'#5a4e38',marginRight:32}}>
-                    <span style={{color:'#c9b99a',fontWeight:600}}>{d.buyer}</span>
-                    {' → '}<span style={{color:'#8b7355'}}>{d.target}</span>
+                  <span key={i} style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,marginRight:32}}>
+                    <span style={{color:C.textBody,fontWeight:600}}>{d.buyer}</span>
+                    {' → '}<span style={{color:C.textMid}}>{d.target}</span>
                     {' '}<span style={{color:d.accent,fontWeight:700}}>{fmt(d.value,curSym(d.currency))}</span>
-                    <span style={{color:'#2a2218',margin:'0 12px'}}>❙</span>
+                    <span style={{color:C.border,margin:'0 12px'}}>❙</span>
                   </span>
                 ))}
               </div>
@@ -277,11 +301,11 @@ export default function Home() {
         <div style={{maxWidth:1200,margin:'0 auto',padding:'0 20px'}}>
           {hero && <div style={{margin:'0 -20px'}}><HeroDeal deal={hero} onClick={setSelected}/></div>}
 
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 12px',borderBottom:'2px solid #1a1610',flexWrap:'wrap',gap:10}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 12px',borderBottom:`2px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
-              <span style={{width:3,height:16,background:'#c9b99a',display:'block'}}/>
-              <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:'#c9b99a',textTransform:'uppercase'}}>Latest Deals</span>
-              {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:'#3a2e20'}}>Updated {lastUpdated.toLocaleTimeString('en-GB')}</span>}
+              <span style={{width:3,height:16,background:C.gold,display:'block'}}/>
+              <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>Latest Deals</span>
+              {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>Updated {lastUpdated.toLocaleTimeString('en-GB')}</span>}
             </div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               {types.map(t=><button key={t} className={`pill ${filter===t?'active':''}`} onClick={()=>setFilter(t)}>{t}</button>)}
@@ -306,20 +330,20 @@ export default function Home() {
               <AdSlot slot="1122334455" format="vertical" style={{minHeight:250}}/>
 
               {/* Type breakdown */}
-              <div style={{background:'#0a0808',border:'1px solid #1a1610'}}>
-                <div style={{borderBottom:'1px solid #1a1610',padding:'10px 16px',display:'flex',gap:8,alignItems:'center'}}>
+              <div style={{background:C.bgCard,border:`1px solid ${C.border}`}}>
+                <div style={{borderBottom:`1px solid ${C.border}`,padding:'10px 16px',display:'flex',gap:8,alignItems:'center'}}>
                   <span style={{width:3,height:12,background:'#f59e0b',display:'block'}}/>
-                  <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:'#c9b99a',textTransform:'uppercase'}}>Deal Breakdown</span>
+                  <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>Deal Breakdown</span>
                 </div>
                 {Object.entries(deals.reduce((a,d)=>{a[d.type]=(a[d.type]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]).map(([type,count])=>{
                   const s=getStyle(type); const pct=Math.round((count/deals.length)*100);
                   return (
-                    <div key={type} style={{padding:'9px 16px',borderBottom:'1px solid #0e0a08'}}>
-                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                        <span style={{fontFamily:"var(--s)",fontSize:11,color:'#6b5e45'}}>{type}</span>
-                        <span style={{fontFamily:"var(--s)",fontSize:11,color:s.accent,fontWeight:600}}>{count}</span>
+                    <div key={type} style={{padding:'9px 16px',borderBottom:`1px solid ${C.bg}`}}>
+                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
+                        <span style={{fontFamily:"var(--s)",fontSize:11,color:C.textBody}}>{type}</span>
+                        <span style={{fontFamily:"var(--s)",fontSize:11,color:s.accent,fontWeight:700}}>{count}</span>
                       </div>
-                      <div style={{height:2,background:'#1a1610',borderRadius:1}}>
+                      <div style={{height:2,background:C.border,borderRadius:1}}>
                         <div style={{height:'100%',width:`${pct}%`,background:s.accent,borderRadius:1}}/>
                       </div>
                     </div>
@@ -328,19 +352,19 @@ export default function Home() {
               </div>
 
               {/* Top 5 by value */}
-              <div style={{background:'#0a0808',border:'1px solid #1a1610'}}>
-                <div style={{borderBottom:'1px solid #1a1610',padding:'10px 16px',display:'flex',gap:8,alignItems:'center'}}>
+              <div style={{background:C.bgCard,border:`1px solid ${C.border}`}}>
+                <div style={{borderBottom:`1px solid ${C.border}`,padding:'10px 16px',display:'flex',gap:8,alignItems:'center'}}>
                   <span style={{width:3,height:12,background:'#22c55e',display:'block'}}/>
-                  <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:'#c9b99a',textTransform:'uppercase'}}>Top by Value</span>
+                  <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>Top by Value</span>
                 </div>
                 {[...deals].sort((a,b)=>Number(b.value||0)-Number(a.value||0)).slice(0,5).map((d,i)=>(
-                  <div key={d.id} onClick={()=>setSelected(d)} style={{padding:'11px 16px',borderBottom:'1px solid #0e0a08',cursor:'pointer',transition:'background .1s'}}
-                    onMouseEnter={e=>e.currentTarget.style.background='#110e08'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                  <div key={d.id} onClick={()=>setSelected(d)} style={{padding:'11px 16px',borderBottom:`1px solid ${C.bg}`,cursor:'pointer',transition:'background .1s'}}
+                    onMouseEnter={e=>e.currentTarget.style.background=C.bgHover} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                     <div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
-                      <span style={{fontFamily:"var(--d)",fontSize:16,color:'#2a2218',fontWeight:700,lineHeight:1.1,flexShrink:0}}>0{i+1}</span>
+                      <span style={{fontFamily:"var(--d)",fontSize:16,color:C.border,fontWeight:700,lineHeight:1.1,flexShrink:0}}>0{i+1}</span>
                       <div>
-                        <div style={{fontFamily:"var(--s)",fontSize:11,color:'#b0a080',fontWeight:600,lineHeight:1.3}}>{d.buyer}</div>
-                        <div style={{fontFamily:"var(--s)",fontSize:10,color:'#3a2e20',marginTop:1}}>{d.target}</div>
+                        <div style={{fontFamily:"var(--s)",fontSize:11,color:C.textHi,fontWeight:600,lineHeight:1.3}}>{d.buyer}</div>
+                        <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,marginTop:1}}>{d.target}</div>
                         <div style={{fontFamily:"var(--d)",fontSize:14,fontWeight:700,color:d.accent,marginTop:3}}>{fmt(d.value,curSym(d.currency))}</div>
                       </div>
                     </div>
@@ -352,9 +376,9 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <div style={{borderTop:'3px double #1a1610',background:'#0a0808',padding:'16px 24px',textAlign:'center'}}>
-          <div style={{fontFamily:"var(--d)",fontSize:16,color:'#2a2218',letterSpacing:'.15em'}}>MERIDIAN</div>
-          <div style={{fontFamily:"var(--s)",fontSize:9,color:'#1a1610',marginTop:3,letterSpacing:'.06em'}}>
+        <div style={{borderTop:`3px double ${C.border}`,background:C.bgCard,padding:'16px 24px',textAlign:'center'}}>
+          <div style={{fontFamily:"var(--d)",fontSize:18,color:C.border,letterSpacing:'.15em'}}>MERIDIAN</div>
+          <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textLo,marginTop:3,letterSpacing:'.06em'}}>
             M&A · LEVFIN · PROJECT FINANCE · RESTRUCTURING · ECM
           </div>
         </div>
