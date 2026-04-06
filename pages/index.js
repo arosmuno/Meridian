@@ -101,6 +101,18 @@ function HeroDeal({ deal, onClick }) {
   );
 }
 
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const mins = Math.floor((now - date) / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
 function DealCard({ deal, onClick }) {
   const c = curSym(deal.currency);
   return (
@@ -119,7 +131,9 @@ function DealCard({ deal, onClick }) {
             <div style={{fontFamily:"var(--d)",fontSize:19,fontWeight:700,color:deal.accent}}>{fmt(deal.value,c)}</div>
           </div>
           <div style={{textAlign:'right'}}>
-            <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid}}>{deal.date}</div>
+            <div style={{fontFamily:"var(--s)",fontSize:10,color:deal.fetched_at?C.gold:C.textMid,fontWeight:deal.fetched_at?700:400}}>
+              {deal.fetched_at ? timeAgo(deal.fetched_at) : deal.date}
+            </div>
             <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textLo,marginTop:2}}>{deal.sector}</div>
           </div>
         </div>
@@ -258,7 +272,11 @@ export default function Home() {
     try {
       const res = await fetch('/api/deals');
       const data = await res.json();
-      setDeals((data.deals || []).map(enrich));
+      // Sort: Breaking always first, then chronological (most recent first)
+      const raw = (data.deals || []).map(enrich);
+      const breaking = raw.filter(d => d.status === 'Breaking');
+      const rest = raw.filter(d => d.status !== 'Breaking');
+      setDeals([...breaking, ...rest]);
       setMode(data.source || 'archive');
       setLastUpdated(data.last_updated ? new Date(data.last_updated) : new Date());
     } catch {
