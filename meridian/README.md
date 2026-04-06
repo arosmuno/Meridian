@@ -137,3 +137,5 @@ User sees live deals + AdSense ads
 | Direct sponsors (law firms, banks) | 10k+ monthly | Negotiate |
 
 Finance audience CPMs are 3-5x general consumer rates.
+
+
