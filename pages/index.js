@@ -131,8 +131,8 @@ function DealCard({ deal, onClick }) {
             <div style={{fontFamily:"var(--d)",fontSize:19,fontWeight:700,color:deal.accent}}>{fmt(deal.value,c)}</div>
           </div>
           <div style={{textAlign:'right'}}>
-            <div style={{fontFamily:"var(--s)",fontSize:10,color:deal.fetched_at?C.gold:C.textMid,fontWeight:deal.fetched_at?700:400}}>
-              {deal.fetched_at ? timeAgo(deal.fetched_at) : deal.date}
+            <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,fontWeight:400}}>
+              {deal.deal_date ? new Date(deal.deal_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : deal.date}
             </div>
             <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textLo,marginTop:2}}>{deal.sector}</div>
           </div>
