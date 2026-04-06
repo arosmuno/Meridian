@@ -274,16 +274,14 @@ export default function Home() {
       const data = await res.json();
       const raw = (data.deals || []).map(enrich);
 
-      // Sort by actual deal date (most recent first), Breaking always top
+      // Sort: Breaking always first, then by real deal date (most recent first)
       const parseDate = (d) => {
-        if (!d.date) return 0;
-        const parsed = new Date(d.date);
-        return isNaN(parsed) ? 0 : parsed.getTime();
+        if (d.deal_date) return new Date(d.deal_date).getTime();
+        if (d.date) { const p = new Date(d.date); return isNaN(p) ? 0 : p.getTime(); }
+        return 0;
       };
-      const breaking = raw.filter(d => d.status === 'Breaking')
-        .sort((a,b) => parseDate(b) - parseDate(a));
-      const rest = raw.filter(d => d.status !== 'Breaking')
-        .sort((a,b) => parseDate(b) - parseDate(a));
+      const breaking = raw.filter(d => d.status === 'Breaking').sort((a,b) => parseDate(b) - parseDate(a));
+      const rest = raw.filter(d => d.status !== 'Breaking').sort((a,b) => parseDate(b) - parseDate(a));
 
       setDeals([...breaking, ...rest]);
       setMode(data.source || 'archive');
@@ -436,7 +434,10 @@ export default function Home() {
                 </div>
                 {(() => {
                   const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30);
-                  const recent = deals.filter(d=>{ const p=new Date(d.date); return !isNaN(p)&&p>=cutoff; });
+                  const recent = deals.filter(d=>{
+                    const p = d.deal_date ? new Date(d.deal_date) : new Date(d.date);
+                    return !isNaN(p)&&p>=cutoff;
+                  });
                   const src = recent.length > 0 ? recent : deals;
                   const counts = src.reduce((a,d)=>{a[d.type]=(a[d.type]||0)+1;return a},{});
                   const total = src.length||1;
