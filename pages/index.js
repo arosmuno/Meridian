@@ -272,10 +272,19 @@ export default function Home() {
     try {
       const res = await fetch('/api/deals');
       const data = await res.json();
-      // Sort: Breaking always first, then chronological (most recent first)
       const raw = (data.deals || []).map(enrich);
-      const breaking = raw.filter(d => d.status === 'Breaking');
-      const rest = raw.filter(d => d.status !== 'Breaking');
+
+      // Sort by actual deal date (most recent first), Breaking always top
+      const parseDate = (d) => {
+        if (!d.date) return 0;
+        const parsed = new Date(d.date);
+        return isNaN(parsed) ? 0 : parsed.getTime();
+      };
+      const breaking = raw.filter(d => d.status === 'Breaking')
+        .sort((a,b) => parseDate(b) - parseDate(a));
+      const rest = raw.filter(d => d.status !== 'Breaking')
+        .sort((a,b) => parseDate(b) - parseDate(a));
+
       setDeals([...breaking, ...rest]);
       setMode(data.source || 'archive');
       setLastUpdated(data.last_updated ? new Date(data.last_updated) : new Date());
@@ -416,26 +425,36 @@ export default function Home() {
               {/* Sidebar ad */}
               <AdSlot slot="1122334455" format="vertical" style={{minHeight:250}}/>
 
-              {/* Type breakdown */}
+              {/* Type breakdown - last 30 days */}
               <div style={{background:C.bgCard,border:`1px solid ${C.border}`}}>
-                <div style={{borderBottom:`1px solid ${C.border}`,padding:'10px 16px',display:'flex',gap:8,alignItems:'center'}}>
-                  <span style={{width:3,height:12,background:'#f59e0b',display:'block'}}/>
-                  <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>Deal Breakdown</span>
+                <div style={{borderBottom:`1px solid ${C.border}`,padding:'10px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                    <span style={{width:3,height:12,background:'#f59e0b',display:'block'}}/>
+                    <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>Deal Breakdown</span>
+                  </div>
+                  <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>Last 30 days</span>
                 </div>
-                {Object.entries(deals.reduce((a,d)=>{a[d.type]=(a[d.type]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]).map(([type,count])=>{
-                  const s=getStyle(type); const pct=Math.round((count/deals.length)*100);
-                  return (
-                    <div key={type} style={{padding:'9px 16px',borderBottom:`1px solid ${C.bg}`}}>
-                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
-                        <span style={{fontFamily:"var(--s)",fontSize:11,color:C.textBody}}>{type}</span>
-                        <span style={{fontFamily:"var(--s)",fontSize:11,color:s.accent,fontWeight:700}}>{count}</span>
+                {(() => {
+                  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30);
+                  const recent = deals.filter(d=>{ const p=new Date(d.date); return !isNaN(p)&&p>=cutoff; });
+                  const src = recent.length > 0 ? recent : deals;
+                  const counts = src.reduce((a,d)=>{a[d.type]=(a[d.type]||0)+1;return a},{});
+                  const total = src.length||1;
+                  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([type,count])=>{
+                    const s=getStyle(type); const pct=Math.round((count/total)*100);
+                    return (
+                      <div key={type} style={{padding:'9px 16px',borderBottom:`1px solid ${C.bg}`}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
+                          <span style={{fontFamily:"var(--s)",fontSize:11,color:C.textBody}}>{type}</span>
+                          <span style={{fontFamily:"var(--s)",fontSize:11,color:s.accent,fontWeight:700}}>{count}</span>
+                        </div>
+                        <div style={{height:2,background:C.border,borderRadius:1}}>
+                          <div style={{height:'100%',width:`${pct}%`,background:s.accent,borderRadius:1}}/>
+                        </div>
                       </div>
-                      <div style={{height:2,background:C.border,borderRadius:1}}>
-                        <div style={{height:'100%',width:`${pct}%`,background:s.accent,borderRadius:1}}/>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
 
               {/* Top 5 by value */}
