@@ -304,10 +304,33 @@ export default function Home() {
   const geos = ['All', 'Europe', 'North America', 'Asia Pacific', 'Latin America', 'Middle East & Africa', 'Global'];
   const sectors = ['All', 'Healthcare', 'TMT', 'Infrastructure', 'Energy & Renewables', 'Financial Services', 'Consumer', 'Industrials', 'Real Estate'];
   const hero = deals[0];
+
+  const matchGeo = (deal, geo) => {
+    if (geo === 'All') return true;
+    const g = (deal.geography || '').toLowerCase();
+    if (geo === 'Europe') return g.includes('europ') || g.includes('uk') || g.includes('spain') || g.includes('german') || g.includes('franc') || g.includes('ital');
+    if (geo === 'North America') return g.includes('north america') || g.includes('us') || g.includes('united states') || g.includes('canada');
+    if (geo === 'Asia Pacific') return g.includes('asia') || g.includes('pacific') || g.includes('china') || g.includes('japan') || g.includes('hong kong');
+    if (geo === 'Latin America') return g.includes('latin') || g.includes('latam') || g.includes('brazil') || g.includes('mexico');
+    if (geo === 'Middle East & Africa') return g.includes('middle east') || g.includes('africa') || g.includes('mea') || g.includes('gulf');
+    if (geo === 'Global') return g.includes('global') || g.includes('international');
+    return g.includes(geo.toLowerCase());
+  };
+
+  const matchSector = (deal, sec) => {
+    if (sec === 'All') return true;
+    const s = (deal.sector || '').toLowerCase();
+    if (sec === 'TMT') return s.includes('tmt') || s.includes('tech') || s.includes('media') || s.includes('telecom') || s.includes('software') || s.includes('digital');
+    if (sec === 'Energy & Renewables') return s.includes('energy') || s.includes('renew') || s.includes('power') || s.includes('solar') || s.includes('wind') || s.includes('oil') || s.includes('gas');
+    if (sec === 'Infrastructure') return s.includes('infra') || s.includes('transport') || s.includes('utility') || s.includes('utilities') || s.includes('airport') || s.includes('road');
+    if (sec === 'Financial Services') return s.includes('financ') || s.includes('bank') || s.includes('insurance') || s.includes('asset manag');
+    return s.includes(sec.toLowerCase());
+  };
+
   const rest = deals.slice(1).filter(d =>
     (filter === 'All' || d.type === filter) &&
-    (geoFilter === 'All' || d.geography === geoFilter) &&
-    (sectorFilter === 'All' || d.sector === sectorFilter)
+    matchGeo(d, geoFilter) &&
+    matchSector(d, sectorFilter)
   );
   const totalVol = deals.reduce((s,d)=>s+Number(d.value||0),0);
 
