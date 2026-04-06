@@ -17,6 +17,7 @@ export default async function handler(req, res) {
     let query = supabase
       .from('deals')
       .select('*')
+      .order('deal_date', { ascending: false, nullsFirst: false })
       .order('fetched_at', { ascending: false })
       .limit(Number(limit));
 
