@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Libre+Franklin:wght@400;500;600;700;800&family=Libre+Baskerville:ital,wght@0,400;1,400&display=swap');
+
+:root {
+  --d: 'Playfair Display', Georgia, serif;
+  --s: 'Libre Franklin', sans-serif;
+  --r: 'Libre Baskerville', Georgia, serif;
+  /* High-contrast dark palette */
+  --bg:        #0d0d0f;
+  --bg-card:   #141418;
+  --bg-hover:  #1a1a20;
+  --border:    #2e2e38;
+  --border-hi: #4a4a5a;
+  --text-hi:   #f0ece4;   /* headlines */
+  --text-body: #c8c0b4;   /* body copy */
+  --text-mid:  #8a8278;   /* metadata */
+  --text-lo:   #5a5450;   /* labels */
+  --gold:      #d4a853;   /* accent/gold */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text-body);
+  font-family: var(--s);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.pill {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  padding: 4px 12px;
+  font-family: var(--s);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.pill:hover { border-color: var(--gold); color: var(--gold); }
+.pill.active { background: var(--gold); color: #0d0d0f; border-color: var(--gold); }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: all .15s;
+}
+.card:hover { background: var(--bg-hover); border-color: var(--border-hi); }
+
+.ticker-wrap { overflow: hidden; white-space: nowrap; }
+.ticker-inner { display: inline-block; animation: tick 70s linear infinite; }
+@keyframes tick { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+/* Ad slot styling */
+.ad-slot {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ad-slot ins { display: block; width: 100%; }
