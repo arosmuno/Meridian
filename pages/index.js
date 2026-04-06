@@ -1,6 +1,100 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import Head from 'next/head';
 import AdSlot from '../components/AdSlot';
+
+// ── TRANSLATIONS ──────────────────────────────────────────────────────────────
+const T = {
+  en: {
+    tagline: 'Deals. Capital. Strategy.',
+    latestDeals: 'Latest Deals',
+    updated: 'Updated',
+    refresh: '↻ REFRESH',
+    dealBreakdown: 'DEAL BREAKDOWN',
+    last30: 'Last 30 days',
+    topByValue: 'TOP BY VALUE',
+    readFull: 'READ FULL DEAL →',
+    value: 'VALUE', type: 'TYPE', sector: 'SECTOR', source: 'SOURCE',
+    buyer: 'BUYER', target: 'TARGET', date: 'DATE', advisors: 'ADVISORS',
+    analysis: '✦ MERIDIAN ANALYSIS',
+    generate: 'GENERATE',
+    generating: 'Drafting editorial analysis…',
+    translate: 'Translate:',
+    region: 'REGION', sectorLabel: 'SECTOR',
+    noDeals: 'No deals match this filter.',
+    loading: 'LOADING INTELLIGENCE…',
+    all: 'ALL',
+    langName: 'English',
+  },
+  es: {
+    tagline: 'Operaciones. Capital. Estrategia.',
+    latestDeals: 'Últimas Operaciones',
+    updated: 'Actualizado',
+    refresh: '↻ ACTUALIZAR',
+    dealBreakdown: 'DESGLOSE DE OPERACIONES',
+    last30: 'Últimos 30 días',
+    topByValue: 'TOP POR VALOR',
+    readFull: 'VER OPERACIÓN COMPLETA →',
+    value: 'VALOR', type: 'TIPO', sector: 'SECTOR', source: 'FUENTE',
+    buyer: 'COMPRADOR', target: 'OBJETIVO', date: 'FECHA', advisors: 'ASESORES',
+    analysis: '✦ ANÁLISIS MERIDIAN',
+    generate: 'GENERAR',
+    generating: 'Redactando análisis editorial…',
+    translate: 'Traducir:',
+    region: 'REGIÓN', sectorLabel: 'SECTOR',
+    noDeals: 'No hay operaciones que coincidan con este filtro.',
+    loading: 'CARGANDO INTELIGENCIA…',
+    all: 'TODOS',
+    langName: 'Español',
+  },
+  fr: {
+    tagline: 'Opérations. Capital. Stratégie.',
+    latestDeals: 'Dernières Opérations',
+    updated: 'Mis à jour',
+    refresh: '↻ ACTUALISER',
+    dealBreakdown: 'RÉPARTITION DES OPÉRATIONS',
+    last30: '30 derniers jours',
+    topByValue: 'TOP PAR VALEUR',
+    readFull: 'LIRE L\'OPÉRATION COMPLÈTE →',
+    value: 'VALEUR', type: 'TYPE', sector: 'SECTEUR', source: 'SOURCE',
+    buyer: 'ACHETEUR', target: 'CIBLE', date: 'DATE', advisors: 'CONSEILLERS',
+    analysis: '✦ ANALYSE MERIDIAN',
+    generate: 'GÉNÉRER',
+    generating: 'Rédaction de l\'analyse éditoriale…',
+    translate: 'Traduire:',
+    region: 'RÉGION', sectorLabel: 'SECTEUR',
+    noDeals: 'Aucune opération ne correspond à ce filtre.',
+    loading: 'CHARGEMENT EN COURS…',
+    all: 'TOUS',
+    langName: 'Français',
+  },
+  de: {
+    tagline: 'Deals. Kapital. Strategie.',
+    latestDeals: 'Neueste Transaktionen',
+    updated: 'Aktualisiert',
+    refresh: '↻ AKTUALISIEREN',
+    dealBreakdown: 'DEAL-AUFSCHLÜSSELUNG',
+    last30: 'Letzte 30 Tage',
+    topByValue: 'TOP NACH WERT',
+    readFull: 'VOLLSTÄNDIGEN DEAL LESEN →',
+    value: 'WERT', type: 'TYP', sector: 'SEKTOR', source: 'QUELLE',
+    buyer: 'KÄUFER', target: 'ZIEL', date: 'DATUM', advisors: 'BERATER',
+    analysis: '✦ MERIDIAN ANALYSE',
+    generate: 'GENERIEREN',
+    generating: 'Redaktionelle Analyse wird erstellt…',
+    translate: 'Übersetzen:',
+    region: 'REGION', sectorLabel: 'SEKTOR',
+    noDeals: 'Keine Deals entsprechen diesem Filter.',
+    loading: 'INTELLIGENCE WIRD GELADEN…',
+    all: 'ALLE',
+    langName: 'Deutsch',
+  },
+};
+
+const LANG_FULL = { en: 'English', es: 'Spanish', fr: 'French', de: 'German' };
+
+// Global language context
+const LangContext = createContext('en');
+const useLang = () => useContext(LangContext);
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const TYPE_STYLE = {
@@ -143,12 +237,32 @@ function DealCard({ deal, onClick }) {
 }
 
 function DealModal({ deal, mode, onClose }) {
+  const lang = useLang();
+  const t = T[lang];
   const [analysis, setAnalysis] = useState('');
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
-  const [translating, setTranslating] = useState(false);
-  const [translated, setTranslated] = useState(null);
-  const [activeLang, setActiveLang] = useState(null);
+  const [translatedSummary, setTranslatedSummary] = useState(null);
+  const [translatingContent, setTranslatingContent] = useState(false);
   const c = curSym(deal.currency);
+
+  // Auto-translate content when language is not English
+  useEffect(() => {
+    setAnalysis('');
+    if (lang === 'en') {
+      setTranslatedSummary(null);
+      return;
+    }
+    setTranslatingContent(true);
+    fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: `${deal.headline}\n\n${deal.summary}`, lang }),
+    })
+      .then(r => r.json())
+      .then(d => { setTranslatedSummary(d.translated || null); })
+      .catch(() => setTranslatedSummary(null))
+      .finally(() => setTranslatingContent(false));
+  }, [lang, deal.headline]);
 
   const runAnalysis = async () => {
     setLoadingAnalysis(true); setAnalysis('');
@@ -156,7 +270,7 @@ function DealModal({ deal, mode, onClose }) {
       const res = await fetch('/api/analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deal }),
+        body: JSON.stringify({ deal, lang, langName: LANG_FULL[lang] }),
       });
       const data = await res.json();
       if (data.analysis) setAnalysis(data.analysis);
@@ -166,24 +280,7 @@ function DealModal({ deal, mode, onClose }) {
     setLoadingAnalysis(false);
   };
 
-  const translate = async (lang) => {
-    if (activeLang === lang) { setTranslated(null); setActiveLang(null); return; }
-    setTranslating(true);
-    try {
-      const textToTranslate = `${deal.headline}\n\n${deal.summary}${analysis ? '\n\n' + analysis : ''}`;
-      const res = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToTranslate, lang }),
-      });
-      const data = await res.json();
-      setTranslated(data.translated);
-      setActiveLang(lang);
-    } catch { setTranslated(null); }
-    setTranslating(false);
-  };
-
-  const displayText = translated || null;
+  const displaySummary = translatedSummary || deal.summary;
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(4,2,6,.92)',zIndex:200,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'28px 16px',backdropFilter:'blur(4px)'}}
@@ -205,7 +302,7 @@ function DealModal({ deal, mode, onClose }) {
 
         {/* Metrics */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',borderBottom:`1px solid ${C.border}`}}>
-          {[{l:'Value',v:fmt(deal.value,c),big:true},{l:'Type',v:deal.type},{l:'Sector',v:deal.sector},{l:'Buyer',v:deal.buyer},{l:'Target',v:deal.target},{l:'Date',v:deal.date}].map((m,i)=>(
+          {[{l:t.value,v:fmt(deal.value,c),big:true},{l:t.type,v:deal.type},{l:t.sector,v:deal.sector},{l:t.buyer,v:deal.buyer},{l:t.target,v:deal.target},{l:t.date,v:deal.date}].map((m,i)=>(
             <div key={i} style={{padding:'13px 20px',borderRight:i%3!==2?`1px solid ${C.border}`:'none',borderBottom:i<3?`1px solid ${C.border}`:'none'}}>
               <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:C.textMid,marginBottom:4,textTransform:'uppercase'}}>{m.l}</div>
               <div style={{fontFamily:m.big?"var(--d)":"var(--s)",fontSize:m.big?22:13,fontWeight:m.big?700:500,color:m.big?deal.accent:C.textBody}}>{m.v||'N/A'}</div>
@@ -214,27 +311,13 @@ function DealModal({ deal, mode, onClose }) {
         </div>
 
         <div style={{padding:'26px 40px'}}>
-          {/* Translation buttons */}
-          <div style={{display:'flex',gap:6,marginBottom:16,alignItems:'center'}}>
-            <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,marginRight:4}}>Translate:</span>
-            {[{lang:'es',label:'🇪🇸 ES'},{lang:'fr',label:'🇫🇷 FR'},{lang:'de',label:'🇩🇪 DE'}].map(({lang,label})=>(
-              <button key={lang} onClick={()=>translate(lang)}
-                style={{background:activeLang===lang?C.gold:'transparent',color:activeLang===lang?C.bg:C.textMid,border:`1px solid ${activeLang===lang?C.gold:C.border}`,padding:'4px 10px',fontFamily:"var(--s)",fontSize:10,fontWeight:700,cursor:'pointer',transition:'all .15s'}}>
-                {translating && activeLang !== lang ? label : label}
-              </button>
-            ))}
-            {activeLang && <button onClick={()=>{setTranslated(null);setActiveLang(null);}} style={{background:'transparent',color:C.textMid,border:`1px solid ${C.border}`,padding:'4px 10px',fontFamily:"var(--s)",fontSize:10,cursor:'pointer'}}>EN</button>}
-            {translating && <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,fontStyle:'italic'}}>Translating…</span>}
-          </div>
-
           {/* Summary */}
-          <p style={{fontFamily:"var(--r)",fontSize:15,color:C.textBody,lineHeight:1.9,marginBottom:20}}>
-            {displayText || deal.summary}
-          </p>
+          {translatingContent && <p style={{fontFamily:"var(--r)",fontSize:15,color:C.textMid,lineHeight:1.9,marginBottom:20,fontStyle:'italic'}}>Translating…</p>}
+          {!translatingContent && <p style={{fontFamily:"var(--r)",fontSize:15,color:C.textBody,lineHeight:1.9,marginBottom:20}}>{displaySummary}</p>}
 
           {deal.advisor && (
             <div style={{paddingTop:12,borderTop:`1px solid ${C.border}`,marginBottom:22}}>
-              <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:C.textMid,marginBottom:5,textTransform:'uppercase'}}>Advisors</div>
+              <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:C.textMid,marginBottom:5,textTransform:'uppercase'}}>{t.advisors}</div>
               <div style={{fontFamily:"var(--s)",fontSize:12,color:C.textBody}}>{deal.advisor}</div>
             </div>
           )}
@@ -244,10 +327,10 @@ function DealModal({ deal, mode, onClose }) {
           {/* AI Analysis */}
           <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:'20px 24px'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:analysis||loadingAnalysis?14:0}}>
-              <div style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:deal.accent}}>✦ MERIDIAN ANALYSIS</div>
-              {!analysis&&!loadingAnalysis&&<button onClick={runAnalysis} style={{background:deal.accent,color:C.bg,border:'none',padding:'6px 14px',fontFamily:"var(--s)",fontSize:11,fontWeight:700,cursor:'pointer',letterSpacing:'.08em'}}>GENERATE</button>}
+              <div style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:deal.accent}}>{t.analysis}</div>
+              {!analysis&&!loadingAnalysis&&<button onClick={runAnalysis} style={{background:deal.accent,color:C.bg,border:'none',padding:'6px 14px',fontFamily:"var(--s)",fontSize:11,fontWeight:700,cursor:'pointer',letterSpacing:'.08em'}}>{t.generate}</button>}
             </div>
-            {loadingAnalysis && <div style={{fontFamily:"var(--r)",fontSize:13,color:C.textMid,fontStyle:'italic'}}>Drafting editorial analysis…</div>}
+            {loadingAnalysis && <div style={{fontFamily:"var(--r)",fontSize:13,color:C.textMid,fontStyle:'italic'}}>{t.generating}</div>}
             {analysis && <p style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.9,margin:0}}>{analysis}</p>}
           </div>
         </div>
@@ -266,6 +349,7 @@ export default function Home() {
   const [sectorFilter, setSectorFilter] = useState('All');
   const [selected, setSelected] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [lang, setLang]       = useState('en');
 
   const loadDeals = useCallback(async () => {
     setLoading(true);
@@ -334,18 +418,21 @@ export default function Home() {
   );
   const totalVol = deals.reduce((s,d)=>s+Number(d.value||0),0);
 
+  const t = T[lang];
+
   if (loading) {
     return (
       <div style={{minHeight:'100vh',background:'#08050a',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24}}>
         <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.3em',color:'#3a2e20'}}>THE CAPITAL MARKETS INTELLIGENCE REVIEW</div>
         <div style={{fontFamily:"var(--d)",fontSize:72,fontWeight:800,color:'#f7f2e8',letterSpacing:'-.02em'}}>MERIDIAN</div>
-        <div style={{fontFamily:"var(--s)",fontSize:11,color:'#4a3a25',letterSpacing:'.1em'}}>LOADING INTELLIGENCE…</div>
+        <div style={{fontFamily:"var(--s)",fontSize:11,color:'#4a3a25',letterSpacing:'.1em'}}>{t.loading}</div>
       </div>
     );
   }
 
   return (
-    <>
+    <LangContext.Provider value={lang}>
+      <>
       <Head>
         <title>MERIDIAN — M&A & Capital Markets Intelligence</title>
       </Head>
@@ -361,16 +448,26 @@ export default function Home() {
               <ModeTag mode={mode}/>
               <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid}}>{deals.length} deals · {fmt(totalVol)}</span>
             </div>
-            <button onClick={loadDeals} style={{background:'none',border:`1px solid ${C.border}`,color:C.textMid,padding:'3px 10px',fontFamily:"var(--s)",fontSize:10,cursor:'pointer',letterSpacing:'.06em',transition:'all .15s'}}
-              onMouseEnter={e=>{e.target.style.color=C.gold;e.target.style.borderColor=C.gold}} onMouseLeave={e=>{e.target.style.color=C.textMid;e.target.style.borderColor=C.border}}>
-              ↻ REFRESH
-            </button>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              {/* Language selector */}
+              {['en','es','fr','de'].map(l=>(
+                <button key={l} onClick={()=>setLang(l)}
+                  style={{background:lang===l?C.gold:'transparent',color:lang===l?C.bg:C.textMid,border:`1px solid ${lang===l?C.gold:C.border}`,padding:'3px 9px',fontFamily:"var(--s)",fontSize:10,fontWeight:700,cursor:'pointer',letterSpacing:'.06em',transition:'all .15s',textTransform:'uppercase'}}>
+                  {l}
+                </button>
+              ))}
+              <div style={{width:1,height:14,background:C.border,margin:'0 4px'}}/>
+              <button onClick={loadDeals} style={{background:'none',border:`1px solid ${C.border}`,color:C.textMid,padding:'3px 10px',fontFamily:"var(--s)",fontSize:10,cursor:'pointer',letterSpacing:'.06em',transition:'all .15s'}}
+                onMouseEnter={e=>{e.target.style.color=C.gold;e.target.style.borderColor=C.gold}} onMouseLeave={e=>{e.target.style.color=C.textMid;e.target.style.borderColor=C.border}}>
+                {t.refresh}
+              </button>
+            </div>
           </div>
 
           <div style={{textAlign:'center',padding:'24px 24px 18px',borderBottom:`1px solid ${C.border}`}}>
             <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.35em',color:C.textMid,marginBottom:8}}>✦ &nbsp; THE CAPITAL MARKETS INTELLIGENCE REVIEW &nbsp; ✦</div>
             <h1 style={{fontFamily:"var(--d)",fontSize:'clamp(44px,7vw,80px)',fontWeight:800,color:C.textHi,letterSpacing:'-.02em',lineHeight:1,margin:'0 0 6px'}}>MERIDIAN</h1>
-            <p style={{fontFamily:"var(--r)",fontSize:12,color:C.textMid,fontStyle:'italic'}}>Deals. Capital. Strategy.</p>
+            <p style={{fontFamily:"var(--r)",fontSize:12,color:C.textMid,fontStyle:'italic'}}>{t.tagline}</p>
           </div>
 
           {/* Ad banner */}
@@ -405,26 +502,26 @@ export default function Home() {
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{width:3,height:16,background:C.gold,display:'block'}}/>
-              <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>Latest Deals</span>
-              {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>Updated {lastUpdated.toLocaleTimeString('en-GB')}</span>}
+              <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>{t.latestDeals}</span>
+              {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>{t.updated} {lastUpdated.toLocaleTimeString('en-GB')}</span>}
             </div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-              {types.map(t=><button key={t} className={`pill ${filter===t?'active':''}`} onClick={()=>setFilter(t)}>{t}</button>)}
+              {types.map(tp=><button key={tp} className={`pill ${filter===tp?'active':''}`} onClick={()=>setFilter(tp)}>{tp === 'All' ? t.all : tp}</button>)}
             </div>
           </div>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',minWidth:50}}>Region</span>
+              <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',minWidth:50}}>{t.region}</span>
               <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                {geos.map(g=><button key={g} className={`pill ${geoFilter===g?'active':''}`} onClick={()=>setGeoFilter(g)}>{g}</button>)}
+                {geos.map(g=><button key={g} className={`pill ${geoFilter===g?'active':''}`} onClick={()=>setGeoFilter(g)}>{g === 'All' ? t.all : g}</button>)}
               </div>
             </div>
           </div>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0 16px',borderBottom:`2px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',minWidth:50}}>Sector</span>
+              <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',minWidth:50}}>{t.sectorLabel}</span>
               <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                {sectors.map(s=><button key={s} className={`pill ${sectorFilter===s?'active':''}`} onClick={()=>setSectorFilter(s)}>{s}</button>)}
+                {sectors.map(sc=><button key={sc} className={`pill ${sectorFilter===sc?'active':''}`} onClick={()=>setSectorFilter(sc)}>{sc === 'All' ? t.all : sc}</button>)}
               </div>
             </div>
           </div>
@@ -436,7 +533,7 @@ export default function Home() {
                   <DealCard key={d.id} deal={d} onClick={setSelected}/>
                 ))}
                 {rest.length === 0 && (
-                  <div style={{gridColumn:'1/-1',textAlign:'center',padding:'60px 0',fontFamily:"var(--r)",color:'#3a2e20',fontStyle:'italic'}}>No deals match this filter.</div>
+                  <div style={{gridColumn:'1/-1',textAlign:'center',padding:'60px 0',fontFamily:"var(--r)",color:'#3a2e20',fontStyle:'italic'}}>{t.noDeals}</div>
                 )}
               </div>
             </div>
@@ -485,7 +582,7 @@ export default function Home() {
               <div style={{background:C.bgCard,border:`1px solid ${C.border}`}}>
                 <div style={{borderBottom:`1px solid ${C.border}`,padding:'10px 16px',display:'flex',gap:8,alignItems:'center'}}>
                   <span style={{width:3,height:12,background:'#22c55e',display:'block'}}/>
-                  <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>Top by Value</span>
+                  <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>{t.topByValue}</span>
                 </div>
                 {[...deals].sort((a,b)=>Number(b.value||0)-Number(a.value||0)).slice(0,5).map((d,i)=>(
                   <div key={d.id} onClick={()=>setSelected(d)} style={{padding:'11px 16px',borderBottom:`1px solid ${C.bg}`,cursor:'pointer',transition:'background .1s'}}
@@ -515,6 +612,7 @@ export default function Home() {
 
         {selected && <DealModal deal={selected} mode={mode} onClose={()=>setSelected(null)}/>}
       </div>
-    </>
+      </>
+    </LangContext.Provider>
   );
 }
