@@ -72,10 +72,12 @@ function HeroDeal({ deal, onClick }) {
           <div style={{fontFamily:"var(--s)",fontSize:9,color:'#4a3a25',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>VALUE</div>
           <div style={{fontFamily:"var(--d)",fontSize:28,fontWeight:800,color:deal.accent}}>{fmt(deal.value,c)}</div>
         </div>
-        {[{l:'Type',v:deal.type},{l:'Sector',v:deal.sector},{l:'Source',v:deal.source}].map((m,i)=>[
-          <div key={`d${i}`} style={{width:1,height:36,background:'#2a2218'}}/>,
-          <div key={m.l}><div style={{fontFamily:"var(--s)",fontSize:9,color:'#4a3a25',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>{m.l}</div><div style={{fontFamily:"var(--s)",fontSize:13,fontWeight:500,color:'#c9b99a'}}>{m.v||'—'}</div></div>
-        ])}
+        {[{l:'Type',v:deal.type},{l:'Sector',v:deal.sector},{l:'Source',v:deal.source}].map((m,i)=>(
+          <div key={m.l} style={{display:'flex',alignItems:'center',gap:20}}>
+            <div style={{width:1,height:36,background:'#2a2218'}}/>
+            <div><div style={{fontFamily:"var(--s)",fontSize:9,color:'#4a3a25',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>{m.l}</div><div style={{fontFamily:"var(--s)",fontSize:13,fontWeight:500,color:'#c9b99a'}}>{m.v||'—'}</div></div>
+          </div>
+        ))}
         <span style={{marginLeft:'auto',fontFamily:"var(--s)",fontSize:11,color:deal.accent,fontWeight:700,letterSpacing:'.06em',borderBottom:`1px solid ${deal.accent}`}}>READ FULL DEAL →</span>
       </div>
     </div>
@@ -289,15 +291,12 @@ export default function Home() {
           <div style={{display:'grid',gridTemplateColumns:'1fr 280px',gap:24,padding:'18px 0 48px',alignItems:'start'}}>
             <div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                {rest.map((d,i) => [
-                  <DealCard key={d.id} deal={d} onClick={setSelected}/>,
-                  // Ad every 4 cards
-                  i > 0 && i % 4 === 3 && (
-                    <div key={`ad-${i}`} style={{gridColumn:'1/-1'}}>
-                      <AdSlot slot="9876543210" format="fluid" />
-                    </div>
-                  )
-                ])}
+                {rest.map((d,i) => (
+                  <DealCard key={d.id} deal={d} onClick={setSelected}/>
+                ))}
+                {rest.length === 0 && (
+                  <div style={{gridColumn:'1/-1',textAlign:'center',padding:'60px 0',fontFamily:"var(--r)",color:'#3a2e20',fontStyle:'italic'}}>No deals match this filter.</div>
+                )}
               </div>
             </div>
 
