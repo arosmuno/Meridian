@@ -49,23 +49,33 @@ export default async function handler(req, res) {
     }
 
     // Save to Supabase — upsert by headline to avoid duplicates
-    const rows = deals.map(d => ({
-      headline: d.headline,
-      summary: d.summary,
-      buyer: d.buyer,
-      target: d.target,
-      value: Number(d.value) || 0,
-      currency: d.currency || 'EUR',
-      type: d.type || 'M&A',
-      sector: d.sector || 'General',
-      status: d.status || 'Signed',
-      date: d.date || new Date().toLocaleDateString('en-GB'),
-      advisor: d.advisor || '',
-      source: d.source || '',
-      source_channel: d.source_channel || 'news',
-      fetched_at: new Date().toISOString(),
-      data_source: source,
-    }));
+    const rows = deals.map(d => {
+      // Parse date string to ISO date for proper sorting
+      let deal_date = null;
+      if (d.date) {
+        const parsed = new Date(d.date);
+        if (!isNaN(parsed)) deal_date = parsed.toISOString().split('T')[0];
+      }
+      return {
+        headline: d.headline,
+        summary: d.summary,
+        buyer: d.buyer,
+        target: d.target,
+        value: Number(d.value) || 0,
+        currency: d.currency || 'EUR',
+        type: d.type || 'M&A',
+        sector: d.sector || 'General',
+        geography: d.geography || 'Global',
+        status: d.status || 'Signed',
+        date: d.date || new Date().toLocaleDateString('en-GB'),
+        deal_date,
+        advisor: d.advisor || '',
+        source: d.source || '',
+        source_channel: d.source_channel || 'news',
+        fetched_at: new Date().toISOString(),
+        data_source: source,
+      };
+    });
 
     const { error } = await supabaseAdmin
       .from('deals')
