@@ -130,11 +130,14 @@ function DealCard({ deal, onClick }) {
 
 function DealModal({ deal, mode, onClose }) {
   const [analysis, setAnalysis] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translated, setTranslated] = useState(null);
+  const [activeLang, setActiveLang] = useState(null);
   const c = curSym(deal.currency);
 
   const runAnalysis = async () => {
-    setLoading(true); setAnalysis('');
+    setLoadingAnalysis(true); setAnalysis('');
     try {
       const res = await fetch('/api/analysis', {
         method: 'POST',
@@ -142,48 +145,96 @@ function DealModal({ deal, mode, onClose }) {
         body: JSON.stringify({ deal }),
       });
       const data = await res.json();
-      setAnalysis(data.analysis || 'Unavailable.');
-    } catch { setAnalysis('Analysis could not be generated.'); }
-    setLoading(false);
+      if (data.analysis) setAnalysis(data.analysis);
+      else if (data.error) setAnalysis(`Error: ${data.error}`);
+      else setAnalysis('Unavailable.');
+    } catch (e) { setAnalysis(`Error: ${e.message}`); }
+    setLoadingAnalysis(false);
   };
+
+  const translate = async (lang) => {
+    if (activeLang === lang) { setTranslated(null); setActiveLang(null); return; }
+    setTranslating(true);
+    try {
+      const textToTranslate = `${deal.headline}\n\n${deal.summary}${analysis ? '\n\n' + analysis : ''}`;
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: textToTranslate, lang }),
+      });
+      const data = await res.json();
+      setTranslated(data.translated);
+      setActiveLang(lang);
+    } catch { setTranslated(null); }
+    setTranslating(false);
+  };
+
+  const displayText = translated || null;
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(4,2,6,.92)',zIndex:200,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'28px 16px',backdropFilter:'blur(4px)'}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:'#0a0808',border:'1px solid #2a2218',maxWidth:780,width:'100%'}}>
+      <div style={{background:C.bgCard,border:`1px solid ${C.border}`,maxWidth:780,width:'100%'}}>
+        {/* Header */}
         <div style={{background:deal.bg,borderBottom:`3px solid ${deal.accent}`,padding:'32px 40px 28px'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
             <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
               <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:800,letterSpacing:'.2em',color:deal.accent}}>{deal.kicker}</span>
-              <StatusBadge status={deal.status}/><ModeTag mode={mode}/>
+              <StatusBadge status={deal.status}/>
+              <ModeTag mode={mode}/>
+              {deal.geography && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,border:`1px solid ${C.border}`,padding:'1px 6px'}}>{deal.geography}</span>}
             </div>
-            <button onClick={onClose} style={{background:'none',border:'none',color:'#5a4e38',cursor:'pointer',fontSize:22,lineHeight:1,paddingLeft:16}}>×</button>
+            <button onClick={onClose} style={{background:'none',border:'none',color:C.textMid,cursor:'pointer',fontSize:22,lineHeight:1,paddingLeft:16}}>×</button>
           </div>
-          <h1 style={{fontFamily:"var(--d)",fontSize:'clamp(20px,2.6vw,30px)',fontWeight:800,color:'#f7f2e8',lineHeight:1.2,margin:0}}>{deal.headline}</h1>
+          <h1 style={{fontFamily:"var(--d)",fontSize:'clamp(20px,2.6vw,30px)',fontWeight:800,color:C.textHi,lineHeight:1.2,margin:0}}>{deal.headline}</h1>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',borderBottom:'1px solid #1a1610'}}>
+
+        {/* Metrics */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',borderBottom:`1px solid ${C.border}`}}>
           {[{l:'Value',v:fmt(deal.value,c),big:true},{l:'Type',v:deal.type},{l:'Sector',v:deal.sector},{l:'Buyer',v:deal.buyer},{l:'Target',v:deal.target},{l:'Date',v:deal.date}].map((m,i)=>(
-            <div key={i} style={{padding:'13px 20px',borderRight:i%3!==2?'1px solid #1a1610':'none',borderBottom:i<3?'1px solid #1a1610':'none'}}>
-              <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:'#3a2e20',marginBottom:4,textTransform:'uppercase'}}>{m.l}</div>
-              <div style={{fontFamily:m.big?"var(--d)":"var(--s)",fontSize:m.big?22:12,fontWeight:m.big?700:500,color:m.big?deal.accent:'#c9b99a'}}>{m.v||'N/A'}</div>
+            <div key={i} style={{padding:'13px 20px',borderRight:i%3!==2?`1px solid ${C.border}`:'none',borderBottom:i<3?`1px solid ${C.border}`:'none'}}>
+              <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:C.textMid,marginBottom:4,textTransform:'uppercase'}}>{m.l}</div>
+              <div style={{fontFamily:m.big?"var(--d)":"var(--s)",fontSize:m.big?22:13,fontWeight:m.big?700:500,color:m.big?deal.accent:C.textBody}}>{m.v||'N/A'}</div>
             </div>
           ))}
         </div>
+
         <div style={{padding:'26px 40px'}}>
-          <p style={{fontFamily:"var(--r)",fontSize:15,color:'#b0a080',lineHeight:1.85,marginBottom:20}}>{deal.summary}</p>
-          {deal.advisor&&<div style={{paddingTop:12,borderTop:'1px solid #1a1610',marginBottom:22}}>
-            <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:'#3a2e20',marginBottom:5,textTransform:'uppercase'}}>Advisors</div>
-            <div style={{fontFamily:"var(--s)",fontSize:12,color:'#5a4e38'}}>{deal.advisor}</div>
-          </div>}
-          {/* Ad inside modal */}
-          <AdSlot slot="3456789012" style={{ marginBottom: 20 }} />
-          <div style={{background:'#0d0a06',border:'1px solid #2a2218',padding:'20px 24px'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:analysis||loading?14:0}}>
-              <div style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:deal.accent}}>✦ MERIDIAN ANALYSIS</div>
-              {!analysis&&!loading&&<button onClick={runAnalysis} style={{background:deal.accent,color:'#08050a',border:'none',padding:'6px 14px',fontFamily:"var(--s)",fontSize:11,fontWeight:700,cursor:'pointer',letterSpacing:'.08em'}}>GENERATE</button>}
+          {/* Translation buttons */}
+          <div style={{display:'flex',gap:6,marginBottom:16,alignItems:'center'}}>
+            <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,marginRight:4}}>Translate:</span>
+            {[{lang:'es',label:'🇪🇸 ES'},{lang:'fr',label:'🇫🇷 FR'},{lang:'de',label:'🇩🇪 DE'}].map(({lang,label})=>(
+              <button key={lang} onClick={()=>translate(lang)}
+                style={{background:activeLang===lang?C.gold:'transparent',color:activeLang===lang?C.bg:C.textMid,border:`1px solid ${activeLang===lang?C.gold:C.border}`,padding:'4px 10px',fontFamily:"var(--s)",fontSize:10,fontWeight:700,cursor:'pointer',transition:'all .15s'}}>
+                {translating && activeLang !== lang ? label : label}
+              </button>
+            ))}
+            {activeLang && <button onClick={()=>{setTranslated(null);setActiveLang(null);}} style={{background:'transparent',color:C.textMid,border:`1px solid ${C.border}`,padding:'4px 10px',fontFamily:"var(--s)",fontSize:10,cursor:'pointer'}}>EN</button>}
+            {translating && <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,fontStyle:'italic'}}>Translating…</span>}
+          </div>
+
+          {/* Summary */}
+          <p style={{fontFamily:"var(--r)",fontSize:15,color:C.textBody,lineHeight:1.9,marginBottom:20}}>
+            {displayText || deal.summary}
+          </p>
+
+          {deal.advisor && (
+            <div style={{paddingTop:12,borderTop:`1px solid ${C.border}`,marginBottom:22}}>
+              <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:C.textMid,marginBottom:5,textTransform:'uppercase'}}>Advisors</div>
+              <div style={{fontFamily:"var(--s)",fontSize:12,color:C.textBody}}>{deal.advisor}</div>
             </div>
-            {loading&&<div style={{fontFamily:"var(--r)",fontSize:13,color:'#4a3a25',fontStyle:'italic'}}>Drafting editorial analysis…</div>}
-            {analysis&&<p style={{fontFamily:"var(--r)",fontSize:14,color:'#b0a080',lineHeight:1.85,margin:0}}>{analysis}</p>}
+          )}
+
+          <AdSlot slot="3456789012" style={{ marginBottom: 20 }} />
+
+          {/* AI Analysis */}
+          <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:'20px 24px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:analysis||loadingAnalysis?14:0}}>
+              <div style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:deal.accent}}>✦ MERIDIAN ANALYSIS</div>
+              {!analysis&&!loadingAnalysis&&<button onClick={runAnalysis} style={{background:deal.accent,color:C.bg,border:'none',padding:'6px 14px',fontFamily:"var(--s)",fontSize:11,fontWeight:700,cursor:'pointer',letterSpacing:'.08em'}}>GENERATE</button>}
+            </div>
+            {loadingAnalysis && <div style={{fontFamily:"var(--r)",fontSize:13,color:C.textMid,fontStyle:'italic'}}>Drafting editorial analysis…</div>}
+            {analysis && <p style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.9,margin:0}}>{analysis}</p>}
           </div>
         </div>
       </div>
@@ -197,6 +248,8 @@ export default function Home() {
   const [mode, setMode]       = useState('archive');
   const [loading, setLoading] = useState(true);
   const [filter, setFilter]   = useState('All');
+  const [geoFilter, setGeoFilter] = useState('All');
+  const [sectorFilter, setSectorFilter] = useState('All');
   const [selected, setSelected] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -223,8 +276,14 @@ export default function Home() {
   }, [loadDeals]);
 
   const types = ['All', ...new Set(deals.map(d=>d.type).filter(Boolean))];
+  const geos = ['All', 'Europe', 'North America', 'Asia Pacific', 'Latin America', 'Middle East & Africa', 'Global'];
+  const sectors = ['All', 'Healthcare', 'TMT', 'Infrastructure', 'Energy & Renewables', 'Financial Services', 'Consumer', 'Industrials', 'Real Estate'];
   const hero = deals[0];
-  const rest = deals.slice(1).filter(d => filter==='All' || d.type===filter);
+  const rest = deals.slice(1).filter(d =>
+    (filter === 'All' || d.type === filter) &&
+    (geoFilter === 'All' || d.geography === geoFilter) &&
+    (sectorFilter === 'All' || d.sector === sectorFilter)
+  );
   const totalVol = deals.reduce((s,d)=>s+Number(d.value||0),0);
 
   if (loading) {
@@ -295,7 +354,7 @@ export default function Home() {
         <div style={{maxWidth:1200,margin:'0 auto',padding:'0 20px'}}>
           {hero && <div style={{margin:'0 -20px'}}><HeroDeal deal={hero} onClick={setSelected}/></div>}
 
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 12px',borderBottom:`2px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{width:3,height:16,background:C.gold,display:'block'}}/>
               <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>Latest Deals</span>
@@ -303,6 +362,22 @@ export default function Home() {
             </div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               {types.map(t=><button key={t} className={`pill ${filter===t?'active':''}`} onClick={()=>setFilter(t)}>{t}</button>)}
+            </div>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',minWidth:50}}>Region</span>
+              <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                {geos.map(g=><button key={g} className={`pill ${geoFilter===g?'active':''}`} onClick={()=>setGeoFilter(g)}>{g}</button>)}
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0 16px',borderBottom:`2px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',minWidth:50}}>Sector</span>
+              <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                {sectors.map(s=><button key={s} className={`pill ${sectorFilter===s?'active':''}`} onClick={()=>setSectorFilter(s)}>{s}</button>)}
+              </div>
             </div>
           </div>
 
