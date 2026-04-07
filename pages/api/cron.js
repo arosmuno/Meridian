@@ -100,13 +100,34 @@ async function processDeals() {
     };
   });
 
-  const { error } = await supabaseAdmin
+  // Insert new deals (ignore duplicates)
+  const { error: insertError } = await supabaseAdmin
     .from('deals')
-    .upsert(rows, { onConflict: 'headline', ignoreDuplicates: false });
+    .upsert(rows, { onConflict: 'headline', ignoreDuplicates: true });
 
-  if (error) console.error('[CRON] Supabase error:', error);
-  else console.log(`[CRON] Saved ${rows.length} deals with translations`);
+  if (insertError) console.error('[CRON] Insert error:', insertError);
 
+  // Update existing deals with translations (those that have NULL headline_es)
+  for (const row of rows) {
+    const { error: updateError } = await supabaseAdmin
+      .from('deals')
+      .update({
+        headline_es: row.headline_es,
+        summary_es: row.summary_es,
+        headline_fr: row.headline_fr,
+        summary_fr: row.summary_fr,
+        headline_de: row.headline_de,
+        summary_de: row.summary_de,
+        geography: row.geography,
+        category: row.category,
+      })
+      .eq('headline', row.headline)
+      .is('headline_es', null);
+
+    if (updateError) console.error('[CRON] Update error:', updateError.message);
+  }
+
+  console.log(`[CRON] Saved ${rows.length} deals with translations`);
   return { saved: rows.length, source };
 }
 
