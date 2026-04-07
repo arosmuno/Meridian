@@ -105,18 +105,23 @@ const TYPE_STYLE = {
   'ECM':             { accent: '#c084fc', bg: '#0d0812' },
   'Restructuring':   { accent: '#f43f5e', bg: '#190610' },
   'Debt Advisory':   { accent: '#f59e0b', bg: '#130d04' },
+  'Macro':           { accent: '#38bdf8', bg: '#071520' },
+  'Earnings':        { accent: '#fb923c', bg: '#130a04' },
+  'Markets':         { accent: '#a3e635', bg: '#091505' },
   'Default':         { accent: '#c9b99a', bg: '#0d0b07' },
 };
 const STATUS_STYLE = {
-  Closed:   { bg: '#041b0d', color: '#4ade80', border: '#15532e' },
-  Signed:   { bg: '#080f25', color: '#60a5fa', border: '#1e3a6e' },
-  Rumoured: { bg: '#1a1003', color: '#fbbf24', border: '#78350f' },
-  Breaking: { bg: '#200610', color: '#f87171', border: '#7f1d1d' },
+  Closed:    { bg: '#041b0d', color: '#4ade80', border: '#15532e' },
+  Signed:    { bg: '#080f25', color: '#60a5fa', border: '#1e3a6e' },
+  Rumoured:  { bg: '#1a1003', color: '#fbbf24', border: '#78350f' },
+  Breaking:  { bg: '#200610', color: '#f87171', border: '#7f1d1d' },
+  Published: { bg: '#071520', color: '#38bdf8', border: '#0c4a6e' },
 };
 const KICKER_MAP = {
   'M&A':'STRATEGIC M&A','LBO':'LEVERAGED BUYOUT','LevFin':'LEVFIN',
   'Project Finance':'PROJECT FINANCE','ECM':'EQUITY CAPITAL MARKETS',
   'Restructuring':'RESTRUCTURING','Debt Advisory':'DEBT ADVISORY',
+  'Macro':'MACRO & POLICY','Earnings':'EARNINGS','Markets':'MARKETS',
 };
 const getStyle = t => TYPE_STYLE[t] || TYPE_STYLE['Default'];
 const curSym = c => c === 'USD' ? '$' : c === 'GBP' ? '£' : '€';
@@ -241,6 +246,7 @@ function DealModal({ deal, mode, onClose }) {
   const t = T[lang];
   const [analysis, setAnalysis] = useState('');
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [translatedHeadline, setTranslatedHeadline] = useState(null);
   const [translatedSummary, setTranslatedSummary] = useState(null);
   const [translatingContent, setTranslatingContent] = useState(false);
   const c = curSym(deal.currency);
@@ -249,18 +255,26 @@ function DealModal({ deal, mode, onClose }) {
   useEffect(() => {
     setAnalysis('');
     if (lang === 'en') {
+      setTranslatedHeadline(null);
       setTranslatedSummary(null);
       return;
     }
     setTranslatingContent(true);
+    // Translate headline + summary together, separated by |||
     fetch('/api/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: `${deal.headline}\n\n${deal.summary}`, lang }),
+      body: JSON.stringify({ text: `${deal.headline}\n|||\n${deal.summary}`, lang }),
     })
       .then(r => r.json())
-      .then(d => { setTranslatedSummary(d.translated || null); })
-      .catch(() => setTranslatedSummary(null))
+      .then(d => {
+        if (d.translated) {
+          const parts = d.translated.split('|||');
+          setTranslatedHeadline(parts[0]?.trim() || null);
+          setTranslatedSummary(parts[1]?.trim() || null);
+        }
+      })
+      .catch(() => { setTranslatedHeadline(null); setTranslatedSummary(null); })
       .finally(() => setTranslatingContent(false));
   }, [lang, deal.headline]);
 
@@ -297,7 +311,9 @@ function DealModal({ deal, mode, onClose }) {
             </div>
             <button onClick={onClose} style={{background:'none',border:'none',color:C.textMid,cursor:'pointer',fontSize:22,lineHeight:1,paddingLeft:16}}>×</button>
           </div>
-          <h1 style={{fontFamily:"var(--d)",fontSize:'clamp(20px,2.6vw,30px)',fontWeight:800,color:C.textHi,lineHeight:1.2,margin:0}}>{deal.headline}</h1>
+          <h1 style={{fontFamily:"var(--d)",fontSize:'clamp(20px,2.6vw,30px)',fontWeight:800,color:C.textHi,lineHeight:1.2,margin:0}}>
+            {translatingContent ? deal.headline : (translatedHeadline || deal.headline)}
+          </h1>
         </div>
 
         {/* Metrics */}
@@ -386,7 +402,7 @@ export default function Home() {
 
   const types = ['All', ...new Set(deals.map(d=>d.type).filter(Boolean))];
   const geos = ['All', 'Europe', 'North America', 'Asia Pacific', 'Latin America', 'Middle East & Africa', 'Global'];
-  const sectors = ['All', 'Healthcare', 'TMT', 'Infrastructure', 'Energy & Renewables', 'Financial Services', 'Consumer', 'Industrials', 'Real Estate'];
+  const sectors = ['All', 'Healthcare', 'TMT', 'Infrastructure', 'Energy & Renewables', 'Financial Services', 'Consumer', 'Industrials', 'Real Estate', 'Macro'];
   const hero = deals[0];
 
   const matchGeo = (deal, geo) => {
