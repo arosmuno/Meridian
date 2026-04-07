@@ -7,6 +7,9 @@ const T = {
   en: {
     tagline: 'Deals. Capital. Strategy.',
     latestDeals: 'Latest Deals',
+    latestMarkets: 'Markets & Macro',
+    tabDeals: 'DEALS',
+    tabMarkets: 'MARKETS',
     updated: 'Updated',
     refresh: '↻ REFRESH',
     dealBreakdown: 'DEAL BREAKDOWN',
@@ -28,6 +31,9 @@ const T = {
   es: {
     tagline: 'Operaciones. Capital. Estrategia.',
     latestDeals: 'Últimas Operaciones',
+    latestMarkets: 'Mercados y Macro',
+    tabDeals: 'OPERACIONES',
+    tabMarkets: 'MERCADOS',
     updated: 'Actualizado',
     refresh: '↻ ACTUALIZAR',
     dealBreakdown: 'DESGLOSE DE OPERACIONES',
@@ -49,6 +55,9 @@ const T = {
   fr: {
     tagline: 'Opérations. Capital. Stratégie.',
     latestDeals: 'Dernières Opérations',
+    latestMarkets: 'Marchés & Macro',
+    tabDeals: 'OPÉRATIONS',
+    tabMarkets: 'MARCHÉS',
     updated: 'Mis à jour',
     refresh: '↻ ACTUALISER',
     dealBreakdown: 'RÉPARTITION DES OPÉRATIONS',
@@ -70,6 +79,9 @@ const T = {
   de: {
     tagline: 'Deals. Kapital. Strategie.',
     latestDeals: 'Neueste Transaktionen',
+    latestMarkets: 'Märkte & Makro',
+    tabDeals: 'DEALS',
+    tabMarkets: 'MÄRKTE',
     updated: 'Aktualisiert',
     refresh: '↻ AKTUALISIEREN',
     dealBreakdown: 'DEAL-AUFSCHLÜSSELUNG',
@@ -357,15 +369,16 @@ function DealModal({ deal, mode, onClose }) {
 
 // ── PAGE ──────────────────────────────────────────────────────────────────────
 export default function Home() {
-  const [deals, setDeals]     = useState([]);
-  const [mode, setMode]       = useState('archive');
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter]   = useState('All');
+  const [deals, setDeals]         = useState([]);
+  const [mode, setMode]           = useState('archive');
+  const [loading, setLoading]     = useState(true);
+  const [section, setSection]     = useState('deals'); // 'deals' | 'markets'
+  const [filter, setFilter]       = useState('All');
   const [geoFilter, setGeoFilter] = useState('All');
   const [sectorFilter, setSectorFilter] = useState('All');
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected]   = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [lang, setLang]       = useState('en');
+  const [lang, setLang]           = useState('en');
 
   const loadDeals = useCallback(async () => {
     setLoading(true);
@@ -400,10 +413,20 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [loadDeals]);
 
-  const types = ['All', ...new Set(deals.map(d=>d.type).filter(Boolean))];
-  const geos = ['All', 'Europe', 'North America', 'Asia Pacific', 'Latin America', 'Middle East & Africa', 'Global'];
-  const sectors = ['All', 'Healthcare', 'TMT', 'Infrastructure', 'Energy & Renewables', 'Financial Services', 'Consumer', 'Industrials', 'Real Estate', 'Macro'];
-  const hero = deals[0];
+  const DEAL_TYPES = ['M&A','LBO','LevFin','Project Finance','ECM','Restructuring','Debt Advisory'];
+  const MARKET_TYPES = ['Macro','Earnings','Markets'];
+
+  const dealItems  = deals.filter(d => !MARKET_TYPES.includes(d.type));
+  const marketItems = deals.filter(d => MARKET_TYPES.includes(d.type));
+  const activeItems = section === 'deals' ? dealItems : marketItems;
+
+  const types = ['All', ...new Set(activeItems.map(d=>d.type).filter(Boolean))];
+  const geos  = ['All', 'Europe', 'North America', 'Asia Pacific', 'Latin America', 'Middle East & Africa', 'Global'];
+  const sectors = section === 'deals'
+    ? ['All', 'Healthcare', 'TMT', 'Infrastructure', 'Energy & Renewables', 'Financial Services', 'Consumer', 'Industrials', 'Real Estate']
+    : ['All', 'Macro', 'Financial Services', 'Consumer', 'Industrials', 'Energy & Renewables', 'TMT'];
+
+  const hero = activeItems[0];
 
   const matchGeo = (deal, geo) => {
     if (geo === 'All') return true;
@@ -427,12 +450,12 @@ export default function Home() {
     return s.includes(sec.toLowerCase());
   };
 
-  const rest = deals.slice(1).filter(d =>
+  const rest = activeItems.slice(1).filter(d =>
     (filter === 'All' || d.type === filter) &&
     matchGeo(d, geoFilter) &&
     matchSector(d, sectorFilter)
   );
-  const totalVol = deals.reduce((s,d)=>s+Number(d.value||0),0);
+  const totalVol = dealItems.reduce((s,d)=>s+Number(d.value||0),0);
 
   const t = T[lang];
 
@@ -486,6 +509,24 @@ export default function Home() {
             <p style={{fontFamily:"var(--r)",fontSize:12,color:C.textMid,fontStyle:'italic'}}>{t.tagline}</p>
           </div>
 
+          {/* Section nav tabs */}
+          <div style={{display:'flex',borderBottom:`1px solid ${C.border}`,background:C.bg}}>
+            {[
+              {id:'deals', label:t.tabDeals, count:dealItems.length},
+              {id:'markets', label:t.tabMarkets, count:marketItems.length},
+            ].map(tab=>(
+              <button key={tab.id} onClick={()=>{setSection(tab.id);setFilter('All');setGeoFilter('All');setSectorFilter('All');}}
+                style={{padding:'12px 28px',background:'none',border:'none',borderBottom:section===tab.id?`3px solid ${C.gold}`:'3px solid transparent',
+                  color:section===tab.id?C.gold:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,
+                  letterSpacing:'.12em',cursor:'pointer',transition:'all .15s',display:'flex',gap:8,alignItems:'center'}}>
+                {tab.label}
+                <span style={{fontFamily:"var(--s)",fontSize:9,color:section===tab.id?C.gold:C.textLo,background:C.bgCard,border:`1px solid ${C.border}`,padding:'1px 6px',borderRadius:2}}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           {/* Ad banner */}
           <div style={{padding:'8px 24px',borderBottom:`1px solid ${C.border}`,background:C.bg}}>
             <AdSlot slot="1234567890" format="horizontal" style={{maxWidth:728,margin:'0 auto'}} />
@@ -498,7 +539,7 @@ export default function Home() {
             </div>
             <div className="ticker-wrap" style={{flex:1,padding:'5px 14px',background:C.bg}}>
               <div className="ticker-inner">
-                {[...deals,...deals].map((d,i)=>(
+                {[...dealItems,...dealItems].filter(d=>d.value>0).map((d,i)=>(
                   <span key={i} style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,marginRight:32}}>
                     <span style={{color:C.textBody,fontWeight:600}}>{d.buyer}</span>
                     {' → '}<span style={{color:C.textMid}}>{d.target}</span>
@@ -518,7 +559,7 @@ export default function Home() {
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{width:3,height:16,background:C.gold,display:'block'}}/>
-              <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>{t.latestDeals}</span>
+              <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>{section==='deals'?t.latestDeals:t.latestMarkets}</span>
               {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>{t.updated} {lastUpdated.toLocaleTimeString('en-GB')}</span>}
             </div>
             <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
