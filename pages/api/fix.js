@@ -1,7 +1,7 @@
-// pages/api/fix.js
-// One-time endpoint to translate existing deals and clean old ones
 import { supabaseAdmin } from '../../lib/supabase';
 import Anthropic from '@anthropic-ai/sdk';
+
+export const config = { maxDuration: 300 };
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -41,52 +41,53 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // 1. Delete deals older than 45 days to keep DB fresh
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 45);
-  const { error: deleteError, count: deleted } = await supabaseAdmin
-    .from('deals')
-    .delete({ count: 'exact' })
-    .lt('fetched_at', cutoff.toISOString());
-
-  if (deleteError) console.error('[FIX] Delete error:', deleteError.message);
-
-  // 2. Get all deals without translations
-  const { data: deals, error: fetchError } = await supabaseAdmin
-    .from('deals')
-    .select('id, headline, summary')
-    .is('headline_es', null)
-    .limit(50);
-
-  if (fetchError) return res.status(500).json({ error: fetchError.message });
-  if (!deals || deals.length === 0) return res.status(200).json({ ok: true, translated: 0, deleted: deleted || 0 });
-
-  // Respond immediately
-  res.status(200).json({ ok: true, message: `Translating ${deals.length} deals...`, deleted: deleted || 0 });
-
-  // 3. Translate in batch
-  const [transES, transFR, transDE] = await Promise.all([
-    translateBatch(deals, 'es'),
-    translateBatch(deals, 'fr'),
-    translateBatch(deals, 'de'),
-  ]);
-
-  // 4. Update each deal
-  for (let i = 0; i < deals.length; i++) {
-    const { error: updateError } = await supabaseAdmin
+  try {
+    // Get all deals without translations
+    const { data: deals, error: fetchError } = await supabaseAdmin
       .from('deals')
-      .update({
-        headline_es: transES[i]?.headline || null,
-        summary_es:  transES[i]?.summary  || null,
-        headline_fr: transFR[i]?.headline || null,
-        summary_fr:  transFR[i]?.summary  || null,
-        headline_de: transDE[i]?.headline || null,
-        summary_de:  transDE[i]?.summary  || null,
-      })
-      .eq('id', deals[i].id);
+      .select('id, headline, summary')
+      .is('headline_es', null)
+      .limit(20);
 
-    if (updateError) console.error(`[FIX] Update ${deals[i].id} failed:`, updateError.message);
+    if (fetchError) return res.status(500).json({ error: fetchError.message });
+    if (!deals || deals.length === 0) return res.status(200).json({ ok: true, translated: 0 });
+
+    console.log(`[FIX] Translating ${deals.length} deals...`);
+
+    // Translate all in parallel
+    const [transES, transFR, transDE] = await Promise.all([
+      translateBatch(deals, 'es'),
+      translateBatch(deals, 'fr'),
+      translateBatch(deals, 'de'),
+    ]);
+
+    // Update each deal individually
+    let updated = 0;
+    for (let i = 0; i < deals.length; i++) {
+      const { error: updateError } = await supabaseAdmin
+        .from('deals')
+        .update({
+          headline_es: transES[i]?.headline || null,
+          summary_es:  transES[i]?.summary  || null,
+          headline_fr: transFR[i]?.headline || null,
+          summary_fr:  transFR[i]?.summary  || null,
+          headline_de: transDE[i]?.headline || null,
+          summary_de:  transDE[i]?.summary  || null,
+        })
+        .eq('id', deals[i].id);
+
+      if (updateError) {
+        console.error(`[FIX] Update ${deals[i].id} failed:`, updateError.message);
+      } else {
+        updated++;
+      }
+    }
+
+    console.log(`[FIX] Done. Updated ${updated}/${deals.length} deals.`);
+    return res.status(200).json({ ok: true, translated: updated });
+
+  } catch (err) {
+    console.error('[FIX] Fatal:', err.message);
+    return res.status(500).json({ error: err.message });
   }
-
-  console.log(`[FIX] Done. Translated ${deals.length} deals, deleted ${deleted || 0} old ones.`);
 }
