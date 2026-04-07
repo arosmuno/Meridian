@@ -518,11 +518,8 @@ export default function Home() {
               <button key={tab.id} onClick={()=>{setSection(tab.id);setFilter('All');setGeoFilter('All');setSectorFilter('All');}}
                 style={{padding:'12px 28px',background:'none',border:'none',borderBottom:section===tab.id?`3px solid ${C.gold}`:'3px solid transparent',
                   color:section===tab.id?C.gold:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,
-                  letterSpacing:'.12em',cursor:'pointer',transition:'all .15s',display:'flex',gap:8,alignItems:'center'}}>
+                  letterSpacing:'.12em',cursor:'pointer',transition:'all .15s'}}>
                 {tab.label}
-                <span style={{fontFamily:"var(--s)",fontSize:9,color:section===tab.id?C.gold:C.textLo,background:C.bgCard,border:`1px solid ${C.border}`,padding:'1px 6px',borderRadius:2}}>
-                  {tab.count}
-                </span>
               </button>
             ))}
           </div>
@@ -583,7 +580,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{display:'grid',gridTemplateColumns:'1fr 280px',gap:24,padding:'18px 0 48px',alignItems:'start'}}>
+          <div style={{display:'grid',gridTemplateColumns:section==='deals'?'1fr 280px':'1fr',gap:24,padding:'18px 0 48px',alignItems:'start'}}>
             <div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 {rest.map((d,i) => (
@@ -595,7 +592,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Sidebar */}
+            {/* Sidebar — only in deals section */}
+            {section === 'deals' && (
             <div style={{display:'flex',flexDirection:'column',gap:18}}>
               {/* Sidebar ad */}
               <AdSlot slot="1122334455" format="vertical" style={{minHeight:250}}/>
@@ -656,10 +654,9 @@ export default function Home() {
                 ))}
               </div>
             </div>
+            )} {/* end section === deals sidebar */}
           </div>
         </div>
-
-        {/* Footer */}
         <div style={{borderTop:`3px double ${C.border}`,background:C.bgCard,padding:'16px 24px',textAlign:'center'}}>
           <div style={{fontFamily:"var(--d)",fontSize:18,color:C.border,letterSpacing:'.15em'}}>MERIDIAN</div>
           <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textLo,marginTop:3,letterSpacing:'.06em'}}>
