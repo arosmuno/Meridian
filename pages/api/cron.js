@@ -41,6 +41,12 @@ async function processDeals() {
   let deals = null;
   let source = 'live';
 
+  // Delete deals older than 30 days to keep DB fresh and allow new ones in
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  await supabaseAdmin.from('deals').delete().lt('fetched_at', cutoff.toISOString());
+  console.log('[CRON] Cleaned old deals');
+
   try {
     deals = await fetchDealsFromWeb();
     console.log(`[CRON] Web search returned ${deals?.length || 0} deals`);
