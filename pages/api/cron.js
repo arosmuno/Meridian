@@ -35,8 +35,8 @@ async function processDeals() {
     return {
       headline: d.headline,
       summary: d.summary,
-      buyer: d.buyer,
-      target: d.target,
+      buyer: d.buyer || 'N/A',
+      target: d.target || 'N/A',
       value: Number(d.value) || 0,
       currency: d.currency || 'EUR',
       type: d.type || 'M&A',
@@ -48,6 +48,7 @@ async function processDeals() {
       advisor: d.advisor || '',
       source: d.source || '',
       source_channel: d.source_channel || 'news',
+      category: d.category || 'deal',
       fetched_at: new Date().toISOString(),
       data_source: source,
     };
