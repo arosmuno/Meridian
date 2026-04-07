@@ -181,6 +181,9 @@ function ModeTag({ mode }) {
 }
 
 function HeroDeal({ deal, onClick }) {
+  const lang = useLang();
+  const { headline, summary } = useTranslated(deal, lang);
+  const t = T[lang];
   const c = curSym(deal.currency);
   return (
     <div onClick={()=>onClick(deal)} style={{background:deal.bg,borderBottom:`4px solid ${deal.accent}`,padding:'44px 48px 38px',cursor:'pointer',position:'relative',overflow:'hidden'}}
@@ -190,14 +193,14 @@ function HeroDeal({ deal, onClick }) {
         <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:800,letterSpacing:'.2em',color:deal.accent}}>{deal.kicker}</span>
         <StatusBadge status={deal.status}/>
       </div>
-      <h2 style={{fontFamily:"var(--d)",fontSize:'clamp(24px,3vw,42px)',fontWeight:800,color:C.textHi,lineHeight:1.15,margin:'0 0 16px',maxWidth:700}}>{deal.headline}</h2>
-      <p style={{fontFamily:"var(--r)",fontSize:16,color:C.textBody,lineHeight:1.75,maxWidth:620,margin:'0 0 26px'}}>{deal.summary}</p>
+      <h2 style={{fontFamily:"var(--d)",fontSize:'clamp(24px,3vw,42px)',fontWeight:800,color:C.textHi,lineHeight:1.15,margin:'0 0 16px',maxWidth:700}}>{headline}</h2>
+      <p style={{fontFamily:"var(--r)",fontSize:16,color:C.textBody,lineHeight:1.75,maxWidth:620,margin:'0 0 26px'}}>{summary}</p>
       <div style={{display:'flex',gap:20,alignItems:'center',flexWrap:'wrap'}}>
         <div>
-          <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>VALUE</div>
+          <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',marginBottom:2}}>{t.value}</div>
           <div style={{fontFamily:"var(--d)",fontSize:28,fontWeight:800,color:deal.accent}}>{fmt(deal.value,c)}</div>
         </div>
-        {[{l:'Type',v:deal.type},{l:'Sector',v:deal.sector},{l:'Source',v:deal.source}].map((m,i)=>(
+        {[{l:t.type,v:deal.type},{l:t.sector,v:deal.sector},{l:t.source,v:deal.source}].map((m,i)=>(
           <div key={m.l} style={{display:'flex',alignItems:'center',gap:20}}>
             <div style={{width:1,height:36,background:C.border}}/>
             <div>
@@ -206,7 +209,7 @@ function HeroDeal({ deal, onClick }) {
             </div>
           </div>
         ))}
-        <span style={{marginLeft:'auto',fontFamily:"var(--s)",fontSize:11,color:deal.accent,fontWeight:700,letterSpacing:'.06em',borderBottom:`1px solid ${deal.accent}`}}>READ FULL DEAL →</span>
+        <span style={{marginLeft:'auto',fontFamily:"var(--s)",fontSize:11,color:deal.accent,fontWeight:700,letterSpacing:'.06em',borderBottom:`1px solid ${deal.accent}`}}>{t.readFull}</span>
       </div>
     </div>
   );
@@ -224,7 +227,18 @@ function timeAgo(dateStr) {
   return `${days}d ago`;
 }
 
+function useTranslated(deal, lang) {
+  if (lang === 'en') return { headline: deal.headline, summary: deal.summary };
+  return {
+    headline: deal[`headline_${lang}`] || deal.headline,
+    summary:  deal[`summary_${lang}`]  || deal.summary,
+  };
+}
+
 function DealCard({ deal, onClick }) {
+  const lang = useLang();
+  const { headline, summary } = useTranslated(deal, lang);
+  const t = T[lang];
   const c = curSym(deal.currency);
   return (
     <div className="card" onClick={()=>onClick(deal)}>
@@ -234,11 +248,11 @@ function DealCard({ deal, onClick }) {
           <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:deal.accent,textTransform:'uppercase'}}>{deal.kicker}</span>
           <StatusBadge status={deal.status}/>
         </div>
-        <h3 style={{fontFamily:"var(--d)",fontSize:17,fontWeight:700,color:C.textHi,lineHeight:1.3,margin:0}}>{deal.headline}</h3>
-        <p style={{fontFamily:"var(--r)",fontSize:13,color:C.textBody,lineHeight:1.7,margin:0,flexGrow:1}}>{(deal.summary||'').slice(0,160)}{(deal.summary||'').length>160?'…':''}</p>
+        <h3 style={{fontFamily:"var(--d)",fontSize:17,fontWeight:700,color:C.textHi,lineHeight:1.3,margin:0}}>{headline}</h3>
+        <p style={{fontFamily:"var(--r)",fontSize:13,color:C.textBody,lineHeight:1.7,margin:0,flexGrow:1}}>{(summary||'').slice(0,160)}{(summary||'').length>160?'…':''}</p>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',paddingTop:10,borderTop:`1px solid ${C.border}`}}>
           <div>
-            <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.08em',marginBottom:2}}>VALUE</div>
+            <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.08em',marginBottom:2}}>{t.value}</div>
             <div style={{fontFamily:"var(--d)",fontSize:19,fontWeight:700,color:deal.accent}}>{fmt(deal.value,c)}</div>
           </div>
           <div style={{textAlign:'right'}}>
@@ -263,7 +277,6 @@ function DealModal({ deal, mode, onClose }) {
   const [translatingContent, setTranslatingContent] = useState(false);
   const c = curSym(deal.currency);
 
-  // Auto-translate content when language is not English
   useEffect(() => {
     setAnalysis('');
     if (lang === 'en') {
@@ -271,8 +284,16 @@ function DealModal({ deal, mode, onClose }) {
       setTranslatedSummary(null);
       return;
     }
+    // Use pre-calculated translations from DB if available
+    const preHeadline = deal[`headline_${lang}`];
+    const preSummary = deal[`summary_${lang}`];
+    if (preHeadline && preSummary) {
+      setTranslatedHeadline(preHeadline);
+      setTranslatedSummary(preSummary);
+      return;
+    }
+    // Fallback: live translate for older deals without pre-calculated translations
     setTranslatingContent(true);
-    // Translate headline + summary together, separated by |||
     fetch('/api/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
