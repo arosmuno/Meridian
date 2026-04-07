@@ -7,9 +7,9 @@ export const config = { maxDuration: 300 };
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const LANG_INSTRUCTIONS = {
-  es: 'European Spanish (Spain) — Castilian Spanish, NOT Latin American. Use Spain-specific financial vocabulary: "operación", "adquisición", "fusión", "consejo de administración".',
-  fr: 'French — standard French financial terminology.',
-  de: 'German — standard German financial terminology.',
+  es: 'Castilian Spanish (Spain). Keep company names, figures, % unchanged. Format: HEADLINE|||SUMMARY###...',
+  fr: 'French. Keep company names, figures, % unchanged. Format: HEADLINE|||SUMMARY###...',
+  de: 'German. Keep company names, figures, % unchanged. Format: HEADLINE|||SUMMARY###...',
 };
 
 async function translateBatch(items, lang) {
@@ -17,10 +17,10 @@ async function translateBatch(items, lang) {
   try {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 6000,
+      max_tokens: 4000,
       messages: [{
         role: 'user',
-        content: `Translate to ${LANG_INSTRUCTIONS[lang]}\n\nKeep all company names, proper nouns, financial figures, percentages and deal values exactly as they are.\n\nInput format: HEADLINE|||SUMMARY###HEADLINE|||SUMMARY###...\nReturn ONLY translated content in exact same format, no explanation.\n\n${input}`,
+        content: `Translate to ${LANG_INSTRUCTIONS[lang]}\nReturn only translated content in same format:\n\n${input}`,
       }],
     });
     const output = message.content[0]?.text || '';
