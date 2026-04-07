@@ -1,4 +1,3 @@
-// pages/api/cron.js
 import { fetchDealsFromWeb, fetchDealsFromKnowledge } from '../../lib/fetchDeals';
 import { supabaseAdmin } from '../../lib/supabase';
 import Anthropic from '@anthropic-ai/sdk';
@@ -8,7 +7,7 @@ export const config = { maxDuration: 300 };
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const LANG_INSTRUCTIONS = {
-  es: 'European Spanish (Spain) — Castilian Spanish, NOT Latin American. Use Spain-specific financial vocabulary: "operación" not "negocio", "adquisición", "fusión", "consejo de administración".',
+  es: 'European Spanish (Spain) — Castilian Spanish, NOT Latin American. Use Spain-specific financial vocabulary: "operación", "adquisición", "fusión", "consejo de administración".',
   fr: 'French — standard French financial terminology.',
   de: 'German — standard German financial terminology.',
 };
@@ -21,7 +20,7 @@ async function translateBatch(items, lang) {
       max_tokens: 6000,
       messages: [{
         role: 'user',
-        content: `Translate to ${LANG_INSTRUCTIONS[lang]}\n\nKeep all company names, proper nouns, financial figures, percentages and deal values exactly as they are. Only translate surrounding text.\n\nInput format: HEADLINE|||SUMMARY###HEADLINE|||SUMMARY###...\nReturn ONLY translated content in exact same format, no explanation.\n\n${input}`,
+        content: `Translate to ${LANG_INSTRUCTIONS[lang]}\n\nKeep all company names, proper nouns, financial figures, percentages and deal values exactly as they are.\n\nInput format: HEADLINE|||SUMMARY###HEADLINE|||SUMMARY###...\nReturn ONLY translated content in exact same format, no explanation.\n\n${input}`,
       }],
     });
     const output = message.content[0]?.text || '';
@@ -37,100 +36,6 @@ async function translateBatch(items, lang) {
   }
 }
 
-async function processDeals() {
-  let deals = null;
-  let source = 'live';
-
-  try {
-    deals = await fetchDealsFromWeb();
-    console.log(`[CRON] Web search returned ${deals?.length || 0} deals`);
-  } catch (e) {
-    console.error('[CRON] Web search failed:', e.message);
-  }
-
-  if (!deals || deals.length < 3) {
-    try {
-      deals = await fetchDealsFromKnowledge();
-      source = 'knowledge';
-    } catch (e) {
-      console.error('[CRON] Knowledge base failed:', e.message);
-    }
-  }
-
-  if (!deals || deals.length === 0) return { saved: 0 };
-
-  console.log(`[CRON] Translating ${deals.length} deals...`);
-  const [transES, transFR, transDE] = await Promise.all([
-    translateBatch(deals, 'es'),
-    translateBatch(deals, 'fr'),
-    translateBatch(deals, 'de'),
-  ]);
-
-  const rows = deals.map((d, i) => {
-    let deal_date = null;
-    if (d.date) {
-      const parsed = new Date(d.date);
-      if (!isNaN(parsed)) deal_date = parsed.toISOString().split('T')[0];
-    }
-    return {
-      headline: d.headline,
-      summary: d.summary,
-      headline_es: transES[i]?.headline || null,
-      summary_es: transES[i]?.summary || null,
-      headline_fr: transFR[i]?.headline || null,
-      summary_fr: transFR[i]?.summary || null,
-      headline_de: transDE[i]?.headline || null,
-      summary_de: transDE[i]?.summary || null,
-      buyer: d.buyer || 'N/A',
-      target: d.target || 'N/A',
-      value: Number(d.value) || 0,
-      currency: d.currency || 'EUR',
-      type: d.type || 'M&A',
-      sector: d.sector || 'General',
-      geography: d.geography || 'Global',
-      status: d.status || 'Signed',
-      date: d.date || new Date().toLocaleDateString('en-GB'),
-      deal_date,
-      advisor: d.advisor || '',
-      source: d.source || '',
-      source_channel: d.source_channel || 'news',
-      category: d.category || 'deal',
-      fetched_at: new Date().toISOString(),
-      data_source: source,
-    };
-  });
-
-  // Insert new deals (ignore duplicates)
-  const { error: insertError } = await supabaseAdmin
-    .from('deals')
-    .upsert(rows, { onConflict: 'headline', ignoreDuplicates: true });
-
-  if (insertError) console.error('[CRON] Insert error:', insertError);
-
-  // Update existing deals with translations (those that have NULL headline_es)
-  for (const row of rows) {
-    const { error: updateError } = await supabaseAdmin
-      .from('deals')
-      .update({
-        headline_es: row.headline_es,
-        summary_es: row.summary_es,
-        headline_fr: row.headline_fr,
-        summary_fr: row.summary_fr,
-        headline_de: row.headline_de,
-        summary_de: row.summary_de,
-        geography: row.geography,
-        category: row.category,
-      })
-      .eq('headline', row.headline)
-      .is('headline_es', null);
-
-    if (updateError) console.error('[CRON] Update error:', updateError.message);
-  }
-
-  console.log(`[CRON] Saved ${rows.length} deals with translations`);
-  return { saved: rows.length, source };
-}
-
 export default async function handler(req, res) {
   const authHeader = req.headers.authorization;
   const isVercelCron = req.headers['x-vercel-cron'] === '1';
@@ -140,11 +45,87 @@ export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   console.log('[CRON] Starting at', new Date().toISOString());
-  res.status(200).json({ ok: true, message: 'Processing started' });
 
   try {
-    await processDeals();
+    let deals = null;
+    let source = 'live';
+
+    try {
+      deals = await fetchDealsFromWeb();
+      console.log(`[CRON] Web search returned ${deals?.length || 0} deals`);
+    } catch (e) {
+      console.error('[CRON] Web search failed:', e.message);
+    }
+
+    if (!deals || deals.length < 3) {
+      try {
+        deals = await fetchDealsFromKnowledge();
+        source = 'knowledge';
+        console.log(`[CRON] Knowledge base returned ${deals?.length || 0} deals`);
+      } catch (e) {
+        console.error('[CRON] Knowledge base failed:', e.message);
+      }
+    }
+
+    if (!deals || deals.length === 0) {
+      return res.status(200).json({ ok: true, saved: 0, message: 'No deals found' });
+    }
+
+    console.log(`[CRON] Translating ${deals.length} deals...`);
+    const [transES, transFR, transDE] = await Promise.all([
+      translateBatch(deals, 'es'),
+      translateBatch(deals, 'fr'),
+      translateBatch(deals, 'de'),
+    ]);
+
+    const rows = deals.map((d, i) => {
+      let deal_date = null;
+      if (d.date) {
+        const parsed = new Date(d.date);
+        if (!isNaN(parsed)) deal_date = parsed.toISOString().split('T')[0];
+      }
+      return {
+        headline: d.headline,
+        summary: d.summary,
+        headline_es: transES[i]?.headline || null,
+        summary_es:  transES[i]?.summary  || null,
+        headline_fr: transFR[i]?.headline || null,
+        summary_fr:  transFR[i]?.summary  || null,
+        headline_de: transDE[i]?.headline || null,
+        summary_de:  transDE[i]?.summary  || null,
+        buyer: d.buyer || 'N/A',
+        target: d.target || 'N/A',
+        value: Number(d.value) || 0,
+        currency: d.currency || 'EUR',
+        type: d.type || 'M&A',
+        sector: d.sector || 'General',
+        geography: d.geography || 'Global',
+        status: d.status || 'Signed',
+        date: d.date || new Date().toLocaleDateString('en-GB'),
+        deal_date,
+        advisor: d.advisor || '',
+        source: d.source || '',
+        source_channel: d.source_channel || 'news',
+        category: d.category || 'deal',
+        fetched_at: new Date().toISOString(),
+        data_source: source,
+      };
+    });
+
+    const { error } = await supabaseAdmin
+      .from('deals')
+      .upsert(rows, { onConflict: 'headline', ignoreDuplicates: true });
+
+    if (error) {
+      console.error('[CRON] Supabase error:', error.message);
+      return res.status(500).json({ error: error.message });
+    }
+
+    console.log(`[CRON] Saved ${rows.length} deals with translations`);
+    return res.status(200).json({ ok: true, saved: rows.length, source });
+
   } catch (err) {
-    console.error('[CRON] Fatal error:', err);
+    console.error('[CRON] Fatal error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 }
