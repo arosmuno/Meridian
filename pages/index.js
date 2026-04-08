@@ -330,11 +330,11 @@ function DealModal({ deal, mode, onClose }) {
   const displaySummary = translatedSummary || deal.summary;
 
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(4,2,6,.92)',zIndex:200,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'28px 16px',backdropFilter:'blur(4px)'}}
+    <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(4,2,6,.92)',zIndex:200,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'28px 16px',backdropFilter:'blur(4px)'}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:C.bgCard,border:`1px solid ${C.border}`,maxWidth:780,width:'100%'}}>
+      <div className="modal-inner" style={{background:C.bgCard,border:`1px solid ${C.border}`,maxWidth:780,width:'100%'}}>
         {/* Header */}
-        <div style={{background:deal.bg,borderBottom:`3px solid ${deal.accent}`,padding:'32px 40px 28px'}}>
+        <div className="modal-header" style={{background:deal.bg,borderBottom:`3px solid ${deal.accent}`,padding:'32px 40px 28px'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
             <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
               <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:800,letterSpacing:'.2em',color:deal.accent}}>{deal.kicker}</span>
@@ -350,7 +350,7 @@ function DealModal({ deal, mode, onClose }) {
         </div>
 
         {/* Metrics */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',borderBottom:`1px solid ${C.border}`}}>
+        <div className="modal-metrics" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',borderBottom:`1px solid ${C.border}`}}>
           {[{l:t.value,v:fmt(deal.value,c),big:true},{l:t.type,v:deal.type},{l:t.sector,v:deal.sector},{l:t.buyer,v:deal.buyer},{l:t.target,v:deal.target},{l:t.date,v:deal.date}].map((m,i)=>(
             <div key={i} style={{padding:'13px 20px',borderRight:i%3!==2?`1px solid ${C.border}`:'none',borderBottom:i<3?`1px solid ${C.border}`:'none'}}>
               <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:C.textMid,marginBottom:4,textTransform:'uppercase'}}>{m.l}</div>
@@ -359,7 +359,7 @@ function DealModal({ deal, mode, onClose }) {
           ))}
         </div>
 
-        <div style={{padding:'26px 40px'}}>
+        <div className="modal-body" style={{padding:'26px 40px'}}>
           {/* Summary */}
           {translatingContent && <p style={{fontFamily:"var(--r)",fontSize:15,color:C.textMid,lineHeight:1.9,marginBottom:20,fontStyle:'italic'}}>Translating…</p>}
           {!translatingContent && <p style={{fontFamily:"var(--r)",fontSize:15,color:C.textBody,lineHeight:1.9,marginBottom:20}}>{displaySummary}</p>}
@@ -500,7 +500,7 @@ export default function Home() {
       <div style={{background:'#08050a',minHeight:'100vh'}}>
         {/* MASTHEAD */}
         <div style={{background:C.bgCard,borderBottom:`3px double ${C.border}`}}>
-          <div style={{borderBottom:`1px solid ${C.border}`,padding:'6px 24px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+          <div className="masthead-top" style={{borderBottom:`1px solid ${C.border}`,padding:'6px 24px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
             <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,letterSpacing:'.08em'}}>
               {new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase()}
             </span>
@@ -531,7 +531,7 @@ export default function Home() {
           </div>
 
           {/* Section nav tabs */}
-          <div style={{display:'flex',borderBottom:`1px solid ${C.border}`,background:C.bg}}>
+          <div className="section-tabs" style={{display:'flex',borderBottom:`1px solid ${C.border}`,background:C.bg}}>
             {[
               {id:'deals', label:t.tabDeals, count:dealItems.length},
               {id:'markets', label:t.tabMarkets, count:marketItems.length},
@@ -571,7 +571,7 @@ export default function Home() {
         </div>
 
         {/* CONTENT */}
-        <div style={{maxWidth:1200,margin:'0 auto',padding:'0 20px'}}>
+        <div className="content-area" style={{maxWidth:1200,margin:'0 auto',padding:'0 20px'}}>
           {hero && <div style={{margin:'0 -20px'}}><HeroDeal deal={hero} onClick={setSelected}/></div>}
 
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
@@ -580,14 +580,14 @@ export default function Home() {
               <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>{section==='deals'?t.latestDeals:t.latestMarkets}</span>
               {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>{t.updated} {lastUpdated.toLocaleTimeString('en-GB')}</span>}
             </div>
-            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            <div className="filter-row" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               {types.map(tp=><button key={tp} className={`pill ${filter===tp?'active':''}`} onClick={()=>setFilter(tp)}>{tp === 'All' ? t.all : tp}</button>)}
             </div>
           </div>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
               <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',minWidth:50}}>{t.region}</span>
-              <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+              <div className="filter-row" style={{display:'flex',gap:5,flexWrap:'wrap'}}>
                 {geos.map(g=><button key={g} className={`pill ${geoFilter===g?'active':''}`} onClick={()=>setGeoFilter(g)}>{g === 'All' ? t.all : g}</button>)}
               </div>
             </div>
@@ -595,15 +595,15 @@ export default function Home() {
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0 16px',borderBottom:`2px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
               <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,letterSpacing:'.1em',textTransform:'uppercase',minWidth:50}}>{t.sectorLabel}</span>
-              <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+              <div className="filter-row" style={{display:'flex',gap:5,flexWrap:'wrap'}}>
                 {sectors.map(sc=><button key={sc} className={`pill ${sectorFilter===sc?'active':''}`} onClick={()=>setSectorFilter(sc)}>{sc === 'All' ? t.all : sc}</button>)}
               </div>
             </div>
           </div>
 
-          <div style={{display:'grid',gridTemplateColumns:section==='deals'?'1fr 280px':'1fr',gap:24,padding:'18px 0 48px',alignItems:'start'}}>
+          <div className="main-grid" style={{display:'grid',gridTemplateColumns:section==='deals'?'1fr 280px':'1fr',gap:24,padding:'18px 0 48px',alignItems:'start'}}>
             <div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div className="cards-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 {rest.map((d,i) => (
                   <DealCard key={d.id} deal={d} onClick={setSelected}/>
                 ))}
@@ -615,7 +615,7 @@ export default function Home() {
 
             {/* Sidebar — only in deals section */}
             {section === 'deals' && (
-            <div style={{display:'flex',flexDirection:'column',gap:18}}>
+            <div className="sidebar" style={{display:'flex',flexDirection:'column',gap:18}}>
               {/* Sidebar ad */}
               <AdSlot slot="1122334455" format="vertical" style={{minHeight:250}}/>
 
