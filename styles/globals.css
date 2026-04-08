@@ -4,25 +4,37 @@
   --d: 'Playfair Display', Georgia, serif;
   --s: 'Libre Franklin', sans-serif;
   --r: 'Libre Baskerville', Georgia, serif;
+  --bg:        #0d0d0f;
+  --bg-card:   #141418;
+  --bg-hover:  #1a1a20;
+  --border:    #2e2e38;
+  --border-hi: #4a4a5a;
+  --text-hi:   #f0ece4;
+  --text-body: #c8c0b4;
+  --text-mid:  #8a8278;
+  --text-lo:   #5a5450;
+  --gold:      #d4a853;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #08050a;
-  color: #c9b99a;
+  background: var(--bg);
+  color: var(--text-body);
   font-family: var(--s);
   -webkit-font-smoothing: antialiased;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
 }
 
 ::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #08050a; }
-::-webkit-scrollbar-thumb { background: #2a2218; border-radius: 2px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 .pill {
   background: transparent;
-  border: 1px solid #1a1610;
-  color: #4a3a25;
+  border: 1px solid var(--border);
+  color: var(--text-mid);
   padding: 4px 12px;
   font-family: var(--s);
   font-size: 10px;
@@ -32,31 +44,140 @@ body {
   letter-spacing: .08em;
   transition: all .15s;
   white-space: nowrap;
+  /* Touch-friendly */
+  -webkit-tap-highlight-color: transparent;
 }
-.pill:hover { border-color: #6b5e45; color: #8b7355; }
-.pill.active { background: #c9b99a; color: #08050a; border-color: #c9b99a; }
+.pill:hover { border-color: var(--gold); color: var(--gold); }
+.pill.active { background: var(--gold); color: #0d0d0f; border-color: var(--gold); }
 
 .card {
-  background: #0a0808;
-  border: 1px solid #1a1610;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.card:hover { background: #110e08; border-color: #3a2e20; }
+.card:hover { background: var(--bg-hover); border-color: var(--border-hi); }
+/* Touch active state for mobile */
+.card:active { background: var(--bg-hover); }
 
 .ticker-wrap { overflow: hidden; white-space: nowrap; }
 .ticker-inner { display: inline-block; animation: tick 70s linear infinite; }
 @keyframes tick { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
-/* Ad slot styling */
 .ad-slot {
-  background: #0d0b07;
-  border: 1px solid #1a1610;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   min-height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .ad-slot ins { display: block; width: 100%; }
+
+/* ── MOBILE (≤768px) ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Filter pills — horizontal scroll instead of wrap */
+  .pill-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .pill-row::-webkit-scrollbar { display: none; }
+
+  /* Cards — single column on mobile */
+  .cards-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Hero deal — tighter padding */
+  .hero-deal {
+    padding: 28px 20px 24px !important;
+  }
+
+  /* Modal — full screen on mobile */
+  .modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+  .modal-inner {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 12px 12px 0 0;
+  }
+  .modal-header {
+    padding: 24px 20px 18px !important;
+  }
+  .modal-body {
+    padding: 20px !important;
+  }
+  .modal-metrics {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Masthead — stack on mobile */
+  .masthead-top {
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 10px 16px !important;
+  }
+
+  /* Content area */
+  .content-area {
+    padding: 0 12px !important;
+  }
+
+  /* Sidebar — hide on mobile */
+  .sidebar {
+    display: none !important;
+  }
+
+  /* Main grid — full width when no sidebar */
+  .main-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Filter rows — scrollable */
+  .filter-row {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+    padding-bottom: 2px;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+
+  /* Section tabs — full width */
+  .section-tabs button {
+    padding: 10px 16px !important;
+    font-size: 11px !important;
+  }
+
+  /* Ticker — smaller on mobile */
+  .ticker-wrap {
+    font-size: 9px;
+  }
+}
+
+/* ── TABLET (769px–1024px) ────────────────────────────────────────────────── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .main-grid {
+    grid-template-columns: 1fr 240px !important;
+  }
+  .content-area {
+    padding: 0 16px !important;
+  }
+}
