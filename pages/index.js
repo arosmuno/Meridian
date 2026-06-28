@@ -415,7 +415,7 @@ export default function Home() {
         return 0;
       };
       const breaking = raw.filter(d => d.status === 'Breaking').sort((a,b) => parseDate(b) - parseDate(a));
-      const rest = raw.filter(d => d.status !== 'Breaking').sort((a,b) => parseDate(b) - parseDate(a));
+      const rest = raw.filter(d => true).sort((a,b) => parseDate(b) - parseDate(a));
 
       setDeals([...breaking, ...rest]);
       setMode(data.source || 'archive');
@@ -471,8 +471,8 @@ export default function Home() {
     return s.includes(sec.toLowerCase());
   };
 
-  const rest = activeItems.slice(1).filter(d =>
-    (filter === 'All' || d.type === filter) &&
+  const rest = (q ? activeItems : activeItems.slice(1)).filter(d =>
+    (filter === 'All' || d.type === filter) && (q==='' || (d.headline+' '+d.buyer+' '+d.target+' '+d.summary).toLowerCase().includes(q.toLowerCase())) &&
     matchGeo(d, geoFilter) &&
     matchSector(d, sectorFilter)
   );
@@ -572,7 +572,7 @@ export default function Home() {
 
         {/* CONTENT */}
         <div className="content-area" style={{maxWidth:1200,margin:'0 auto',padding:'0 20px'}}>
-          {hero && <div style={{margin:'0 -20px'}}><HeroDeal deal={hero} onClick={setSelected}/></div>}
+          {hero && !q && <div style={{margin:'0 -20px'}}><HeroDeal deal={hero} onClick={setSelected}/></div>}
 
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -580,7 +580,7 @@ export default function Home() {
               <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>{section==='deals'?t.latestDeals:t.latestMarkets}</span>
               {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>{t.updated} {lastUpdated.toLocaleTimeString('en-GB')}</span>}
             </div>
-            <div className="filter-row" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+            <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar deals" style={{background:'#141418',border:'1px solid #2e2e38',color:'#f0ece4',padding:'5px 12px',fontFamily:'var(--s)',fontSize:11,minWidth:200,outline:'none',marginRight:8}} /><div className="filter-row" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
               {types.map(tp=><button key={tp} className={`pill ${filter===tp?'active':''}`} onClick={()=>setFilter(tp)}>{tp === 'All' ? t.all : tp}</button>)}
             </div>
           </div>
