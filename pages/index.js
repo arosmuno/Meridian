@@ -510,7 +510,7 @@ export default function Home() {
             </div>
             <div style={{display:'flex',gap:6,alignItems:'center'}}>
               {/* Language selector */}
-              {['en','es','fr','de'].map(l=>(
+              {[].map(l=>(
                 <button key={l} onClick={()=>setLang(l)}
                   style={{background:lang===l?C.gold:'transparent',color:lang===l?C.bg:C.textMid,border:`1px solid ${lang===l?C.gold:C.border}`,padding:'3px 9px',fontFamily:"var(--s)",fontSize:10,fontWeight:700,cursor:'pointer',letterSpacing:'.06em',transition:'all .15s',textTransform:'uppercase'}}>
                   {l}
