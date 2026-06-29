@@ -14,6 +14,22 @@
   --text-mid:  #8a8278;
   --text-lo:   #5a5450;
   --gold:      #d4a853;
+  --pill-active-text: #0d0d0f;
+}
+
+/* ── LIGHT THEME (activado con data-theme="light" en <html>) ────────────────── */
+:root[data-theme="light"] {
+  --bg:        #faf8f3;
+  --bg-card:   #ffffff;
+  --bg-hover:  #efece4;
+  --border:    #ddd7ca;
+  --border-hi: #c3bcab;
+  --text-hi:   #1c1916;
+  --text-body: #403a33;
+  --text-mid:  #736c61;
+  --text-lo:   #a59d8f;
+  --gold:      #9a7d1e;
+  --pill-active-text: #ffffff;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,6 +41,7 @@ body {
   -webkit-font-smoothing: antialiased;
   /* Prevent horizontal scroll on mobile */
   overflow-x: hidden;
+  transition: background .2s ease, color .2s ease;
 }
 
 ::-webkit-scrollbar { width: 5px; }
@@ -48,7 +65,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .pill:hover { border-color: var(--gold); color: var(--gold); }
-.pill.active { background: var(--gold); color: #0d0d0f; border-color: var(--gold); }
+.pill.active { background: var(--gold); color: var(--pill-active-text); border-color: var(--gold); }
 
 .card {
   background: var(--bg-card);
