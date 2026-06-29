@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import '../styles/globals.css';
+import CookieConsent from '../components/CookieConsent';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -11,7 +12,7 @@ export default function App({ Component, pageProps }) {
         <meta name="theme-color" content="#0a0808" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
-        {/* Google AdSense */}
+        {/* Google AdSense (solo cuando hay ID configurado y, en producción real, tras consentimiento) */}
         {process.env.NEXT_PUBLIC_ADSENSE_ID && (
           <script
             async
@@ -21,6 +22,7 @@ export default function App({ Component, pageProps }) {
         )}
       </Head>
       <Component {...pageProps} />
+      <CookieConsent />
     </>
   );
 }
