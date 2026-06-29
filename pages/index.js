@@ -186,7 +186,7 @@ function HeroDeal({ deal, onClick }) {
   const t = T[lang];
   const c = curSym(deal.currency);
   return (
-    <div onClick={()=>onClick(deal)} style={{background:deal.bg,borderBottom:`4px solid ${deal.accent}`,padding:'44px 48px 38px',cursor:'pointer',position:'relative',overflow:'hidden'}}
+    <div className="hero-deal" onClick={()=>onClick(deal)} style={{background:deal.bg,borderBottom:`4px solid ${deal.accent}`,padding:'44px 48px 38px',cursor:'pointer',position:'relative',overflow:'hidden'}}
       onMouseEnter={e=>e.currentTarget.style.opacity='.93'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
       <div style={{position:'absolute',inset:0,background:`radial-gradient(ellipse at 80% 0%,${deal.accent}18 0%,transparent 60%)`,pointerEvents:'none'}}/>
       <div style={{display:'flex',gap:10,alignItems:'center',marginBottom:14,flexWrap:'wrap'}}>
@@ -380,7 +380,7 @@ function DealModal({ deal, mode, onClose }) {
               {!analysis&&!loadingAnalysis&&<button onClick={runAnalysis} style={{background:deal.accent,color:C.bg,border:'none',padding:'6px 14px',fontFamily:"var(--s)",fontSize:11,fontWeight:700,cursor:'pointer',letterSpacing:'.08em'}}>{t.generate}</button>}
             </div>
             {loadingAnalysis && <div style={{fontFamily:"var(--r)",fontSize:13,color:C.textMid,fontStyle:'italic'}}>{t.generating}</div>}
-            {analysis && <p style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.9,margin:0}}>{analysis}</p>}
+            {analysis && <p style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.9,margin:0,whiteSpace:'pre-wrap'}}>{analysis}</p>}
           </div>
         </div>
       </div>
@@ -400,6 +400,7 @@ export default function Home() {
   const [selected, setSelected]   = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [lang, setLang]           = useState('en');
+  const [q, setQ]                 = useState('');
 
   const loadDeals = useCallback(async () => {
     setLoading(true);
@@ -408,16 +409,15 @@ export default function Home() {
       const data = await res.json();
       const raw = (data.deals || []).map(enrich);
 
-      // Sort: Breaking always first, then by real deal date (most recent first)
+      // Sort strictly chronologically — most recent first
       const parseDate = (d) => {
         if (d.deal_date) return new Date(d.deal_date).getTime();
         if (d.date) { const p = new Date(d.date); return isNaN(p) ? 0 : p.getTime(); }
         return 0;
       };
-      const breaking = raw.filter(d => d.status === 'Breaking').sort((a,b) => parseDate(b) - parseDate(a));
-      const rest = raw.filter(d => true).sort((a,b) => parseDate(b) - parseDate(a));
+      const sorted = [...raw].sort((a,b) => parseDate(b) - parseDate(a));
 
-      setDeals([...breaking, ...rest]);
+      setDeals(sorted);
       setMode(data.source || 'archive');
       setLastUpdated(data.last_updated ? new Date(data.last_updated) : new Date());
     } catch {
@@ -471,8 +471,15 @@ export default function Home() {
     return s.includes(sec.toLowerCase());
   };
 
+  const matchSearch = (deal) => {
+    if (!q) return true;
+    const hay = `${deal.headline||''} ${deal.buyer||''} ${deal.target||''} ${deal.summary||''} ${deal.sector||''}`.toLowerCase();
+    return hay.includes(q.toLowerCase());
+  };
+
   const rest = (q ? activeItems : activeItems.slice(1)).filter(d =>
-    (filter === 'All' || d.type === filter) && (q==='' || (d.headline+' '+d.buyer+' '+d.target+' '+d.summary).toLowerCase().includes(q.toLowerCase())) &&
+    (filter === 'All' || d.type === filter) &&
+    matchSearch(d) &&
     matchGeo(d, geoFilter) &&
     matchSector(d, sectorFilter)
   );
@@ -509,14 +516,6 @@ export default function Home() {
               <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid}}>{deals.length} deals · {fmt(totalVol)}</span>
             </div>
             <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              {/* Language selector */}
-              {[].map(l=>(
-                <button key={l} onClick={()=>setLang(l)}
-                  style={{background:lang===l?C.gold:'transparent',color:lang===l?C.bg:C.textMid,border:`1px solid ${lang===l?C.gold:C.border}`,padding:'3px 9px',fontFamily:"var(--s)",fontSize:10,fontWeight:700,cursor:'pointer',letterSpacing:'.06em',transition:'all .15s',textTransform:'uppercase'}}>
-                  {l}
-                </button>
-              ))}
-              <div style={{width:1,height:14,background:C.border,margin:'0 4px'}}/>
               <button onClick={loadDeals} style={{background:'none',border:`1px solid ${C.border}`,color:C.textMid,padding:'3px 10px',fontFamily:"var(--s)",fontSize:10,cursor:'pointer',letterSpacing:'.06em',transition:'all .15s'}}
                 onMouseEnter={e=>{e.target.style.color=C.gold;e.target.style.borderColor=C.gold}} onMouseLeave={e=>{e.target.style.color=C.textMid;e.target.style.borderColor=C.border}}>
                 {t.refresh}
@@ -580,8 +579,12 @@ export default function Home() {
               <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:C.gold,textTransform:'uppercase'}}>{section==='deals'?t.latestDeals:t.latestMarkets}</span>
               {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>{t.updated} {lastUpdated.toLocaleTimeString('en-GB')}</span>}
             </div>
-            <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar deals" style={{background:'#141418',border:'1px solid #2e2e38',color:'#f0ece4',padding:'5px 12px',fontFamily:'var(--s)',fontSize:11,minWidth:200,outline:'none',marginRight:8}} /><div className="filter-row" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-              {types.map(tp=><button key={tp} className={`pill ${filter===tp?'active':''}`} onClick={()=>setFilter(tp)}>{tp === 'All' ? t.all : tp}</button>)}
+            <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar deals…"
+                style={{background:C.bg,border:`1px solid ${C.border}`,color:C.textHi,padding:'5px 12px',fontFamily:"var(--s)",fontSize:11,minWidth:200,outline:'none'}} />
+              <div className="filter-row" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                {types.map(tp=><button key={tp} className={`pill ${filter===tp?'active':''}`} onClick={()=>setFilter(tp)}>{tp === 'All' ? t.all : tp}</button>)}
+              </div>
             </div>
           </div>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:8}}>
