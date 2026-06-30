@@ -181,6 +181,9 @@ function DealModal({ deal, mode, onClose }) {
     setLoadingAnalysis(false);
   };
 
+  // Auto-generar el análisis al abrir un deal (sin botón)
+  useEffect(() => { runAnalysis(); /* eslint-disable-next-line */ }, [deal.headline]);
+
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(4,2,6,.92)',zIndex:200,display:'flex',alignItems:'flex-start',justifyContent:'center',overflowY:'auto',padding:'28px 16px',backdropFilter:'blur(4px)'}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
@@ -223,9 +226,8 @@ function DealModal({ deal, mode, onClose }) {
 
           {/* AI Analysis */}
           <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:'20px 24px'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:analysis||loadingAnalysis?14:0}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
               <div style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:deal.accent}}>✦ MERIDIAN ANALYSIS</div>
-              {!analysis&&!loadingAnalysis&&<button onClick={runAnalysis} style={{background:deal.accent,color:'#fff',border:'none',padding:'6px 14px',fontFamily:"var(--s)",fontSize:11,fontWeight:700,cursor:'pointer',letterSpacing:'.08em'}}>GENERATE</button>}
             </div>
             {loadingAnalysis && <div style={{fontFamily:"var(--r)",fontSize:13,color:C.textMid,fontStyle:'italic'}}>Drafting editorial analysis…</div>}
             {analysis && <p style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.9,margin:0,whiteSpace:'pre-wrap'}}>{analysis}</p>}
@@ -437,7 +439,7 @@ export default function Home() {
 
         {/* CONTENT */}
         <div className="content-area" style={{maxWidth:1200,margin:'0 auto',padding:'0 20px'}}>
-          {hero && !q && <div style={{margin:'0 -20px'}}><HeroDeal deal={hero} onClick={setSelected}/></div>}
+          {hero && !q && <div className="hero-wrap" style={{margin:'0 -20px'}}><HeroDeal deal={hero} onClick={setSelected}/></div>}
 
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -473,9 +475,18 @@ export default function Home() {
           <div className="main-grid" style={{display:'grid',gridTemplateColumns:section==='deals'?'1fr 280px':'1fr',gap:24,padding:'18px 0 48px',alignItems:'start'}}>
             <div>
               <div className="cards-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                {rest.map((d) => (
-                  <DealCard key={d.id} deal={d} onClick={setSelected}/>
-                ))}
+                {rest.flatMap((d, i) => {
+                  const out = [<DealCard key={d.id} deal={d} onClick={setSelected}/>];
+                  // Anuncio in-feed cada 6 tarjetas (ancho completo)
+                  if ((i + 1) % 6 === 0 && i < rest.length - 1) {
+                    out.push(
+                      <div key={`adfeed-${i}`} style={{gridColumn:'1 / -1'}}>
+                        <AdSlot slot="2233445566" format="horizontal" />
+                      </div>
+                    );
+                  }
+                  return out;
+                })}
                 {rest.length === 0 && (
                   <div style={{gridColumn:'1/-1',textAlign:'center',padding:'60px 0',fontFamily:"var(--r)",color:C.textMid,fontStyle:'italic'}}>No deals match this filter.</div>
                 )}
@@ -545,6 +556,8 @@ export default function Home() {
             </div>
             )}
           </div>
+
+          <AdSlot slot="3344556677" format="horizontal" style={{maxWidth:728,margin:'8px auto 36px'}} />
         </div>
         <div style={{borderTop:`3px double ${C.border}`,background:C.bgCard,padding:'16px 24px',textAlign:'center'}}>
           <div style={{fontFamily:"var(--d)",fontSize:18,color:C.border,letterSpacing:'.15em'}}>MERIDIAN</div>
