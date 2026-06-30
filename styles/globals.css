@@ -174,14 +174,11 @@ body {
   }
 
   /* Filter rows — scrollable */
+  /* En movil: los filtros bajan a varias lineas (todos visibles y pulsables) */
   .filter-row {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    flex-wrap: nowrap !important;
-    scrollbar-width: none !important;
-    padding-bottom: 2px;
+    flex-wrap: wrap !important;
+    row-gap: 6px;
   }
-  .filter-row::-webkit-scrollbar { display: none; }
 
   /* Section tabs — full width */
   .section-tabs button {
