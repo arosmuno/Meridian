@@ -1,5 +1,8 @@
 // pages/api/analysis.js
-// Análisis editorial vía Google Gemini (free tier). Sin Anthropic.
+// Análisis editorial vía Google Gemini (free tier), CON CACHÉ en Supabase.
+// Se genera UNA vez por deal (clave: headline) y se reutiliza → evita rate limits.
+
+import { supabaseAdmin } from '../../lib/supabase';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -7,8 +10,23 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { deal, lang = 'en', langName = 'English' } = req.body || {};
-  if (!deal) return res.status(400).json({ error: 'No deal provided' });
+  const { deal } = req.body || {};
+  if (!deal || !deal.headline) return res.status(400).json({ error: 'No deal provided' });
+
+  // 1) ¿Ya está cacheado en la base de datos?
+  try {
+    const { data: existing } = await supabaseAdmin
+      .from('deals')
+      .select('analysis')
+      .eq('headline', deal.headline)
+      .limit(1)
+      .maybeSingle();
+    if (existing && existing.analysis) {
+      return res.status(200).json({ analysis: existing.analysis, cached: true });
+    }
+  } catch (e) {
+    // Si la columna no existe aún o falla la lectura, seguimos a generar (sin cachear).
+  }
 
   const key = process.env.GEMINI_API_KEY || process.env.Gemini_Api_key;
   if (!key) return res.status(500).json({ error: 'GEMINI_API_KEY missing' });
@@ -18,11 +36,8 @@ export default async function handler(req, res) {
     const val = Number(deal.value) >= 1000
       ? `${c}${(Number(deal.value) / 1000).toFixed(1)}Bn`
       : `${c}${deal.value}M`;
-    const langInstruction = lang !== 'en'
-      ? `Write the analysis in ${langName}. Keep all financial terms, company names, numbers and deal values in their original form.`
-      : '';
 
-    const prompt = `You are a sharp M&A analyst writing editorial commentary for MERIDIAN, a premium capital markets publication. Write a substantial THREE-paragraph analysis (roughly 200-280 words, no headers, flowing prose) of this deal. Paragraph 1: the strategic rationale and what's really driving it. Paragraph 2: the financial and structural read (valuation, leverage, premium, financing). Paragraph 3: what it signals about broader market dynamics. Be direct and use precise financial language. ${langInstruction}
+    const prompt = `You are a sharp M&A analyst writing editorial commentary for MERIDIAN, a premium capital markets publication. Write a substantial THREE-paragraph analysis (roughly 200-280 words, no headers, flowing prose) of this deal. Paragraph 1: the strategic rationale and what's really driving it. Paragraph 2: the financial and structural read (valuation, leverage, premium, financing). Paragraph 3: what it signals about broader market dynamics. Be direct and use precise financial language.
 
 Deal: ${deal.headline}
 Buyer: ${deal.buyer} | Target: ${deal.target} | Value: ${val} | Type: ${deal.type} | Sector: ${deal.sector}
@@ -38,8 +53,6 @@ Start directly with the analysis, no preamble:`;
         generationConfig: {
           temperature: 0.6,
           maxOutputTokens: 1600,
-          // Flash activa "thinking" por defecto y se come el presupuesto → respuesta corta.
-          // Lo desactivamos para que todos los tokens vayan a la respuesta visible.
           thinkingConfig: { thinkingBudget: 0 },
         },
       }),
@@ -50,6 +63,12 @@ Start directly with the analysis, no preamble:`;
     }
     const parts = data?.candidates?.[0]?.content?.parts || [];
     const analysis = parts.map((p) => p.text).filter(Boolean).join('\n').trim() || 'Analysis unavailable.';
+
+    // 2) Guardar en caché (no bloqueante si falla)
+    try {
+      await supabaseAdmin.from('deals').update({ analysis }).eq('headline', deal.headline);
+    } catch (e) { /* ignora si la columna no existe todavía */ }
+
     return res.status(200).json({ analysis });
   } catch (err) {
     return res.status(500).json({ error: err.message });
