@@ -34,12 +34,14 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Prevent any horizontal scroll/overflow at the page level */
+html, body { overflow-x: hidden; max-width: 100%; }
+
 body {
   background: var(--bg);
   color: var(--text-body);
   font-family: var(--s);
   -webkit-font-smoothing: antialiased;
-  /* Prevent horizontal scroll on mobile */
   overflow-x: hidden;
   transition: background .2s ease, color .2s ease;
 }
@@ -117,8 +119,15 @@ body {
 
   /* Hero deal — tighter padding */
   .hero-deal {
-    padding: 28px 20px 24px !important;
+    padding: 28px 16px 24px !important;
   }
+  /* Hero wrapper bleed must match mobile content padding (12px) to avoid overflow */
+  .hero-wrap {
+    margin-left: -12px !important;
+    margin-right: -12px !important;
+  }
+  /* In-feed full-width ad in single-column grid */
+  .cards-grid > div[style*="1 / -1"] { grid-column: 1 / -1 !important; }
 
   /* Modal — full screen on mobile */
   .modal-overlay {
