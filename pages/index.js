@@ -175,9 +175,8 @@ function DealModal({ deal, mode, onClose }) {
       });
       const data = await res.json();
       if (data.analysis) setAnalysis(data.analysis);
-      else if (data.error) setAnalysis(`Error: ${data.error}`);
-      else setAnalysis('Unavailable.');
-    } catch (e) { setAnalysis(`Error: ${e.message}`); }
+      else setAnalysis('El análisis no está disponible en este momento.');
+    } catch (e) { setAnalysis('El análisis no está disponible en este momento.'); }
     setLoadingAnalysis(false);
   };
 
