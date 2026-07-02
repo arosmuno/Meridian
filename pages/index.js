@@ -32,7 +32,9 @@ const KICKER_MAP = {
 const getStyle = t => TYPE_STYLE[t] || TYPE_STYLE['Default'];
 const curSym = c => c === 'USD' ? '$' : c === 'GBP' ? '£' : '€';
 const fmt = (n, c='€') => { const v=Number(n); if(!v) return 'N/A'; return v>=1000?`${c}${(v/1000).toFixed(1)}Bn`:`${c}${v}M`; };
-const enrich = (d, i) => ({ ...d, id:i+1, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
+// Tipos de mercado/macro: no son operaciones, nunca muestran importe de deal.
+const MARKET_TYPES = ['Macro','Earnings','Markets'];
+const enrich = (d, i) => ({ ...d, id:i+1, value: MARKET_TYPES.includes(d.type) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
 
 // ── THEMES ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -299,8 +301,6 @@ export default function Home() {
     const interval = setInterval(loadDeals, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [loadDeals]);
-
-  const MARKET_TYPES = ['Macro','Earnings','Markets'];
 
   const dealItems  = deals.filter(d => !MARKET_TYPES.includes(d.type));
   const marketItems = deals.filter(d => MARKET_TYPES.includes(d.type));
