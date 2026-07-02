@@ -32,9 +32,22 @@ const KICKER_MAP = {
 const getStyle = t => TYPE_STYLE[t] || TYPE_STYLE['Default'];
 const curSym = c => c === 'USD' ? '$' : c === 'GBP' ? '£' : '€';
 const fmt = (n, c='€') => { const v=Number(n); if(!v) return 'N/A'; return v>=1000?`${c}${(v/1000).toFixed(1)}Bn`:`${c}${v}M`; };
-// Tipos de mercado/macro: no son operaciones, nunca muestran importe de deal.
+// Tipos de mercado/macro: no son operaciones.
 const MARKET_TYPES = ['Macro','Earnings','Markets'];
-const enrich = (d, i) => ({ ...d, id:i+1, value: MARKET_TYPES.includes(d.type) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
+const isNA = (s) => !s || /^n\/?a$/i.test(String(s).trim());
+// Un item NO es una operacion real (es mercado/sector) si: es tipo macro/mercado;
+// o le falta comprador Y objetivo; o le falta una contraparte y suena a mercado/sector/indice.
+const isMarketLike = (d) => {
+  if (MARKET_TYPES.includes(d.type) || d.category === 'macro') return true;
+  if (isNA(d.buyer) && isNA(d.target)) return true;
+  if (isNA(d.buyer) || isNA(d.target)) {
+    const bt = `${d.buyer||''} ${d.target||''}`.toLowerCase();
+    return /market|sector|industry|\bindex\b|total addressable|overall|economy/.test(bt);
+  }
+  return false;
+};
+// Los items de mercado nunca muestran importe de operacion.
+const enrich = (d, i) => ({ ...d, id:i+1, value: isMarketLike(d) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
 
 // ── THEMES ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -302,8 +315,8 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [loadDeals]);
 
-  const dealItems  = deals.filter(d => !MARKET_TYPES.includes(d.type));
-  const marketItems = deals.filter(d => MARKET_TYPES.includes(d.type));
+  const dealItems  = deals.filter(d => !isMarketLike(d));
+  const marketItems = deals.filter(d => isMarketLike(d));
   const activeItems = section === 'deals' ? dealItems : marketItems;
 
   const types = ['All', ...new Set(activeItems.map(d=>d.type).filter(Boolean))];
