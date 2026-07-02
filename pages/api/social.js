@@ -3,7 +3,7 @@
 // Se usa para Instagram y como og:image (preview de enlace en X/LinkedIn/WhatsApp).
 import { ImageResponse } from 'next/og';
 
-export const config = { runtime: 'nodejs', maxDuration: 30 };
+export const config = { runtime: 'edge' };
 
 const ACCENT = {
   'M&A':'#e65256','LBO':'#a78bfa','LevFin':'#4a9eff','Project Finance':'#22c55e',
