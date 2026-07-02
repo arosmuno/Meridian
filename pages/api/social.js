@@ -65,7 +65,10 @@ export default async function handler(req) {
 
   const dl = searchParams.get('dl');
   const opts = { width: 1080, height: 1350, fonts: fonts.length ? fonts : undefined };
-  if (dl) opts.headers = { 'Content-Disposition': 'attachment; filename="meridian_post.png"' };
+  if (dl) {
+    const fn = 'meridian_' + String(dl).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) + '.png';
+    opts.headers = { 'Content-Disposition': 'attachment; filename="' + fn + '"' };
+  }
 
   return new ImageResponse(
     (
