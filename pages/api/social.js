@@ -63,6 +63,10 @@ export default async function handler(req) {
   const fonts = [lora, latoBold, latoReg].filter(Boolean);
   const headFam = lora ? 'Lora' : 'Lato';
 
+  const dl = searchParams.get('dl');
+  const opts = { width: 1080, height: 1350, fonts: fonts.length ? fonts : undefined };
+  if (dl) opts.headers = { 'Content-Disposition': 'attachment; filename="meridian_post.png"' };
+
   return new ImageResponse(
     (
       <div style={{ width: 1080, height: 1350, display: 'flex', position: 'relative', backgroundColor: '#0b0b0d' }}>
@@ -94,6 +98,6 @@ export default async function handler(req) {
         </div>
       </div>
     ),
-    { width: 1080, height: 1350, fonts: fonts.length ? fonts : undefined }
+    opts
   );
 }
