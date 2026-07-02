@@ -47,7 +47,16 @@ const isMarketLike = (d) => {
   return false;
 };
 // Los items de mercado nunca muestran importe de operacion.
-const enrich = (d, i) => ({ ...d, id:i+1, value: isMarketLike(d) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
+// Limpia coletillas de LinkedIn / Google Alerts en titulares (legacy).
+const cleanHeadline = (h) => {
+  let s = (h || '').replace(/https?:\/\/\S+/gi, ' ').replace(/\blnkd\.in\S*/gi, ' ').replace(/&middot;/gi, ' ')
+    .replace(/\bPublicaci[oó]n de\b[\s\S]*$/i, ' ').replace(/\bVer el perfil de\b[\s\S]*$/i, ' ').replace(/on LinkedIn:\s*/i, '');
+  const c = s.search(/\s\|\s.*$/); if (c > 25) s = s.slice(0, c);
+  return s.replace(/\s{2,}/g, ' ').replace(/[\s|·\-–]+$/, '').trim();
+};
+// El diario es SIEMPRE en ingles: detecta titulares en espanol para no mostrarlos.
+const looksSpanish = (h) => /[ñ¿¡]/.test(h || '') || /\b(millones|adquiere|compra|deuda|cr[eé]dito|pr[eé]stamo|fusi[oó]n|ampliaci[oó]n|accionista|espa[nñ]ola?|empresa|negocio|bolsa|beneficio|salida a bolsa|puja|retrasa|colocar)\b/i.test(h || '');
+const enrich = (d, i) => ({ ...d, id:i+1, headline: cleanHeadline(d.headline), value: isMarketLike(d) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
 
 // ── THEMES ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -299,7 +308,7 @@ export default function Home() {
       };
       const sorted = [...raw].sort((a,b) => parseDate(b) - parseDate(a));
 
-      setDeals(sorted);
+      setDeals(sorted.filter((d) => !looksSpanish(d.headline)));
       setMode(data.source || 'archive');
       setLastUpdated(data.last_updated ? new Date(data.last_updated) : new Date());
     } catch {
