@@ -5,6 +5,7 @@ import Head from 'next/head';
 const SITE = 'https://www.meridiancapmarkets.com';
 const GEMINI_MODEL = 'gemini-2.5-flash-lite';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+let CACHE = { day: '', text: '', label: '', count: 0 };
 
 function Footer() {
   return (
@@ -20,8 +21,12 @@ function Footer() {
   );
 }
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
   let wrap = '', dateLabel = '', count = 0;
+  const today = new Date().toISOString().slice(0, 10);
+  if (CACHE.day === today && CACHE.text) {
+    return { props: { wrap: CACHE.text, dateLabel: CACHE.label, count: CACHE.count } };
+  }
   try {
     dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const r = await fetch(SITE + '/api/deals?limit=40');
@@ -41,7 +46,8 @@ export async function getStaticProps() {
       if (gr.ok) { const parts = gd && gd.candidates && gd.candidates[0] && gd.candidates[0].content && gd.candidates[0].content.parts || []; wrap = parts.map((p) => p.text).filter(Boolean).join('\n').trim(); }
     }
   } catch (e) {}
-  return { props: { wrap, dateLabel, count }, revalidate: 600 };
+  if (wrap) CACHE = { day: today, text: wrap, label: dateLabel, count };
+  return { props: { wrap, dateLabel, count } };
 }
 
 export default function Wrap({ wrap, dateLabel, count }) {
