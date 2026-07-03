@@ -34,6 +34,12 @@ const nextConfig = {
       { source: '/:path*', headers: securityHeaders },
     ];
   },
+  async rewrites() {
+    return [
+      // Pretty per-deal share URLs: /deal/<slug>-<id> served by /deal?slug=...
+      { source: '/deal/:slug', destination: '/deal?slug=:slug' },
+    ];
+  },
 };
 
 module.exports = nextConfig;
