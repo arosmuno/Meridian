@@ -1,24 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Libre+Franklin:wght@400;500;600;700;800&family=Libre+Baskerville:ital,wght@0,400;1,400&display=swap');
 
+/* ── LIGHT is the DEFAULT theme ─────────────────────────────────────────────── */
 :root {
   --d: 'Playfair Display', Georgia, serif;
   --s: 'Libre Franklin', sans-serif;
   --r: 'Libre Baskerville', Georgia, serif;
-  --bg:        #0d0d0f;
-  --bg-card:   #141418;
-  --bg-hover:  #1a1a20;
-  --border:    #2e2e38;
-  --border-hi: #4a4a5a;
-  --text-hi:   #f0ece4;
-  --text-body: #c8c0b4;
-  --text-mid:  #8a8278;
-  --text-lo:   #5a5450;
-  --gold:      #d4a853;
-  --pill-active-text: #0d0d0f;
-}
-
-/* ── LIGHT THEME (activado con data-theme="light" en <html>) ────────────────── */
-:root[data-theme="light"] {
   --bg:        #faf8f3;
   --bg-card:   #ffffff;
   --bg-hover:  #efece4;
@@ -30,6 +16,21 @@
   --text-lo:   #a59d8f;
   --gold:      #9a7d1e;
   --pill-active-text: #ffffff;
+}
+
+/* ── DARK THEME (opt-in with data-theme="dark" on <html>) ───────────────────── */
+:root[data-theme="dark"] {
+  --bg:        #0d0d0f;
+  --bg-card:   #141418;
+  --bg-hover:  #1a1a20;
+  --border:    #2e2e38;
+  --border-hi: #4a4a5a;
+  --text-hi:   #f0ece4;
+  --text-body: #c8c0b4;
+  --text-mid:  #8a8278;
+  --text-lo:   #5a5450;
+  --gold:      #d4a853;
+  --pill-active-text: #0d0d0f;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
