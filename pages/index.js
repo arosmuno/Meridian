@@ -431,6 +431,7 @@ export default function Home() {
                 {tab.label}
               </button>
             ))}
+            <a href="/learn" style={{padding:'12px 28px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center',marginLeft:'auto'}}>LEARN &#8250;</a>
           </div>
 
           {/* Ad banner */}
