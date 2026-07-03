@@ -273,21 +273,21 @@ export default function Home() {
   const [selected, setSelected]   = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [q, setQ]                 = useState('');
-  const [theme, setTheme]         = useState('dark');
+  const [theme, setTheme]         = useState('light');
 
   const C = THEMES[theme] || THEMES.dark;
 
   // Load saved theme on mount (avoids SSR hydration mismatch by defaulting dark)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('meridian_theme');
+      const saved = localStorage.getItem('meridian_theme_v2');
       if (saved === 'light' || saved === 'dark') setTheme(saved);
     } catch {}
   }, []);
 
   // Persist theme + expose it to CSS (globals.css uses [data-theme="light"])
   useEffect(() => {
-    try { localStorage.setItem('meridian_theme', theme); } catch {}
+    try { localStorage.setItem('meridian_theme_v2', theme); } catch {}
     if (typeof document !== 'undefined') document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 

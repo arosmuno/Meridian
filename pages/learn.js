@@ -30,15 +30,15 @@ function ResourceCard({ r, accent }) {
 }
 
 export default function Learn() {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
   const [q, setQ] = useState('');
   const [group, setGroup] = useState('All');
 
   useEffect(() => {
-    try { const s = localStorage.getItem('meridian_theme'); if (s === 'light' || s === 'dark') setTheme(s); } catch (e) {}
+    try { const s = localStorage.getItem('meridian_theme_v2'); if (s === 'light' || s === 'dark') setTheme(s); } catch (e) {}
   }, []);
   useEffect(() => {
-    try { localStorage.setItem('meridian_theme', theme); } catch (e) {}
+    try { localStorage.setItem('meridian_theme_v2', theme); } catch (e) {}
     if (typeof document !== 'undefined') document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
