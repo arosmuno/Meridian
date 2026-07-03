@@ -477,6 +477,23 @@ export default function Home({ initialDeals = [] }) {
 
         {/* CONTENT */}
         <div className="content-area" style={{maxWidth:1200,margin:'0 auto',padding:'0 20px'}}>
+          {!q && dealItems.length > 0 && (
+            <div className="trending-strip" style={{margin:'0 -20px',borderBottom:`1px solid ${C.border}`,background:C.bgCard,display:'flex',alignItems:'stretch',overflow:'hidden'}}>
+              <div style={{background:'#e63946',padding:'0 15px',display:'flex',alignItems:'center',flexShrink:0}}>
+                <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:800,letterSpacing:'.12em',color:'#fff',whiteSpace:'nowrap'}}>&#9733; IN THE NEWS</span>
+              </div>
+              <div className="trending-scroll" style={{display:'flex',overflowX:'auto',flex:1}}>
+                {[...dealItems].sort((a,b)=>Number(b.value||0)-Number(a.value||0)).slice(0,5).map((d)=>(
+                  <div key={d.id} onClick={()=>setSelected(d)} style={{padding:'10px 18px',borderRight:`1px solid ${C.border}`,cursor:'pointer',minWidth:230,maxWidth:300,flexShrink:0,display:'flex',flexDirection:'column',gap:3}}
+                    onMouseEnter={e=>e.currentTarget.style.background=C.bgHover} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                    <span style={{fontFamily:"var(--s)",fontSize:8,fontWeight:700,letterSpacing:'.12em',color:d.accent,textTransform:'uppercase'}}>{d.kicker}</span>
+                    <span style={{fontFamily:"var(--d)",fontSize:13,fontWeight:700,color:C.textHi,lineHeight:1.25,display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{d.headline}</span>
+                    {d.value>0 && <span style={{fontFamily:"var(--d)",fontSize:12,fontWeight:700,color:d.accent}}>{fmt(d.value,curSym(d.currency))}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {hero && !q && <div className="hero-wrap" style={{margin:'0 -20px'}}><HeroDeal deal={hero} onClick={setSelected}/></div>}
 
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 0 10px',borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',gap:10}}>
