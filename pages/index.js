@@ -58,6 +58,19 @@ const cleanHeadline = (h) => {
 const looksSpanish = (h) => /[ñ¿¡]/.test(h || '') || /\b(millones|adquiere|compra|deuda|cr[eé]dito|pr[eé]stamo|fusi[oó]n|ampliaci[oó]n|accionista|espa[nñ]ola?|empresa|negocio|bolsa|beneficio|salida a bolsa|puja|retrasa|colocar)\b/i.test(h || '');
 const enrich = (d, i) => ({ ...d, id:i+1, headline: cleanHeadline(d.headline), value: isMarketLike(d) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
 
+// Procesa deals crudos de la API a la forma que renderiza la home (enrich + orden + filtro).
+// Se usa tanto para el estado inicial (SSR: contenido visible para Google/AdSense) como en loadDeals.
+function processDeals(arr) {
+  const raw = (arr || []).map(enrich);
+  const parseDate = (d) => {
+    if (d.deal_date) return new Date(d.deal_date).getTime();
+    if (d.date) { const p = new Date(d.date); return isNaN(p) ? 0 : p.getTime(); }
+    return 0;
+  };
+  const sorted = [...raw].sort((a, b) => parseDate(b) - parseDate(a));
+  return sorted.filter((d) => !looksSpanish(d.headline));
+}
+
 // ── THEMES ────────────────────────────────────────────────────────────────────
 const THEMES = {
   dark: {
@@ -262,8 +275,8 @@ function DealModal({ deal, mode, onClose }) {
 }
 
 // ── PAGE ──────────────────────────────────────────────────────────────────────
-export default function Home() {
-  const [deals, setDeals]         = useState([]);
+export default function Home({ initialDeals = [] }) {
+  const [deals, setDeals]         = useState(() => processDeals(initialDeals));
   const [mode, setMode]           = useState('archive');
   const [loading, setLoading]     = useState(true);
   const [section, setSection]     = useState('deals'); // 'deals' | 'markets'
@@ -372,7 +385,7 @@ export default function Home() {
   );
   const totalVol = dealItems.reduce((s,d)=>s+Number(d.value||0),0);
 
-  if (loading) {
+  if (loading && !deals.length) {
     return (
       <div style={{minHeight:'100vh',background:C.page,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24}}>
         <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.3em',color:C.textMid}}>THE CAPITAL MARKETS INTELLIGENCE REVIEW</div>
@@ -587,7 +600,7 @@ export default function Home() {
             M&A · LEVFIN · PROJECT FINANCE · RESTRUCTURING · ECM
           </div>
           <div style={{marginTop:8}}>
-            <a href="/privacidad" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Política de privacidad</a>
+            <a href="/about" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>About</a><a href="/contact" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Contact</a><a href="/privacidad" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Política de privacidad</a>
           </div>
         </div>
 
@@ -596,4 +609,15 @@ export default function Home() {
       </>
     </ThemeContext.Provider>
   );
+}
+
+// Server-render the latest deals into the initial HTML so Google / AdSense see real
+// content (not just the loading shell) on the page that carries ads.
+export async function getServerSideProps() {
+  let initialDeals = [];
+  try {
+    const r = await fetch('https://www.meridiancapmarkets.com/api/deals?limit=60');
+    if (r.ok) { const j = await r.json(); initialDeals = j.deals || []; }
+  } catch (e) {}
+  return { props: { initialDeals } };
 }
