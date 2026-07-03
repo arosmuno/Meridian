@@ -1,6 +1,9 @@
-// pages/deal.js -- per-deal share page (/deal?id=123).
-// Server-rendered og/twitter tags so X, LinkedIn, WhatsApp show the FT-style
-// /api/social card as the link preview. No image upload needed anywhere.
+// pages/deal.js -- per-deal share page.
+// Pretty URL: /deal/<slug>-<id> (via next.config rewrite -> /deal?slug=...).
+// Back-compat: /deal?id=<id> still works. Server-renders og/twitter tags so X /
+// LinkedIn / WhatsApp show the FT-style /api/social card. The Meridian analysis
+// loads and shows INLINE automatically -- no click needed.
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 
 const SITE = 'https://www.meridiancapmarkets.com';
@@ -15,9 +18,17 @@ function fmtValue(v, sym) {
   if (!n) return '';
   return n >= 1000 ? sym + (n / 1000).toFixed(1) + 'Bn' : sym + n + 'M';
 }
+function slugify(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+}
 
 export async function getServerSideProps(ctx) {
-  const id = String((ctx.query && ctx.query.id) || '');
+  const q = ctx.query || {};
+  let id = String(q.id || '');
+  if (!id && q.slug) {
+    const m = String(q.slug).match(/(\d+)$/);
+    id = m ? m[1] : '';
+  }
   let deal = null;
   if (id) {
     try {
@@ -33,6 +44,25 @@ export async function getServerSideProps(ctx) {
 }
 
 export default function DealPage({ deal, id }) {
+  const [analysis, setAnalysis] = useState((deal && deal.analysis) || '');
+  const [loadingA, setLoadingA] = useState(false);
+
+  useEffect(() => {
+    if (!deal || analysis) return;
+    let alive = true;
+    setLoadingA(true);
+    fetch('/api/analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deal }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (alive && d && d.analysis) setAnalysis(d.analysis); })
+      .catch(() => {})
+      .finally(() => { if (alive) setLoadingA(false); });
+    return () => { alive = false; };
+  }, [deal, analysis]);
+
   if (!deal) {
     return (
       <>
@@ -57,7 +87,8 @@ export default function DealPage({ deal, id }) {
   const status = (deal.status || '').toUpperCase();
   const date = deal.date || '';
   const value = fmtValue(deal.value, curSym(deal.currency));
-  const url = SITE + '/deal?id=' + encodeURIComponent(id);
+  const slug = slugify(headline);
+  const url = SITE + '/deal/' + (slug ? slug + '-' : '') + id;
   const img = SITE + '/api/social?headline=' + encodeURIComponent(headline) +
     '&type=' + encodeURIComponent(type) + '&sector=' + encodeURIComponent(sector) +
     '&status=' + encodeURIComponent(status) + '&date=' + encodeURIComponent(date);
@@ -118,7 +149,19 @@ export default function DealPage({ deal, id }) {
             ) : null}
           </div>
 
-          <p style={{ fontFamily: 'var(--r)', fontSize: 18, color: 'var(--text-body)', lineHeight: 1.8, margin: '0 0 28px' }}>{deal.summary}</p>
+          <p style={{ fontFamily: 'var(--r)', fontSize: 18, color: 'var(--text-body)', lineHeight: 1.8, margin: '0 0 26px' }}>{deal.summary}</p>
+
+          {(analysis || loadingA) ? (
+            <div style={{ marginBottom: 30, paddingTop: 22, borderTop: '1px solid var(--border)' }}>
+              <div style={{ fontFamily: 'var(--s)', fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: accent, textTransform: 'uppercase', marginBottom: 12 }}>&#10022; Meridian Analysis</div>
+              {loadingA && !analysis ? (
+                <div style={{ fontFamily: 'var(--r)', fontSize: 14, color: 'var(--text-mid)', fontStyle: 'italic' }}>Drafting editorial analysis...</div>
+              ) : null}
+              {analysis ? (
+                <div style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-body)', lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>{analysis}</div>
+              ) : null}
+            </div>
+          ) : null}
 
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', fontFamily: 'var(--s)', fontSize: 12, color: 'var(--text-mid)', marginBottom: 34 }}>
             {deal.source ? <span>Source: {deal.source}</span> : null}
