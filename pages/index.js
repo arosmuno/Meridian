@@ -444,7 +444,9 @@ export default function Home({ initialDeals = [] }) {
                 {tab.label}
               </button>
             ))}
-            <a href="/learn" style={{padding:'12px 28px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center',marginLeft:'auto'}}>LEARN &#8250;</a>
+            <a href="/analysis" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center',marginLeft:'auto'}}>ANALYSIS</a>
+            <a href="/rankings" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>RANKINGS</a>
+            <a href="/learn" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>LEARN &#8250;</a>
           </div>
 
           {/* Ad banner */}
@@ -598,6 +600,12 @@ export default function Home({ initialDeals = [] }) {
           <div style={{fontFamily:"var(--d)",fontSize:18,color:C.border,letterSpacing:'.15em'}}>MERIDIAN</div>
           <div style={{fontFamily:"var(--s)",fontSize:9,color:C.textLo,marginTop:3,letterSpacing:'.06em'}}>
             M&A · LEVFIN · PROJECT FINANCE · RESTRUCTURING · ECM
+          </div>
+          <div style={{marginTop:10}}>
+            <a href="/analysis" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Analysis</a><a href="/rankings" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Rankings</a><a href="/learn" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Learn</a>
+          </div>
+          <div style={{marginTop:6,fontFamily:"var(--s)",fontSize:9,letterSpacing:'.06em',lineHeight:1.9}}>
+            <a href="/sector/tmt" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>TMT</a><a href="/sector/healthcare" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Healthcare</a><a href="/sector/energy-renewables" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Energy</a><a href="/sector/financial-services" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Financial Services</a><a href="/sector/industrials" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Industrials</a><a href="/sector/consumer" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Consumer</a><a href="/sector/real-estate" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Real Estate</a><a href="/sector/infrastructure" style={{color:C.textLo,textDecoration:'none'}}>Infrastructure</a>
           </div>
           <div style={{marginTop:8}}>
             <a href="/about" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>About</a><a href="/contact" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Contact</a><a href="/privacidad" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Política de privacidad</a>
