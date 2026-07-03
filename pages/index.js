@@ -141,6 +141,12 @@ function HeroDeal({ deal, onClick }) {
     <div className="hero-deal" onClick={()=>onClick(deal)} style={{background:panelBg(deal,theme),borderBottom:`4px solid ${deal.accent}`,padding:'44px 48px 38px',cursor:'pointer',position:'relative',overflow:'hidden'}}
       onMouseEnter={e=>e.currentTarget.style.opacity='.93'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
       <div style={{position:'absolute',inset:0,background:`radial-gradient(ellipse at 80% 0%,${deal.accent}18 0%,transparent 60%)`,pointerEvents:'none'}}/>
+      {deal.image_url ? (
+        <div style={{width:'100%',height:300,overflow:'hidden',marginBottom:26,border:`1px solid ${C.border}`,position:'relative'}}>
+          <img src={deal.image_url} alt="" onError={(e)=>{e.currentTarget.parentElement.style.display='none';}}
+            style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
+        </div>
+      ) : null}
       <div style={{display:'flex',gap:10,alignItems:'center',marginBottom:14,flexWrap:'wrap'}}>
         <span style={{fontFamily:"var(--s)",fontSize:10,fontWeight:800,letterSpacing:'.2em',color:deal.accent}}>{deal.kicker}</span>
         <StatusBadge status={deal.status}/>
@@ -172,6 +178,12 @@ function DealCard({ deal, onClick }) {
   return (
     <div className="card" onClick={()=>onClick(deal)}>
       <div style={{height:3,background:deal.accent}}/>
+      {deal.image_url ? (
+        <div style={{width:'100%',height:150,overflow:'hidden',background:C.bg}}>
+          <img src={deal.image_url} alt="" loading="lazy" onError={(e)=>{e.currentTarget.parentElement.style.display='none';}}
+            style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
+        </div>
+      ) : null}
       <div style={{padding:'18px 22px',flexGrow:1,display:'flex',flexDirection:'column',gap:10}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:6}}>
           <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:700,letterSpacing:'.14em',color:deal.accent,textTransform:'uppercase'}}>{deal.kicker}</span>

@@ -11,6 +11,42 @@ const GROUP_META = {
   Miscellaneous: { accent: '#22c55e', tag: 'The toolkit', desc: 'The daily newsletters, data tools and communities that keep you sharp and current.' },
 };
 
+// Ruta visual "de cero a IB": etapas ordenadas de principiante a avanzado.
+const IB_STEPS = [
+  { n: 1, color: '#22c55e', title: 'Foundations', desc: 'How markets, companies and deals fit together. Build the vocabulary.' },
+  { n: 2, color: '#4a9eff', title: 'Accounting', desc: 'Read the income statement, balance sheet and cash flows fluently.' },
+  { n: 3, color: '#a78bfa', title: 'Valuation', desc: 'DCF, trading comps and precedent transactions -- what a business is worth.' },
+  { n: 4, color: '#d4a853', title: 'Modeling', desc: 'Build 3-statement and LBO models in Excel from a blank sheet.' },
+  { n: 5, color: '#fb923c', title: 'Deal types', desc: 'M&A, LBOs, IPOs/ECM, debt and restructuring -- how each actually works.' },
+  { n: 6, color: '#e63946', title: 'Recruiting', desc: 'Network, earn referrals, sharpen your story and ace the technicals.' },
+];
+
+function PathToIB() {
+  return (
+    <section style={{ maxWidth: 1100, margin: '0 auto', padding: '30px 20px 6px' }}>
+      <div style={{ textAlign: 'center', marginBottom: 22 }}>
+        <div style={{ fontFamily: 'var(--s)', fontSize: 9, letterSpacing: '.2em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 6 }}>&#10022; The roadmap</div>
+        <h2 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(26px,3.4vw,40px)', fontWeight: 800, color: 'var(--text-hi)', margin: '0 0 6px', letterSpacing: '-.01em' }}>The Path to Investment Banking</h2>
+        <p style={{ fontFamily: 'var(--r)', fontSize: 14, color: 'var(--text-mid)', fontStyle: 'italic', maxWidth: 620, margin: '0 auto', lineHeight: 1.6 }}>From zero to offer -- the six stages, in order. Use the library below to work through each one.</p>
+      </div>
+      <div className="ib-path" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+        {IB_STEPS.map((s, i) => (
+          <div key={s.n} style={{ flex: '1 1 150px', minWidth: 140, maxWidth: 200, position: 'relative', padding: '0 6px' }}>
+            <div style={{ position: 'relative', height: 46, marginBottom: 12 }}>
+              <div style={{ position: 'absolute', top: 22, left: i === 0 ? '50%' : 0, right: i === IB_STEPS.length - 1 ? '50%' : 0, height: 2, background: 'var(--border)' }} />
+              <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 46, height: 46, borderRadius: '50%', background: s.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--d)', fontSize: 21, fontWeight: 800, zIndex: 1, border: '3px solid var(--bg)' }}>{s.n}</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--s)', fontSize: 12.5, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.02em', textTransform: 'uppercase' }}>{s.title}</div>
+              <p style={{ fontFamily: 'var(--r)', fontSize: 11.5, color: 'var(--text-mid)', margin: '5px 0 0', lineHeight: 1.5 }}>{s.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ResourceCard({ r, accent }) {
   return (
     <a className="card" href={r.url} target="_blank" rel="noopener noreferrer"
@@ -85,6 +121,9 @@ export default function Learn() {
             </p>
           </div>
         </div>
+
+        {/* PATH TO IB */}
+        <PathToIB />
 
         {/* CONTROLS */}
         <div className="content-area" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px' }}>

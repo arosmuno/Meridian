@@ -128,6 +128,16 @@ export default function DealPage({ deal, id }) {
 
           <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(30px,5vw,50px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.15, margin: '0 0 18px' }}>{headline}</h1>
 
+          {deal.image_url ? (
+            <figure style={{ margin: '0 0 24px' }}>
+              <div style={{ width: '100%', maxHeight: 430, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                <img src={deal.image_url} alt="" onError={(e)=>{e.currentTarget.closest('figure').style.display='none';}}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}/>
+              </div>
+              {deal.source ? <figcaption style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', marginTop: 6, letterSpacing: '.04em' }}>Photo via {deal.source}</figcaption> : null}
+            </figure>
+          ) : null}
+
           <div style={{ display: 'flex', gap: 26, flexWrap: 'wrap', alignItems: 'baseline', marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             {value ? (
               <div>
@@ -164,7 +174,9 @@ export default function DealPage({ deal, id }) {
           ) : null}
 
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', fontFamily: 'var(--s)', fontSize: 12, color: 'var(--text-mid)', marginBottom: 34 }}>
-            {deal.source ? <span>Source: {deal.source}</span> : null}
+            {deal.source ? (deal.source_url
+              ? <a href={deal.source_url} target="_blank" rel="noopener noreferrer nofollow" style={{ color: accent, textDecoration: 'none', fontWeight: 700 }}>Read the original at {deal.source} &rarr;</a>
+              : <span>Source: {deal.source}</span>) : null}
             {date ? <span>{date}</span> : null}
             {deal.geography ? <span>{deal.geography}</span> : null}
           </div>
