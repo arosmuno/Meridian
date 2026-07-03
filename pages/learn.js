@@ -1,39 +1,30 @@
-// pages/learn.js -- MERIDIAN LEARN: a curated, tiered learning library.
+// pages/learn.js -- MERIDIAN LEARN: a curated library (Books / Resources / Podcasts / Miscellaneous).
 import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import AdSlot from '../components/AdSlot';
-import { RESOURCES, GROUPS, TYPES } from '../lib/learnResources';
+import { RESOURCES, GROUPS } from '../lib/learnResources';
 
-const LEVELS = ['All', 'Foundations', 'Intermediate', 'Advanced'];
+const GROUP_META = {
+  Books: { accent: '#d4a853', tag: 'The canon', desc: 'The books worth actually reading -- from value-investing scripture to the narratives that show how deals really happen.' },
+  Resources: { accent: '#4a9eff', tag: 'Learn for free', desc: 'Free, high-signal places to learn valuation, markets and how the industry really works. No paywalls, no fluff.' },
+  Podcasts: { accent: '#a78bfa', tag: 'Listen', desc: 'Long-form conversations that make the commute smarter -- deals, strategy and the people behind them.' },
+  Miscellaneous: { accent: '#22c55e', tag: 'The toolkit', desc: 'The daily newsletters, data tools and communities that keep you sharp and current.' },
+};
 
-function Badge({ children, tone }) {
-  const tones = {
-    type: { bg: 'transparent', color: 'var(--text-mid)', border: 'var(--border)' },
-    level: { bg: 'transparent', color: 'var(--gold)', border: 'var(--gold)' },
-    free: { bg: '#041b0d', color: '#4ade80', border: '#15532e' },
-    paid: { bg: 'transparent', color: 'var(--text-lo)', border: 'var(--border)' },
-  };
-  const t = tones[tone] || tones.type;
-  return (
-    <span style={{ background: t.bg, color: t.color, border: `1px solid ${t.border}`, padding: '2px 8px', fontFamily: 'var(--s)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-      {children}
-    </span>
-  );
-}
-
-function ResourceCard({ r }) {
+function ResourceCard({ r, accent }) {
   return (
     <a className="card" href={r.url} target="_blank" rel="noopener noreferrer"
-      style={{ textDecoration: 'none', padding: '18px 18px 16px', gap: 10 }}>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 2 }}>
-        <Badge tone="type">{r.type}</Badge>
-        {r.level !== 'All' && <Badge tone="level">{r.level}</Badge>}
-        <Badge tone={r.free ? 'free' : 'paid'}>{r.free ? 'Free' : 'Paid'}</Badge>
+      style={{ textDecoration: 'none', padding: '16px 18px 15px', gap: 9, borderLeft: `3px solid ${accent}` }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = accent; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.borderLeftColor = accent; }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ color: accent, border: `1px solid ${accent}`, padding: '2px 8px', fontFamily: 'var(--s)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}>{r.type}</span>
+        {r.free && <span style={{ background: '#041b0d', color: '#4ade80', border: '1px solid #15532e', padding: '2px 8px', fontFamily: 'var(--s)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}>Free</span>}
       </div>
-      <h3 style={{ fontFamily: 'var(--d)', fontSize: 19, fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.25, margin: 0 }}>{r.name}</h3>
+      <h3 style={{ fontFamily: 'var(--d)', fontSize: 19, fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.25, margin: '2px 0 0' }}>{r.name}</h3>
       <div style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', letterSpacing: '.06em', textTransform: 'uppercase' }}>{r.provider}</div>
       <p style={{ fontFamily: 'var(--r)', fontSize: 13.5, color: 'var(--text-body)', lineHeight: 1.7, margin: '2px 0 0', flexGrow: 1 }}>{r.blurb}</p>
-      <span style={{ fontFamily: 'var(--s)', fontSize: 11, color: 'var(--gold)', fontWeight: 700, letterSpacing: '.06em', marginTop: 6 }}>Visit &rarr;</span>
+      <span style={{ fontFamily: 'var(--s)', fontSize: 11, color: accent, fontWeight: 700, letterSpacing: '.06em', marginTop: 6 }}>Visit &rarr;</span>
     </a>
   );
 }
@@ -41,8 +32,7 @@ function ResourceCard({ r }) {
 export default function Learn() {
   const [theme, setTheme] = useState('dark');
   const [q, setQ] = useState('');
-  const [level, setLevel] = useState('All');
-  const [type, setType] = useState('All');
+  const [group, setGroup] = useState('All');
 
   useEffect(() => {
     try { const s = localStorage.getItem('meridian_theme'); if (s === 'light' || s === 'dark') setTheme(s); } catch (e) {}
@@ -53,28 +43,26 @@ export default function Learn() {
   }, [theme]);
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  const typeList = ['All', ...TYPES];
-
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return RESOURCES.filter((r) => {
-      if (level !== 'All' && r.level !== level && r.level !== 'All') return false;
-      if (type !== 'All' && r.type !== type) return false;
+      if (group !== 'All' && r.group !== group) return false;
       if (needle) {
-        const hay = `${r.name} ${r.provider} ${r.blurb} ${r.type} ${r.level}`.toLowerCase();
+        const hay = `${r.name} ${r.provider} ${r.blurb} ${r.type}`.toLowerCase();
         if (!hay.includes(needle)) return false;
       }
       return true;
     });
-  }, [q, level, type]);
+  }, [q, group]);
 
   const total = filtered.length;
+  const shownGroups = group === 'All' ? GROUPS : [group];
 
   return (
     <>
       <Head>
-        <title>Meridian Learn -- Curated resources to master M&amp;A, capital markets, private equity &amp; investing</title>
-        <meta name="description" content="A curated, tiered library of the best books, courses, newsletters, tools and podcasts to learn capital markets, M&A, investment banking, private equity and valuation -- from beginner to advanced." />
+        <title>Meridian Learn -- The best books, resources &amp; podcasts to master M&amp;A, capital markets &amp; investing</title>
+        <meta name="description" content="A hand-picked library to learn capital markets, M&A, private equity, valuation and investing: the best books, free resources, podcasts and tools -- curated, no paid-course noise." />
         <link rel="canonical" href="https://www.meridiancapmarkets.com/learn" />
       </Head>
 
@@ -89,43 +77,25 @@ export default function Learn() {
             </button>
           </div>
 
-          <div style={{ textAlign: 'center', padding: '26px 24px 20px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ textAlign: 'center', padding: '26px 24px 22px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ fontFamily: 'var(--s)', fontSize: 9, letterSpacing: '.35em', color: 'var(--text-mid)', marginBottom: 8 }}>&#10022; &nbsp; THE CAPITAL MARKETS INTELLIGENCE REVIEW &nbsp; &#10022;</div>
             <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(40px,6.5vw,72px)', fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '-.02em', lineHeight: 1, margin: '0 0 10px' }}>MERIDIAN LEARN</h1>
-            <p style={{ fontFamily: 'var(--r)', fontSize: 15, color: 'var(--text-body)', fontStyle: 'italic', maxWidth: 640, margin: '0 auto', lineHeight: 1.6 }}>
-              From first principles to the deal room. A hand-picked library of the books, courses, newsletters and tools worth your time -- to actually learn capital markets, M&amp;A, private equity and investing.
+            <p style={{ fontFamily: 'var(--r)', fontSize: 15, color: 'var(--text-body)', fontStyle: 'italic', maxWidth: 660, margin: '0 auto', lineHeight: 1.6 }}>
+              A hand-picked library to actually learn this business -- the best books, free resources and podcasts on capital markets, M&amp;A, private equity and investing. Only what we would recommend to a friend.
             </p>
           </div>
         </div>
 
         {/* CONTROLS */}
         <div className="content-area" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 0 12px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 3, height: 16, background: 'var(--gold)', display: 'block' }} />
-              <span style={{ fontFamily: 'var(--s)', fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: 'var(--gold)', textTransform: 'uppercase' }}>The Library</span>
-              <span style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-mid)' }}>{total} resource{total === 1 ? '' : 's'}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0 14px', borderBottom: '2px solid var(--border)', flexWrap: 'wrap', gap: 12 }}>
+            <div className="filter-row" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['All', ...GROUPS].map((g) => (
+                <button key={g} className={`pill ${group === g ? 'active' : ''}`} onClick={() => setGroup(g)}>{g}</button>
+              ))}
             </div>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search resources..."
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search the library..."
               style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-hi)', padding: '6px 12px', fontFamily: 'var(--s)', fontSize: 12, minWidth: 220, outline: 'none' }} />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0 8px', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-mid)', letterSpacing: '.1em', textTransform: 'uppercase', minWidth: 46 }}>Level</span>
-            <div className="filter-row" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {LEVELS.map((lv) => (
-                <button key={lv} className={`pill ${level === lv ? 'active' : ''}`} onClick={() => setLevel(lv)}>{lv === 'All' ? 'All' : lv}</button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0 14px', borderBottom: '2px solid var(--border)', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-mid)', letterSpacing: '.1em', textTransform: 'uppercase', minWidth: 46 }}>Type</span>
-            <div className="filter-row" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {typeList.map((tp) => (
-                <button key={tp} className={`pill ${type === tp ? 'active' : ''}`} onClick={() => setType(tp)}>{tp}</button>
-              ))}
-            </div>
           </div>
 
           {/* Ad banner */}
@@ -133,24 +103,27 @@ export default function Learn() {
             <AdSlot slot="learn-top" format="horizontal" style={{ maxWidth: 728, margin: '0 auto' }} />
           </div>
 
-          {/* GROUPED RESOURCES */}
-          <div style={{ padding: '8px 0 40px' }}>
-            {GROUPS.map((group, gi) => {
-              const items = filtered.filter((r) => r.group === group);
+          {/* SECTIONS */}
+          <div style={{ padding: '8px 0 44px' }}>
+            {shownGroups.map((g, gi) => {
+              const items = filtered.filter((r) => r.group === g);
               if (!items.length) return null;
+              const meta = GROUP_META[g] || { accent: 'var(--gold)', tag: '', desc: '' };
               return (
-                <section key={group} style={{ marginTop: gi === 0 ? 18 : 34 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                    <span style={{ width: 3, height: 18, background: 'var(--gold)', display: 'block' }} />
-                    <h2 style={{ fontFamily: 'var(--s)', fontSize: 12, fontWeight: 700, letterSpacing: '.14em', color: 'var(--text-hi)', textTransform: 'uppercase', margin: 0 }}>{group}</h2>
-                    <span style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-                    <span style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-mid)' }}>{items.length}</span>
+                <section key={g} style={{ marginTop: gi === 0 ? 20 : 40 }}>
+                  <div style={{ borderTop: `2px solid ${meta.accent}`, paddingTop: 12, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'var(--s)', fontSize: 9, fontWeight: 800, letterSpacing: '.18em', color: meta.accent, textTransform: 'uppercase' }}>{meta.tag}</span>
+                      <h2 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(24px,3vw,34px)', fontWeight: 800, color: 'var(--text-hi)', margin: 0, letterSpacing: '-.01em' }}>{g}</h2>
+                      <span style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)' }}>{items.length}</span>
+                    </div>
+                    <p style={{ fontFamily: 'var(--r)', fontSize: 13, color: 'var(--text-mid)', fontStyle: 'italic', margin: '6px 0 0', maxWidth: 680, lineHeight: 1.6 }}>{meta.desc}</p>
                   </div>
                   <div className="cards-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                    {items.map((r) => <ResourceCard key={r.name} r={r} />)}
+                    {items.map((r) => <ResourceCard key={r.name} r={r} accent={meta.accent} />)}
                   </div>
-                  {gi === 1 && (
-                    <div style={{ marginTop: 18 }}>
+                  {gi === 0 && group === 'All' && (
+                    <div style={{ marginTop: 20 }}>
                       <AdSlot slot="learn-mid" format="horizontal" />
                     </div>
                   )}
