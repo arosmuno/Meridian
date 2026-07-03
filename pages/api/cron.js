@@ -55,6 +55,8 @@ export default async function handler(req, res) {
         source: d.source || '',
         source_channel: d.source_channel || 'news',
         category: d.category || 'deal',
+        image_url: d.image || null,
+        source_url: d.source_url || null,
         fetched_at: new Date().toISOString(),
         data_source: source,
       };
