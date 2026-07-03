@@ -483,7 +483,13 @@ export default function Home({ initialDeals = [] }) {
                 <span style={{fontFamily:"var(--s)",fontSize:9,fontWeight:800,letterSpacing:'.12em',color:'#fff',whiteSpace:'nowrap'}}>&#9733; IN THE NEWS</span>
               </div>
               <div className="trending-scroll" style={{display:'flex',overflowX:'auto',flex:1}}>
-                {[...dealItems].sort((a,b)=>Number(b.value||0)-Number(a.value||0)).slice(0,5).map((d)=>(
+                {(() => {
+                  const seen = new Set();
+                  return [...dealItems].sort((a,b)=>Number(b.value||0)-Number(a.value||0)).filter((d)=>{
+                    const k = ((!isNA(d.buyer) ? d.buyer : d.headline) || '').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20);
+                    if (seen.has(k)) return false; seen.add(k); return true;
+                  }).slice(0,5);
+                })().map((d)=>(
                   <div key={d.id} onClick={()=>setSelected(d)} style={{padding:'10px 18px',borderRight:`1px solid ${C.border}`,cursor:'pointer',minWidth:230,maxWidth:300,flexShrink:0,display:'flex',flexDirection:'column',gap:3}}
                     onMouseEnter={e=>e.currentTarget.style.background=C.bgHover} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                     <span style={{fontFamily:"var(--s)",fontSize:8,fontWeight:700,letterSpacing:'.12em',color:d.accent,textTransform:'uppercase'}}>{d.kicker}</span>
