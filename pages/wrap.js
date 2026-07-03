@@ -41,7 +41,7 @@ export async function getStaticProps() {
       if (gr.ok) { const parts = gd && gd.candidates && gd.candidates[0] && gd.candidates[0].content && gd.candidates[0].content.parts || []; wrap = parts.map((p) => p.text).filter(Boolean).join('\n').trim(); }
     }
   } catch (e) {}
-  return { props: { wrap, dateLabel, count }, revalidate: 3600 };
+  return { props: { wrap, dateLabel, count }, revalidate: 600 };
 }
 
 export default function Wrap({ wrap, dateLabel, count }) {
