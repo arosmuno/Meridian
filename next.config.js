@@ -38,6 +38,7 @@ const nextConfig = {
     return [
       // Pretty per-deal share URLs: /deal/<slug>-<id> served by /deal?slug=...
       { source: '/deal/:slug', destination: '/deal?slug=:slug' },
+      { source: '/sector/:slug', destination: '/sector?slug=:slug' },
     ];
   },
 };
