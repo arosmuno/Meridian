@@ -1,6 +1,9 @@
 // pages/wrap.js -- "The Wrap": an auto-generated daily editorial summary of the day's dealmaking.
-// Uses ISR (getStaticProps + revalidate) so Gemini is called at most ~once/hour, not per request.
+// Gemini is called AT MOST ONCE PER DAY: a persistent cache in Supabase (site_cache table)
+// survives cold starts, so page loads never regenerate. Only the first request of a new day
+// (on a cold instance with no DB entry) triggers generation; everyone else reads the cache.
 import Head from 'next/head';
+import { supabaseAdmin } from '../lib/supabase';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const GEMINI_MODEL = 'gemini-2.5-flash-lite';
@@ -21,32 +24,60 @@ function Footer() {
   );
 }
 
+async function generateWrap(dateLabel) {
+  const r = await fetch(SITE + '/api/deals?limit=40');
+  const j = await r.json();
+  const seen = new Set();
+  const deals = (j.deals || []).filter((d) => d.category === 'deal' && d.headline && !seen.has(d.headline) && (seen.add(d.headline) || true)).slice(0, 15);
+  const count = deals.length;
+  const key = process.env.GEMINI_API_KEY || process.env.Gemini_Api_key;
+  if (!key || !deals.length) return { wrap: '', count };
+  const list = deals.map((d) => '- ' + d.headline + (Number(d.value) ? ' (' + d.value + ' ' + (d.currency || '') + ')' : '') + ' [' + (d.type || '') + ', ' + (d.sector || '') + ']').join('\n');
+  const prompt = 'You are the editor of MERIDIAN, a capital-markets newspaper. Write a tight, professional "Deal Wrap" for ' + dateLabel + ' in English: 2 to 3 short paragraphs of flowing prose, no headers, no bullet points. Cover the biggest deals of the day, the dominant sectors or themes, and end with one forward-looking line. Be precise; do not invent figures.\n\nToday\'s deals:\n' + list + '\n\nStart directly with the wrap:';
+  const gr = await fetch(GEMINI_URL + '?key=' + key, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.6, maxOutputTokens: 900, thinkingConfig: { thinkingBudget: 0 } } }),
+  });
+  const gd = await gr.json().catch(() => ({}));
+  let wrap = '';
+  if (gr.ok) { const parts = (gd && gd.candidates && gd.candidates[0] && gd.candidates[0].content && gd.candidates[0].content.parts) || []; wrap = parts.map((p) => p.text).filter(Boolean).join('\n').trim(); }
+  return { wrap, count };
+}
+
 export async function getServerSideProps() {
-  let wrap = '', dateLabel = '', count = 0;
   const today = new Date().toISOString().slice(0, 10);
+  const dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const cacheKey = 'wrap:' + today;
+
+  // 1) Fast path: same serverless instance already has today's wrap in memory.
   if (CACHE.day === today && CACHE.text) {
     return { props: { wrap: CACHE.text, dateLabel: CACHE.label, count: CACHE.count } };
   }
+
+  // 2) Persistent cache in Supabase (survives cold starts) -> no Gemini call.
   try {
-    dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const r = await fetch(SITE + '/api/deals?limit=40');
-    const j = await r.json();
-    const seen = new Set();
-    const deals = (j.deals || []).filter((d) => d.category === 'deal' && d.headline && !seen.has(d.headline) && (seen.add(d.headline) || true)).slice(0, 15);
-    count = deals.length;
-    const key = process.env.GEMINI_API_KEY || process.env.Gemini_Api_key;
-    if (key && deals.length) {
-      const list = deals.map((d) => '- ' + d.headline + (Number(d.value) ? ' (' + d.value + ' ' + (d.currency || '') + ')' : '') + ' [' + (d.type || '') + ', ' + (d.sector || '') + ']').join('\n');
-      const prompt = 'You are the editor of MERIDIAN, a capital-markets newspaper. Write a tight, professional "Deal Wrap" for ' + dateLabel + ' in English: 2 to 3 short paragraphs of flowing prose, no headers, no bullet points. Cover the biggest deals of the day, the dominant sectors or themes, and end with one forward-looking line. Be precise; do not invent figures.\n\nToday\'s deals:\n' + list + '\n\nStart directly with the wrap:';
-      const gr = await fetch(GEMINI_URL + '?key=' + key, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { temperature: 0.6, maxOutputTokens: 900, thinkingConfig: { thinkingBudget: 0 } } }),
-      });
-      const gd = await gr.json();
-      if (gr.ok) { const parts = gd && gd.candidates && gd.candidates[0] && gd.candidates[0].content && gd.candidates[0].content.parts || []; wrap = parts.map((p) => p.text).filter(Boolean).join('\n').trim(); }
+    const { data } = await supabaseAdmin.from('site_cache').select('value').eq('key', cacheKey).maybeSingle();
+    if (data && data.value) {
+      const parsed = JSON.parse(data.value);
+      CACHE = { day: today, text: parsed.text, label: parsed.label || dateLabel, count: parsed.count || 0 };
+      return { props: { wrap: parsed.text, dateLabel: CACHE.label, count: CACHE.count } };
     }
-  } catch (e) {}
-  if (wrap) CACHE = { day: today, text: wrap, label: dateLabel, count };
+  } catch (e) { /* table missing or read error -> fall through to generate */ }
+
+  // 3) Generate once, then persist so no other request regenerates today.
+  let wrap = '', count = 0;
+  try {
+    const out = await generateWrap(dateLabel);
+    wrap = out.wrap; count = out.count;
+  } catch (e) { /* leave placeholder; next request retries */ }
+
+  if (wrap) {
+    CACHE = { day: today, text: wrap, label: dateLabel, count };
+    try {
+      await supabaseAdmin.from('site_cache').upsert({ key: cacheKey, value: JSON.stringify({ text: wrap, label: dateLabel, count }), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    } catch (e) { /* non-blocking */ }
+  }
+
   return { props: { wrap, dateLabel, count } };
 }
 
