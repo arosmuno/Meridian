@@ -6,6 +6,9 @@
 import { supabaseAdmin } from '../../lib/supabase';
 import { generateAnalysis } from '../../lib/dealAnalysis';
 
+// Peticion EN VIVO: acota el tiempo maximo de la funcion.
+export const config = { maxDuration: 30 };
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -28,7 +31,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const analysis = await generateAnalysis(deal);
+    const analysis = await generateAnalysis(deal, { fast: true });
     if (!analysis || analysis.length < 40) {
       return res.status(200).json({ analysis: '' });
     }
