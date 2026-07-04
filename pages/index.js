@@ -58,7 +58,35 @@ const cleanHeadline = (h) => {
 const looksSpanish = (h) => /[ñ¿¡]/.test(h || '') || /\b(millones|adquiere|compra|deuda|cr[eé]dito|pr[eé]stamo|fusi[oó]n|ampliaci[oó]n|accionista|espa[nñ]ola?|empresa|negocio|bolsa|beneficio|salida a bolsa|puja|retrasa|colocar)\b/i.test(h || '');
 const enrich = (d, i) => ({ ...d, id:i+1, headline: cleanHeadline(d.headline), value: isMarketLike(d) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
 
-// Procesa deals crudos de la API a la forma que renderiza la home (enrich + orden + filtro).
+// Firma de una entidad: minusculas, sin acentos ni signos, y sin sufijos corporativos
+// (group, holdings, inc, corp, plc, ag, ltd, partners, automotive...). Asi "Renk" y
+// "Renk Group" colapsan a la misma clave.
+const CORP_SUFFIX = /(group|holdings|holding|incorporated|inc|corporation|corp|company|co|sa|plc|ag|gmbh|ltd|limited|llc|lp|partners|automotive|nv|spa|realestate|se|ab|oyj)$/;
+function sigPart(s) {
+  let x = String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (let i = 0; i < 3; i++) { const y = x.replace(CORP_SUFFIX, ''); if (y === x) break; x = y; }
+  return x;
+}
+// Colapsa noticias duplicadas (misma operacion re-titulada por distintas fuentes/pasadas
+// del cron). Clave = par buyer|target normalizado y ordenado (tolera intercambio de roles);
+// si falta comprador u objetivo, usa un prefijo del titular. Conserva el primero (mas reciente).
+function dedupeDeals(arr) {
+  const seen = new Set();
+  const out = [];
+  for (const d of arr) {
+    const b = sigPart(d.buyer), t = sigPart(d.target);
+    const real = b && b !== 'na' && b.length > 2 && t && t !== 'na' && t.length > 2;
+    const key = real
+      ? (b < t ? b + '|' + t : t + '|' + b)
+      : 'h:' + String(d.headline || '').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 42);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(d);
+  }
+  return out;
+}
+
+// Procesa deals crudos de la API a la forma que renderiza la home (enrich + orden + filtro + dedupe).
 // Se usa tanto para el estado inicial (SSR: contenido visible para Google/AdSense) como en loadDeals.
 function processDeals(arr) {
   const raw = (arr || []).map(enrich);
@@ -68,7 +96,7 @@ function processDeals(arr) {
     return 0;
   };
   const sorted = [...raw].sort((a, b) => parseDate(b) - parseDate(a));
-  return sorted.filter((d) => !looksSpanish(d.headline));
+  return dedupeDeals(sorted.filter((d) => !looksSpanish(d.headline)));
 }
 
 // ── THEMES ────────────────────────────────────────────────────────────────────
@@ -323,17 +351,7 @@ export default function Home({ initialDeals = [] }) {
     try {
       const res = await fetch('/api/deals');
       const data = await res.json();
-      const raw = (data.deals || []).map(enrich);
-
-      // Sort strictly chronologically — most recent first
-      const parseDate = (d) => {
-        if (d.deal_date) return new Date(d.deal_date).getTime();
-        if (d.date) { const p = new Date(d.date); return isNaN(p) ? 0 : p.getTime(); }
-        return 0;
-      };
-      const sorted = [...raw].sort((a,b) => parseDate(b) - parseDate(a));
-
-      setDeals(sorted.filter((d) => !looksSpanish(d.headline)));
+      setDeals(processDeals(data.deals || []));
       setMode(data.source || 'archive');
       setLastUpdated(data.last_updated ? new Date(data.last_updated) : new Date());
     } catch {
