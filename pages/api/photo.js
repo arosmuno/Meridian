@@ -118,7 +118,7 @@ export default async function handler(req, res) {
   const buyer = String(q.b || '');
   const target = String(q.t || '');
   const i = parseInt(id, 10) || hashNum(id);
-  const cacheKey = 'photo:v3:' + id + ':' + sector;
+  const cacheKey = 'photo:v4:' + id + ':' + sector;
 
   // Cache por deal: la cascada se resuelve una sola vez.
   try {
@@ -126,15 +126,13 @@ export default async function handler(req, res) {
     if (data && data.value) { res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400'); res.redirect(302, data.value); return; }
   } catch (e) { /* seguimos */ }
 
-  let url = '';
-  const na = (s) => !s || /^n\/?a$/i.test(String(s).trim());
-  // (1) Wikimedia: foto real del sujeto, con coincidencia estricta y licencia libre.
-  if (!na(buyer)) url = await tryWikimedia(buyer);
-  if (!url && !na(target)) url = await tryWikimedia(target);
-  // (2) Pexels (red final): stock por sector con licencia comercial.
-  // (La ilustracion IA -- aiUrl() -- se probo pero se descarta: Pollinations genera bajo
-  //  demanda y tarda >20s, dejando tarjetas en blanco. Queda como funcion por si acaso.)
-  if (!url) url = await tryPexels(sector, i);
+  // Fuente unica: Pexels por sector (stock foto, licencia comercial). Se probaron fuentes
+  // "especificas" pero no son fiables de forma automatica: Wikimedia por nombre devuelve
+  // imagenes irrelevantes (p.ej. el ESCUDO HERALDICO de la familia O'Reilly en un deal de
+  // autopartes) y la IA (Pollinations) tarda >20s y deja tarjetas en blanco. Por consistencia
+  // y profesionalidad usamos solo Pexels: la foto es representativa del SECTOR, no de la empresa.
+  // (tryWikimedia/aiUrl se conservan por si se quieren reactivar con curacion manual.)
+  let url = await tryPexels(sector, i);
 
   if (!url) { res.status(404).end(); return; }
   try { await supabaseAdmin.from('site_cache').upsert({ key: cacheKey, value: url, updated_at: new Date().toISOString() }, { onConflict: 'key' }); } catch (e) {}
