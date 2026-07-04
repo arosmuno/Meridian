@@ -44,7 +44,7 @@ export default function AdSlot({ slot, format = 'auto', style = {} }) {
           zIndex: 0,
         }}
       >
-        Publicidad
+        Advertisement
       </span>
       {hasAds && (
         <div style={{ width: '100%', position: 'relative', zIndex: 1 }}>

@@ -28,21 +28,21 @@ export default function CookieConsent() {
       fontFamily: "'Libre Franklin', sans-serif",
     }}>
       <span style={{ fontSize: 13, color: '#c8c0b4', maxWidth: 640, lineHeight: 1.6 }}>
-        Usamos cookies esenciales para que el sitio funcione y, si lo aceptas, cookies de
-        publicidad (Google AdSense) para sostener el proyecto. Puedes rechazar las no esenciales.{' '}
-        <a href="/privacidad" style={{ color: '#d4a853', textDecoration: 'underline' }}>Más información</a>.
+        We use essential cookies to make the site work and, if you accept, advertising cookies
+        (Google AdSense) to support the project. You can reject non-essential ones.{' '}
+        <a href="/privacidad" style={{ color: '#d4a853', textDecoration: 'underline' }}>Learn more</a>.
       </span>
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => choose('rejected')} style={{
           background: 'transparent', border: '1px solid #2e2e38', color: '#c8c0b4',
           padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
           letterSpacing: '.04em', textTransform: 'uppercase',
-        }}>Rechazar</button>
+        }}>Reject</button>
         <button onClick={() => choose('accepted')} style={{
           background: '#d4a853', border: '1px solid #d4a853', color: '#0d0d0f',
           padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
           letterSpacing: '.04em', textTransform: 'uppercase',
-        }}>Aceptar</button>
+        }}>Accept</button>
       </div>
     </div>
   );
