@@ -41,6 +41,13 @@ const nextConfig = {
       { source: '/sector/:slug', destination: '/sector?slug=:slug' },
     ];
   },
+  async redirects() {
+    return [
+      // La pagina de privacidad ahora vive en /privacy (ingles). El antiguo
+      // /privacidad redirige de forma permanente para no romper enlaces ni AdSense.
+      { source: '/privacidad', destination: '/privacy', permanent: true },
+    ];
+  },
 };
 
 module.exports = nextConfig;
