@@ -681,7 +681,7 @@ export default function Home({ initialDeals = [] }) {
             <a href="/about" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>About</a><a href="/contact" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Contact</a><a href="/privacy" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Privacy Policy</a>
           </div>
           <div style={{marginTop:6,fontFamily:"var(--s)",fontSize:8,color:C.textLo,letterSpacing:'.06em'}}>
-            Images via <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style={{color:C.textLo}}>Pexels</a> &amp; <a href="https://commons.wikimedia.org" target="_blank" rel="noopener noreferrer" style={{color:C.textLo}}>Wikimedia Commons</a>
+            Photos via <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style={{color:C.textLo}}>Pexels</a>
           </div>
         </div>
 

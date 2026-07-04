@@ -134,7 +134,7 @@ export default function DealPage({ deal, id }) {
                 onError={(e)=>{e.currentTarget.closest('figure').style.display='none';}}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}/>
             </div>
-            <figcaption style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', marginTop: 6, letterSpacing: '.04em' }}>Illustrative image</figcaption>
+            <figcaption style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', marginTop: 6, letterSpacing: '.04em' }}>Photo via Pexels</figcaption>
           </figure>
 
           <div style={{ display: 'flex', gap: 26, flexWrap: 'wrap', alignItems: 'baseline', marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
