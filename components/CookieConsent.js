@@ -30,7 +30,7 @@ export default function CookieConsent() {
       <span style={{ fontSize: 13, color: '#c8c0b4', maxWidth: 640, lineHeight: 1.6 }}>
         We use essential cookies to make the site work and, if you accept, advertising cookies
         (Google AdSense) to support the project. You can reject non-essential ones.{' '}
-        <a href="/privacidad" style={{ color: '#d4a853', textDecoration: 'underline' }}>Learn more</a>.
+        <a href="/privacy" style={{ color: '#d4a853', textDecoration: 'underline' }}>Learn more</a>.
       </span>
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => choose('rejected')} style={{
