@@ -113,7 +113,7 @@ export default async function handler(req, res) {
   const buyer = String(q.b || '');
   const target = String(q.t || '');
   const i = parseInt(id, 10) || hashNum(id);
-  const cacheKey = 'photo:' + id + ':' + sector;
+  const cacheKey = 'photo:v2:' + id + ':' + sector;
 
   // Cache por deal: la cascada se resuelve una sola vez.
   try {
@@ -123,12 +123,12 @@ export default async function handler(req, res) {
 
   let url = '';
   const na = (s) => !s || /^n\/?a$/i.test(String(s).trim());
-  // (1) Wikimedia
+  // (1) Wikimedia: foto real del sujeto, con coincidencia estricta y licencia libre.
   if (!na(buyer)) url = await tryWikimedia(buyer);
   if (!url && !na(target)) url = await tryWikimedia(target);
-  // (2) IA
-  if (!url) url = aiUrl(sector, id);
-  // (3) Pexels (red final)
+  // (2) Pexels (red final): stock por sector con licencia comercial.
+  // (La ilustracion IA -- aiUrl() -- se probo pero se descarta: Pollinations genera bajo
+  //  demanda y tarda >20s, dejando tarjetas en blanco. Queda como funcion por si acaso.)
   if (!url) url = await tryPexels(sector, i);
 
   if (!url) { res.status(404).end(); return; }
