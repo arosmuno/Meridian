@@ -130,7 +130,7 @@ export default function DealPage({ deal, id }) {
 
           <figure style={{ margin: '0 0 24px' }}>
             <div style={{ width: '100%', maxHeight: 430, overflow: 'hidden', border: '1px solid var(--border)' }}>
-              <img src={'/api/photo?sector=' + encodeURIComponent(sector || 'General') + '&id=' + (id || 0) + '&b=' + encodeURIComponent(deal.buyer || '') + '&t=' + encodeURIComponent(deal.target || '')} alt=""
+              <img src={'/api/photo?sector=' + encodeURIComponent(sector || 'General') + '&id=' + (id || 0) + '&pv=4'} alt=""
                 onError={(e)=>{e.currentTarget.closest('figure').style.display='none';}}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}/>
             </div>

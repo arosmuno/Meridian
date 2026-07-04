@@ -188,7 +188,7 @@ function HeroDeal({ deal, onClick }) {
       onMouseEnter={e=>e.currentTarget.style.opacity='.93'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
       <div style={{position:'absolute',inset:0,background:`radial-gradient(ellipse at 80% 0%,${deal.accent}18 0%,transparent 60%)`,pointerEvents:'none'}}/>
       <div style={{width:'100%',height:300,overflow:'hidden',marginBottom:26,border:`1px solid ${C.border}`,position:'relative'}}>
-        <img src={'/api/photo?sector=' + encodeURIComponent(deal.sector || 'General') + '&id=' + (deal.id || 0) + '&b=' + encodeURIComponent(deal.buyer || '') + '&t=' + encodeURIComponent(deal.target || '')} alt=""
+        <img src={'/api/photo?sector=' + encodeURIComponent(deal.sector || 'General') + '&id=' + (deal.id || 0) + '&pv=4'} alt=""
           onError={(e)=>{e.currentTarget.parentElement.style.display='none';}}
           style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
       </div>
@@ -224,7 +224,7 @@ function DealCard({ deal, onClick }) {
     <div className="card" onClick={()=>onClick(deal)}>
       <div style={{height:3,background:deal.accent}}/>
       <div style={{width:'100%',height:150,overflow:'hidden',background:C.bg}}>
-        <img src={'/api/photo?sector=' + encodeURIComponent(deal.sector || 'General') + '&id=' + (deal.id || 0) + '&b=' + encodeURIComponent(deal.buyer || '') + '&t=' + encodeURIComponent(deal.target || '')} alt="" loading="lazy"
+        <img src={'/api/photo?sector=' + encodeURIComponent(deal.sector || 'General') + '&id=' + (deal.id || 0) + '&pv=4'} alt="" loading="lazy"
           onError={(e)=>{e.currentTarget.parentElement.style.display='none';}}
           style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
       </div>
