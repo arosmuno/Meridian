@@ -1,5 +1,6 @@
 // pages/rankings.js -- League tables: biggest deals, most active sectors & acquirers.
 import Head from 'next/head';
+import { dedupeDeals } from '../lib/dedupe';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const curSym = (c) => (c === 'USD' ? '$' : c === 'GBP' ? String.fromCharCode(163) : String.fromCharCode(8364));
@@ -34,12 +35,7 @@ export async function getServerSideProps() {
     const r = await fetch(SITE + '/api/deals?limit=100');
     if (r.ok) {
       const j = await r.json();
-      const seen = new Set();
-      const deals = (j.deals || []).filter((d) => {
-        if (d.category === 'macro') return false;
-        if (!d.headline) return false;
-        if (seen.has(d.headline)) return false; seen.add(d.headline); return true;
-      });
+      const deals = dedupeDeals((j.deals || []).filter((d) => d.category !== 'macro' && d.headline));
       count = deals.length;
       biggest = deals.filter((d) => Number(d.value) > 0)
         .sort((a, b) => Number(b.value) - Number(a.value)).slice(0, 10)

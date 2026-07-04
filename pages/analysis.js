@@ -1,5 +1,6 @@
 // pages/analysis.js -- Analysis hub: every deal that has a Meridian Analysis, as an articles feed.
 import Head from 'next/head';
+import { dedupeDeals } from '../lib/dedupe';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const ACCENT = {
@@ -31,10 +32,7 @@ export async function getServerSideProps() {
     const r = await fetch(SITE + '/api/deals?limit=100');
     if (r.ok) {
       const j = await r.json();
-      const seen = new Set();
-      items = (j.deals || [])
-        .filter((d) => d.analysis && d.analysis.length > 60 && d.headline)
-        .filter((d) => { const k = d.headline; if (seen.has(k)) return false; seen.add(k); return true; })
+      items = dedupeDeals((j.deals || []).filter((d) => d.analysis && d.analysis.length > 60 && d.headline))
         .map((d) => ({
           id: d.id, headline: d.headline, type: d.type || 'DEAL', sector: d.sector || '',
           date: d.date || '', excerpt: String(d.analysis).replace(/\s+/g, ' ').slice(0, 240),

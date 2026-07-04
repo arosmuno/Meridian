@@ -1,5 +1,6 @@
 // pages/sector.js -- per-sector deal feed. Clean URL /sector/<slug> (rewrite) or ?name=<sector>.
 import Head from 'next/head';
+import { dedupeDeals } from '../lib/dedupe';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const SECTORS = ['Healthcare', 'TMT', 'Infrastructure', 'Energy & Renewables', 'Financial Services', 'Consumer', 'Industrials', 'Real Estate', 'Macro', 'General'];
@@ -40,10 +41,7 @@ export async function getServerSideProps(ctx) {
       const r = await fetch(SITE + '/api/deals?limit=100');
       if (r.ok) {
         const j = await r.json();
-        const seen = new Set();
-        deals = (j.deals || [])
-          .filter((d) => d.headline && (d.sector || '').toLowerCase() === sector.toLowerCase())
-          .filter((d) => { if (seen.has(d.headline)) return false; seen.add(d.headline); return true; })
+        deals = dedupeDeals((j.deals || []).filter((d) => d.headline && (d.sector || '').toLowerCase() === sector.toLowerCase()))
           .map((d) => ({ id: d.id, headline: d.headline, summary: (d.summary || '').slice(0, 160), type: d.type || 'DEAL', value: fmtValue(d.value, curSym(d.currency)), date: d.date || '', status: (d.status || '').toUpperCase() }));
       }
     } catch (e) {}
