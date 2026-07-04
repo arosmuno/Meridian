@@ -268,8 +268,8 @@ function DealModal({ deal, mode, onClose }) {
       });
       const data = await res.json();
       if (data.analysis) setAnalysis(data.analysis);
-      else setAnalysis('El análisis no está disponible en este momento.');
-    } catch (e) { setAnalysis('El análisis no está disponible en este momento.'); }
+      else setAnalysis('The analysis is not available right now.');
+    } catch (e) { setAnalysis('The analysis is not available right now.'); }
     setLoadingAnalysis(false);
   };
 
@@ -460,7 +460,7 @@ export default function Home({ initialDeals = [] }) {
               <span style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid}}>{deals.length} deals · {fmt(totalVol)}</span>
             </div>
             <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              <button onClick={toggleTheme} title="Cambiar tema claro/oscuro" style={{background:'none',border:`1px solid ${C.border}`,color:C.textMid,padding:'3px 9px',fontSize:13,lineHeight:1,cursor:'pointer'}}
+              <button onClick={toggleTheme} title="Toggle light/dark theme" style={{background:'none',border:`1px solid ${C.border}`,color:C.textMid,padding:'3px 9px',fontSize:13,lineHeight:1,cursor:'pointer'}}
                 onMouseEnter={e=>{e.currentTarget.style.color=C.gold;e.currentTarget.style.borderColor=C.gold}} onMouseLeave={e=>{e.currentTarget.style.color=C.textMid;e.currentTarget.style.borderColor=C.border}}>
                 {theme === 'dark' ? '☀' : '☾'}
               </button>
@@ -555,7 +555,7 @@ export default function Home({ initialDeals = [] }) {
               {lastUpdated && <span style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid}}>Updated {lastUpdated.toLocaleTimeString('en-GB')}</span>}
             </div>
             <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
-              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar deals…"
+              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search deals…"
                 style={{background:C.bg,border:`1px solid ${C.border}`,color:C.textHi,padding:'5px 12px',fontFamily:"var(--s)",fontSize:11,minWidth:200,outline:'none'}} />
               <div className="filter-row" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                 {types.map(tp=><button key={tp} className={`pill ${filter===tp?'active':''}`} onClick={()=>setFilter(tp)}>{tp === 'All' ? 'ALL' : tp}</button>)}
@@ -678,7 +678,7 @@ export default function Home({ initialDeals = [] }) {
             <a href="/sector/tmt" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>TMT</a><a href="/sector/healthcare" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Healthcare</a><a href="/sector/energy-renewables" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Energy</a><a href="/sector/financial-services" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Financial Services</a><a href="/sector/industrials" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Industrials</a><a href="/sector/consumer" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Consumer</a><a href="/sector/real-estate" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Real Estate</a><a href="/sector/infrastructure" style={{color:C.textLo,textDecoration:'none'}}>Infrastructure</a>
           </div>
           <div style={{marginTop:8}}>
-            <a href="/about" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>About</a><a href="/contact" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Contact</a><a href="/privacidad" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Política de privacidad</a>
+            <a href="/about" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>About</a><a href="/contact" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Contact</a><a href="/privacidad" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Privacy Policy</a>
           </div>
         </div>
 

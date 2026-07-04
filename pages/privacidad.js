@@ -14,65 +14,65 @@ function Section({ title, children }) {
   );
 }
 
-export default function Privacidad() {
-  const updated = '29 de junio de 2026';
+export default function Privacy() {
+  const updated = '29 June 2026';
   return (
     <>
       <Head>
-        <title>Política de Privacidad — MERIDIAN</title>
+        <title>Privacy Policy — MERIDIAN</title>
         <meta name="robots" content="index,follow" />
       </Head>
       <div style={{ background: '#08050a', minHeight: '100vh', padding: '0 0 60px' }}>
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 22px' }}>
           <a href="/" style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 12, color: C.gold, textDecoration: 'none', letterSpacing: '.08em' }}>← MERIDIAN</a>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 40, fontWeight: 800, color: C.hi, margin: '18px 0 6px' }}>Política de Privacidad</h1>
-          <p style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 12, color: C.mid, marginBottom: 32 }}>Última actualización: {updated}</p>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 40, fontWeight: 800, color: C.hi, margin: '18px 0 6px' }}>Privacy Policy</h1>
+          <p style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 12, color: C.mid, marginBottom: 32 }}>Last updated: {updated}</p>
 
-          <Section title="1. Responsable del tratamiento">
-            Esta web (“Meridian”) es una publicación independiente de inteligencia de mercados de capital.
-            Para cualquier cuestión relativa a privacidad o protección de datos puedes contactar en{' '}
+          <Section title="1. Who we are">
+            This website ("Meridian") is an independent capital-markets intelligence publication.
+            For any question about privacy or data protection you can contact us at{' '}
             <a href="mailto:arosmuno@gmail.com" style={{ color: C.gold }}>arosmuno@gmail.com</a>.
           </Section>
 
-          <Section title="2. Qué datos tratamos">
-            Meridian no requiere registro ni recoge datos personales identificativos de forma directa
-            (no hay cuentas de usuario ni formularios). Como cualquier sitio web, el proveedor de alojamiento
-            puede registrar datos técnicos básicos (dirección IP, tipo de navegador, fecha y hora) en los
-            registros del servidor con fines de seguridad y funcionamiento.
+          <Section title="2. What data we process">
+            Meridian does not require registration and does not directly collect identifying personal
+            data (there are no user accounts or forms). Like any website, our hosting provider may record
+            basic technical data (IP address, browser type, date and time) in the server logs for security
+            and operational purposes.
           </Section>
 
           <Section title="3. Cookies">
-            Utilizamos cookies <strong>esenciales</strong> necesarias para el funcionamiento del sitio.
-            Si das tu consentimiento, podremos usar cookies de <strong>publicidad</strong> a través de
-            Google AdSense para mostrar anuncios y sostener el proyecto. Puedes aceptar o rechazar las
-            cookies no esenciales mediante el banner de consentimiento, y cambiar tu elección borrando los
-            datos del sitio en tu navegador.
+            We use <strong>essential</strong> cookies needed for the site to work. If you give your consent,
+            we may use <strong>advertising</strong> cookies through Google AdSense to show ads and help
+            sustain the project. You can accept or reject non-essential cookies via the consent banner, and
+            change your choice by clearing the site data in your browser.
           </Section>
 
-          <Section title="4. Terceros">
-            Empleamos los siguientes proveedores, que pueden tratar datos técnicos conforme a sus propias
-            políticas: <strong>Vercel</strong> (alojamiento), <strong>Supabase</strong> (base de datos del
-            contenido) y, cuando esté activo, <strong>Google AdSense</strong> (publicidad). Google puede
-            utilizar cookies para personalizar anuncios; puedes gestionar tus preferencias en
-            {' '}<a href="https://adssettings.google.com" style={{ color: C.gold }}>adssettings.google.com</a>.
+          <Section title="4. Third parties">
+            We use the following providers, which may process technical data under their own policies:{' '}
+            <strong>Vercel</strong> (hosting), <strong>Supabase</strong> (content database) and, when active,
+            <strong> Google AdSense</strong> (advertising). Google may use cookies to personalise ads; you can
+            manage your preferences at{' '}
+            <a href="https://adssettings.google.com" style={{ color: C.gold }}>adssettings.google.com</a>.
           </Section>
 
-          <Section title="5. Base legal y tus derechos">
-            La base legal es tu consentimiento (cookies no esenciales) y el interés legítimo en el
-            funcionamiento y seguridad del sitio. Tienes derecho a acceder, rectificar, suprimir, limitar u
-            oponerte al tratamiento de tus datos, así como a la portabilidad y a retirar el consentimiento en
-            cualquier momento. Para ejercerlos, escribe a{' '}
-            <a href="mailto:arosmuno@gmail.com" style={{ color: C.gold }}>arosmuno@gmail.com</a>. También
-            puedes reclamar ante la autoridad de control competente (en España, la AEPD).
+          <Section title="5. Legal basis and your rights">
+            The legal basis is your consent (for non-essential cookies) and our legitimate interest in the
+            operation and security of the site. You have the right to access, rectify, erase, restrict or
+            object to the processing of your data, as well as to data portability and to withdraw consent at
+            any time. To exercise these rights, write to{' '}
+            <a href="mailto:arosmuno@gmail.com" style={{ color: C.gold }}>arosmuno@gmail.com</a>. You may also
+            lodge a complaint with your local data protection authority (for example, the AEPD in Spain or the
+            ICO in the UK).
           </Section>
 
-          <Section title="6. Cambios en esta política">
-            Podemos actualizar esta política para reflejar cambios legales o del servicio. Publicaremos la
-            versión vigente en esta misma página con su fecha de actualización.
+          <Section title="6. Changes to this policy">
+            We may update this policy to reflect legal or service changes. We will publish the current version
+            on this page together with its update date.
           </Section>
 
           <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 36, paddingTop: 16 }}>
-            <a href="/" style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 12, color: C.mid, textDecoration: 'none' }}>← Volver a Meridian</a>
+            <a href="/" style={{ fontFamily: "'Libre Franklin', sans-serif", fontSize: 12, color: C.mid, textDecoration: 'none' }}>← Back to Meridian</a>
           </div>
         </div>
       </div>
