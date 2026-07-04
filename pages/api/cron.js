@@ -121,8 +121,11 @@ export default async function handler(req, res) {
         .eq('category', 'deal')
         .is('analysis', null)
         .order('fetched_at', { ascending: false })
-        .limit(5);
-      for (const d of (missing || [])) {
+        .limit(4);
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const list = missing || [];
+      for (let k = 0; k < list.length; k++) {
+        const d = list[k];
         try {
           const a = await generateAnalysis(d);
           if (a && a.length > 60) {
@@ -130,6 +133,8 @@ export default async function handler(req, res) {
             analysed++;
           }
         } catch (e) { /* skip this deal on error, try again next run */ }
+        // Espacia las peticiones para no chocar con el limite POR MINUTO de Groq (RPM/TPM).
+        if (k < list.length - 1) await sleep(12000);
       }
     } catch (e) {
       console.error('[CRON] Analysis backfill failed:', e.message);
