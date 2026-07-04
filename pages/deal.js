@@ -130,11 +130,11 @@ export default function DealPage({ deal, id }) {
 
           <figure style={{ margin: '0 0 24px' }}>
             <div style={{ width: '100%', maxHeight: 430, overflow: 'hidden', border: '1px solid var(--border)' }}>
-              <img src={'/api/photo?sector=' + encodeURIComponent(sector || 'General') + '&i=' + (id || 0)} alt=""
+              <img src={'/api/photo?sector=' + encodeURIComponent(sector || 'General') + '&id=' + (id || 0) + '&b=' + encodeURIComponent(deal.buyer || '') + '&t=' + encodeURIComponent(deal.target || '')} alt=""
                 onError={(e)=>{e.currentTarget.closest('figure').style.display='none';}}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}/>
             </div>
-            <figcaption style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', marginTop: 6, letterSpacing: '.04em' }}>Photo via Pexels</figcaption>
+            <figcaption style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', marginTop: 6, letterSpacing: '.04em' }}>Illustrative image</figcaption>
           </figure>
 
           <div style={{ display: 'flex', gap: 26, flexWrap: 'wrap', alignItems: 'baseline', marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>

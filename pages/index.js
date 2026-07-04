@@ -188,7 +188,7 @@ function HeroDeal({ deal, onClick }) {
       onMouseEnter={e=>e.currentTarget.style.opacity='.93'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
       <div style={{position:'absolute',inset:0,background:`radial-gradient(ellipse at 80% 0%,${deal.accent}18 0%,transparent 60%)`,pointerEvents:'none'}}/>
       <div style={{width:'100%',height:300,overflow:'hidden',marginBottom:26,border:`1px solid ${C.border}`,position:'relative'}}>
-        <img src={'/api/photo?sector=' + encodeURIComponent(deal.sector || 'General') + '&i=' + (deal.id || 0)} alt=""
+        <img src={'/api/photo?sector=' + encodeURIComponent(deal.sector || 'General') + '&id=' + (deal.id || 0) + '&b=' + encodeURIComponent(deal.buyer || '') + '&t=' + encodeURIComponent(deal.target || '')} alt=""
           onError={(e)=>{e.currentTarget.parentElement.style.display='none';}}
           style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
       </div>
@@ -224,7 +224,7 @@ function DealCard({ deal, onClick }) {
     <div className="card" onClick={()=>onClick(deal)}>
       <div style={{height:3,background:deal.accent}}/>
       <div style={{width:'100%',height:150,overflow:'hidden',background:C.bg}}>
-        <img src={'/api/photo?sector=' + encodeURIComponent(deal.sector || 'General') + '&i=' + (deal.id || 0)} alt="" loading="lazy"
+        <img src={'/api/photo?sector=' + encodeURIComponent(deal.sector || 'General') + '&id=' + (deal.id || 0) + '&b=' + encodeURIComponent(deal.buyer || '') + '&t=' + encodeURIComponent(deal.target || '')} alt="" loading="lazy"
           onError={(e)=>{e.currentTarget.parentElement.style.display='none';}}
           style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
       </div>
@@ -681,7 +681,7 @@ export default function Home({ initialDeals = [] }) {
             <a href="/about" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>About</a><a href="/contact" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Contact</a><a href="/privacy" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Privacy Policy</a>
           </div>
           <div style={{marginTop:6,fontFamily:"var(--s)",fontSize:8,color:C.textLo,letterSpacing:'.06em'}}>
-            Photos via <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style={{color:C.textLo}}>Pexels</a>
+            Images via <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style={{color:C.textLo}}>Pexels</a>, <a href="https://commons.wikimedia.org" target="_blank" rel="noopener noreferrer" style={{color:C.textLo}}>Wikimedia Commons</a> &amp; AI illustration
           </div>
         </div>
 
