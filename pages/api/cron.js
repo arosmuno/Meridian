@@ -1,5 +1,6 @@
 import { fetchDealsFromWeb, fetchDealsFromKnowledge } from '../../lib/fetchDeals';
 import { supabaseAdmin } from '../../lib/supabase';
+import { generateAnalysis } from '../../lib/dealAnalysis';
 
 export const config = { maxDuration: 300 };
 
@@ -97,22 +98,45 @@ export default async function handler(req, res) {
       return true;
     });
 
-    if (freshRows.length === 0) {
-      console.log('[CRON] All fetched deals were duplicates of existing ones.');
-      return res.status(200).json({ ok: true, saved: 0, skipped: rows.length, message: 'All duplicates' });
+    let saved = 0;
+    if (freshRows.length > 0) {
+      const { error } = await supabaseAdmin
+        .from('deals')
+        .upsert(freshRows, { onConflict: 'headline', ignoreDuplicates: true });
+      if (error) {
+        console.error('[CRON] Supabase error:', error.message);
+        return res.status(500).json({ error: error.message });
+      }
+      saved = freshRows.length;
     }
 
-    const { error } = await supabaseAdmin
-      .from('deals')
-      .upsert(freshRows, { onConflict: 'headline', ignoreDuplicates: true });
-
-    if (error) {
-      console.error('[CRON] Supabase error:', error.message);
-      return res.status(500).json({ error: error.message });
+    // Backfill Meridian Analysis for deals that still lack it. Runs every cycle (even
+    // when all fetched news were duplicates), bounded per run to respect quota/time, so
+    // the whole archive gets analysis over time -- not just deals a reader happened to open.
+    let analysed = 0;
+    try {
+      const { data: missing } = await supabaseAdmin
+        .from('deals')
+        .select('id,headline,summary,buyer,target,value,currency,type,sector')
+        .eq('category', 'deal')
+        .is('analysis', null)
+        .order('fetched_at', { ascending: false })
+        .limit(5);
+      for (const d of (missing || [])) {
+        try {
+          const a = await generateAnalysis(d);
+          if (a && a.length > 60) {
+            await supabaseAdmin.from('deals').update({ analysis: a }).eq('id', d.id);
+            analysed++;
+          }
+        } catch (e) { /* skip this deal on error, try again next run */ }
+      }
+    } catch (e) {
+      console.error('[CRON] Analysis backfill failed:', e.message);
     }
 
-    console.log(`[CRON] Saved ${freshRows.length} deals (skipped ${rows.length - freshRows.length} duplicates)`);
-    return res.status(200).json({ ok: true, saved: freshRows.length, skipped: rows.length - freshRows.length, source });
+    console.log(`[CRON] Saved ${saved} deals (skipped ${rows.length - saved} dupes), analysed ${analysed}`);
+    return res.status(200).json({ ok: true, saved, skipped: rows.length - saved, analysed, source });
 
   } catch (err) {
     console.error('[CRON] Fatal error:', err.message);
