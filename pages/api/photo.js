@@ -1,9 +1,13 @@
-// pages/api/photo.js -- foto por sector desde Pexels (licencia de uso comercial, sin
-// riesgo legal de reutilizar fotos de otros periodicos). Cachea las URLs por sector en
-// Supabase (site_cache) para no gastar la cuota de la API de Pexels. Devuelve un 302 a la
-// imagen elegida (variedad por indice). Requiere PEXELS_API_KEY.
+// pages/api/photo.js -- foto por deal con CASCADA de fuentes legalmente seguras y, como
+// red final, Pexels. Orden: (1) Wikimedia Commons -- foto REAL del sujeto, solo si el
+// titulo del archivo contiene claramente el nombre de la empresa Y la licencia es de
+// dominio publico / CC0 (sin obligacion de atribucion); (2) ilustracion generada por IA
+// (Pollinations, imagen original por sector, sin nombres ni logos reales); (3) Pexels por
+// sector (stock con licencia comercial). El ganador se cachea por deal en Supabase
+// (site_cache) para que la cascada se ejecute UNA vez y luego cargue al instante.
 //
-// La atribucion "Photos via Pexels" se muestra en el pie del sitio (requisito de la API).
+// Nota: los LOGOS de empresa se dejan fuera a proposito (adivinar el dominio desde el
+// nombre puede mostrar el logo de otra empresa, y un logo no encaja como foto a sangre).
 
 import { supabaseAdmin } from '../../lib/supabase';
 
@@ -20,36 +24,115 @@ const TERMS = {
   General: 'business corporate skyline',
 };
 
-export default async function handler(req, res) {
-  const sector = String((req.query && req.query.sector) || 'General');
-  const i = parseInt((req.query && req.query.i) || '0', 10) || 0;
-  const term = TERMS[sector] || TERMS.General;
-  const cacheKey = 'photos:' + sector;
+const SUFFIX = /^(group|holdings|holding|incorporated|inc|corporation|corp|company|co|sa|plc|ag|gmbh|ltd|limited|llc|lp|partners|automotive|nv|spa|se|ab|oyj|the|and|for)$/;
 
+function cleanName(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+// Token distintivo (primera palabra significativa) para exigir coincidencia real en Wikimedia.
+function coreToken(name) {
+  const words = cleanName(name).split(' ').filter((w) => w.length >= 3 && !SUFFIX.test(w));
+  return words[0] || '';
+}
+function hashNum(s) {
+  let h = 0; const str = String(s || '');
+  for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; }
+  return Math.abs(h);
+}
+async function fetchT(url, opts, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms || 4500);
+  try { return await fetch(url, Object.assign({ signal: ctrl.signal }, opts || {})); }
+  finally { clearTimeout(t); }
+}
+
+// (1) Wikimedia Commons: foto real, con coincidencia estricta de nombre y licencia libre.
+async function tryWikimedia(name) {
+  const core = coreToken(name);
+  if (core.length < 4) return ''; // sin token distintivo, no arriesgamos una coincidencia falsa
+  const api = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search'
+    + '&gsrsearch=' + encodeURIComponent(cleanName(name)) + '&gsrnamespace=6&gsrlimit=10'
+    + '&prop=imageinfo&iiprop=url|extmetadata|mime&iiurlwidth=1000&origin=*';
+  try {
+    const r = await fetchT(api, { headers: { 'User-Agent': 'MeridianNewsBot/1.0 (contact: arosmuno@gmail.com)' } }, 5000);
+    const j = await r.json().catch(() => ({}));
+    const pages = (j && j.query && j.query.pages) ? Object.values(j.query.pages) : [];
+    for (const p of pages) {
+      const title = String(p.title || '').toLowerCase();
+      const ii = p.imageinfo && p.imageinfo[0];
+      if (!ii) continue;
+      if (!/jpeg|png/.test(String(ii.mime || '').toLowerCase())) continue; // solo fotos reales
+      if (title.indexOf(core) === -1) continue;                            // debe nombrar la empresa
+      const md = ii.extmetadata || {};
+      const lic = String((md.LicenseShortName && md.LicenseShortName.value) || '').toLowerCase();
+      if (!/public domain|cc0|no restrictions|pd-/.test(lic)) continue;    // solo libre sin atribucion
+      const u = ii.thumburl || ii.url;
+      if (u) return u;
+    }
+  } catch (e) { /* cae al siguiente nivel */ }
+  return '';
+}
+
+// (2) Ilustracion IA original por sector (sin nombres/logos reales). Pollinations, sin clave.
+function aiUrl(sector, id) {
+  const term = TERMS[sector] || TERMS.General;
+  const prompt = 'professional editorial photograph, ' + term + ', corporate business, cinematic lighting, no text, no logo, no watermark';
+  const seed = hashNum(sector + ':' + id) % 100000;
+  return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt)
+    + '?width=1000&height=650&nologo=true&model=flux&seed=' + seed;
+}
+
+// (3) Pexels por sector (stock con licencia comercial). Cachea las URLs por sector.
+async function tryPexels(sector, i) {
+  const key = process.env.PEXELS_API_KEY;
+  const cacheKey = 'photos:' + sector;
   let urls = [];
   try {
     const { data } = await supabaseAdmin.from('site_cache').select('value').eq('key', cacheKey).maybeSingle();
     if (data && data.value) urls = JSON.parse(data.value);
-  } catch (e) { /* seguimos y pedimos a Pexels */ }
-
-  const key = process.env.PEXELS_API_KEY;
+  } catch (e) { /* pedimos a Pexels */ }
   if (!urls.length && key) {
     try {
-      const pr = await fetch('https://api.pexels.com/v1/search?query=' + encodeURIComponent(term) + '&per_page=15&orientation=landscape', {
-        headers: { Authorization: key },
-      });
+      const term = TERMS[sector] || TERMS.General;
+      const pr = await fetchT('https://api.pexels.com/v1/search?query=' + encodeURIComponent(term) + '&per_page=15&orientation=landscape', { headers: { Authorization: key } }, 5000);
       const pj = await pr.json().catch(() => ({}));
       urls = (pj.photos || []).map((p) => p && p.src && (p.src.large || p.src.medium)).filter(Boolean);
       if (urls.length) {
-        try {
-          await supabaseAdmin.from('site_cache').upsert({ key: cacheKey, value: JSON.stringify(urls), updated_at: new Date().toISOString() }, { onConflict: 'key' });
-        } catch (e) { /* no bloqueante */ }
+        try { await supabaseAdmin.from('site_cache').upsert({ key: cacheKey, value: JSON.stringify(urls), updated_at: new Date().toISOString() }, { onConflict: 'key' }); } catch (e) {}
       }
-    } catch (e) { /* si falla, 404 abajo */ }
+    } catch (e) { /* nada */ }
   }
+  if (!urls.length) return '';
+  return urls[Math.abs(i) % urls.length];
+}
 
-  if (!urls.length) { res.status(404).end(); return; }
-  const url = urls[Math.abs(i) % urls.length];
+export default async function handler(req, res) {
+  const q = req.query || {};
+  const sector = String(q.sector || 'General');
+  const id = String(q.id || q.i || '0');
+  const buyer = String(q.b || '');
+  const target = String(q.t || '');
+  const i = parseInt(id, 10) || hashNum(id);
+  const cacheKey = 'photo:' + id + ':' + sector;
+
+  // Cache por deal: la cascada se resuelve una sola vez.
+  try {
+    const { data } = await supabaseAdmin.from('site_cache').select('value').eq('key', cacheKey).maybeSingle();
+    if (data && data.value) { res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400'); res.redirect(302, data.value); return; }
+  } catch (e) { /* seguimos */ }
+
+  let url = '';
+  const na = (s) => !s || /^n\/?a$/i.test(String(s).trim());
+  // (1) Wikimedia
+  if (!na(buyer)) url = await tryWikimedia(buyer);
+  if (!url && !na(target)) url = await tryWikimedia(target);
+  // (2) IA
+  if (!url) url = aiUrl(sector, id);
+  // (3) Pexels (red final)
+  if (!url) url = await tryPexels(sector, i);
+
+  if (!url) { res.status(404).end(); return; }
+  try { await supabaseAdmin.from('site_cache').upsert({ key: cacheKey, value: url, updated_at: new Date().toISOString() }, { onConflict: 'key' }); } catch (e) {}
   res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
   res.redirect(302, url);
 }
