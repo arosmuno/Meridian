@@ -183,7 +183,7 @@ export default function Learn() {
             LEARN &middot; DEALS &middot; CAPITAL &middot; STRATEGY
           </div>
           <div style={{ marginTop: 8 }}>
-            <a href="/privacidad" style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-mid)', textDecoration: 'none', letterSpacing: '.06em' }}>Privacy Policy</a>
+            <a href="/privacy" style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-mid)', textDecoration: 'none', letterSpacing: '.06em' }}>Privacy Policy</a>
           </div>
         </div>
       </div>

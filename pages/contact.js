@@ -38,7 +38,7 @@ export default function Contact() {
             <a href="/about" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>About</a>
             <a href="/contact" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Contact</a>
             <a href="/learn" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Learn</a>
-            <a href="/privacidad" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>Privacy</a>
+            <a href="/privacy" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>Privacy</a>
           </div>
         </div>
       </div>
