@@ -61,8 +61,13 @@ async function tryWikimedia(name) {
       const title = String(p.title || '').toLowerCase();
       const ii = p.imageinfo && p.imageinfo[0];
       if (!ii) continue;
-      if (!/jpeg|png/.test(String(ii.mime || '').toLowerCase())) continue; // solo fotos reales
+      if (!/jpeg/.test(String(ii.mime || '').toLowerCase())) continue;     // solo fotos JPEG reales
       if (title.indexOf(core) === -1) continue;                            // debe nombrar la empresa
+      // Excluye escudos/heraldica/logos/mapas/retratos: no son ilustrativos de una operacion.
+      if (/coat of arms|crest|arms of|\blogo\b|\bseal\b|\bflag\b|emblem|escudo|heraldr|banner|\bmap\b|diagram|\bicon\b|portrait|signature|stamp/.test(title)) continue;
+      // Solo imagenes claramente apaisadas (evita escudos/retratos verticales que casan por nombre).
+      const tw = Number(ii.thumbwidth || ii.width || 0), th = Number(ii.thumbheight || ii.height || 0);
+      if (!(tw > 0 && th > 0 && tw >= th * 1.2)) continue;
       const md = ii.extmetadata || {};
       const lic = String((md.LicenseShortName && md.LicenseShortName.value) || '').toLowerCase();
       if (!/public domain|cc0|no restrictions|pd-/.test(lic)) continue;    // solo libre sin atribucion
@@ -113,7 +118,7 @@ export default async function handler(req, res) {
   const buyer = String(q.b || '');
   const target = String(q.t || '');
   const i = parseInt(id, 10) || hashNum(id);
-  const cacheKey = 'photo:v2:' + id + ':' + sector;
+  const cacheKey = 'photo:v3:' + id + ':' + sector;
 
   // Cache por deal: la cascada se resuelve una sola vez.
   try {
