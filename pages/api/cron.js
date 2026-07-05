@@ -1,6 +1,8 @@
 import { fetchDealsFromWeb, fetchDealsFromKnowledge } from '../../lib/fetchDeals';
 import { supabaseAdmin } from '../../lib/supabase';
 import { generateAnalysis } from '../../lib/dealAnalysis';
+import { dedupeDeals } from '../../lib/dedupe';
+import { getOrGenerateWrap } from '../../lib/wrapGen';
 
 export const config = { maxDuration: 300 };
 
@@ -78,25 +80,23 @@ export default async function handler(req, res) {
       };
     });
 
-    // Dedupe: descarta filas cuya operacion (buyer|target) ya existe en la BD o se
-    // repite en este mismo lote, aunque el titular este redactado distinto.
-    const seen = new Set();
+    // Dedupe ROBUSTO con el mismo motor que el frontend (firma buyer|target + solape de
+    // titular): asi los duplicados re-titulados (p.ej. "Bending Spoons builds $23B empire
+    // through..." vs "...with Nasdaq...") NO llegan a entrar en la BD.
+    let existing = [];
     try {
-      const { data: existing } = await supabaseAdmin
+      const { data } = await supabaseAdmin
         .from('deals')
         .select('buyer,target,headline')
         .order('fetched_at', { ascending: false })
         .limit(300);
-      (existing || []).forEach((d) => seen.add(dealSig(d)));
+      existing = data || [];
     } catch (e) {
       console.error('[CRON] Could not load existing deals for dedupe:', e.message);
     }
-    const freshRows = rows.filter((d) => {
-      const sig = dealSig(d);
-      if (seen.has(sig)) return false;
-      seen.add(sig);
-      return true;
-    });
+    const keptHeadlines = new Set(dedupeDeals([...existing, ...rows]).map((d) => d.headline));
+    const existingHeadlines = new Set(existing.map((e) => e.headline));
+    const freshRows = rows.filter((d) => keptHeadlines.has(d.headline) && !existingHeadlines.has(d.headline));
 
     let saved = 0;
     if (freshRows.length > 0) {
@@ -140,8 +140,13 @@ export default async function handler(req, res) {
       console.error('[CRON] Analysis backfill failed:', e.message);
     }
 
-    console.log(`[CRON] Saved ${saved} deals (skipped ${rows.length - saved} dupes), analysed ${analysed}`);
-    return res.status(200).json({ ok: true, saved, skipped: rows.length - saved, analysed, source });
+    // Pre-genera "The Wrap" de hoy (si aun no esta cacheado) con el motor fiable del cron,
+    // para que la pagina /wrap nunca muestre el placeholder ni una fecha vieja.
+    let wrapped = false;
+    try { const w = await getOrGenerateWrap(false); wrapped = !!(w && w.wrap); } catch (e) { console.error('[CRON] Wrap gen failed:', e.message); }
+
+    console.log(`[CRON] Saved ${saved} deals (skipped ${rows.length - saved} dupes), analysed ${analysed}, wrap:${wrapped}`);
+    return res.status(200).json({ ok: true, saved, skipped: rows.length - saved, analysed, wrapped, source });
 
   } catch (err) {
     console.error('[CRON] Fatal error:', err.message);
