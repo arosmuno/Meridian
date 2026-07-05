@@ -6,6 +6,7 @@ import { RESOURCES, GROUPS } from '../lib/learnResources';
 
 const GROUP_META = {
   Books: { accent: '#d4a853', tag: 'The canon', desc: 'The books worth actually reading -- from value-investing scripture to the narratives that show how deals really happen.' },
+  Courses: { accent: '#14b8a6', tag: 'Learn from the best', desc: 'Top-university courses -- Wharton, Bocconi, Yale and Damodaran -- free to audit or genuinely free. The real thing, not the paid course mills.' },
   Resources: { accent: '#4a9eff', tag: 'Learn for free', desc: 'Free, high-signal places to learn valuation, markets and how the industry really works. No paywalls, no fluff.' },
   Podcasts: { accent: '#a78bfa', tag: 'Listen', desc: 'Long-form conversations that make the commute smarter -- deals, strategy and the people behind them.' },
   Miscellaneous: { accent: '#22c55e', tag: 'The toolkit', desc: 'The daily newsletters, data tools and communities that keep you sharp and current.' },
