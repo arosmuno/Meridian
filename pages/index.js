@@ -13,7 +13,7 @@ const TYPE_STYLE = {
   'Debt Advisory':   { accent: '#f59e0b', bg: '#130d04' },
   'Macro':           { accent: '#38bdf8', bg: '#071520' },
   'Earnings':        { accent: '#fb923c', bg: '#130a04' },
-  'Markets':         { accent: '#a3e635', bg: '#091505' },h
+  'Markets':         { accent: '#a3e635', bg: '#091505' },
   'Default':         { accent: '#c9b99a', bg: '#0d0b07' },
 };
 const STATUS_STYLE = {
