@@ -13,7 +13,7 @@ const TYPE_STYLE = {
   'Debt Advisory':   { accent: '#f59e0b', bg: '#130d04' },
   'Macro':           { accent: '#38bdf8', bg: '#071520' },
   'Earnings':        { accent: '#fb923c', bg: '#130a04' },
-  'Markets':         { accent: '#a3e635', bg: '#091505' },
+  'Markets':         { accent: '#a3e635', bg: '#091505' },h
   'Default':         { accent: '#c9b99a', bg: '#0d0b07' },
 };
 const STATUS_STYLE = {
@@ -362,10 +362,10 @@ export default function Home({ initialDeals = [] }) {
 
   const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
 
-  const loadDeals = useCallback(async () => {
+  const loadDeals = useCallback(async (days = 7) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/deals');
+      const res = await fetch(`/api/deals?days=${days}`);
       const data = await res.json();
       setDeals(processDeals(data.deals || []));
       setMode(data.source || 'archive');
@@ -376,12 +376,19 @@ export default function Home({ initialDeals = [] }) {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadDeals(); }, [loadDeals]);
+  useEffect(() => { loadDeals(7); }, [loadDeals]);
 
   useEffect(() => {
-    const interval = setInterval(loadDeals, 10 * 60 * 1000);
+    const interval = setInterval(() => loadDeals(7), 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [loadDeals]);
+
+  // Re-fetch with wider date range when region or sector filter is applied
+  useEffect(() => {
+    const hasFilter = geoFilter !== 'All' || sectorFilter !== 'All';
+    loadDeals(hasFilter ? 30 : 7);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoFilter, sectorFilter]);
 
   const dealItems  = deals.filter(d => !isMarketLike(d));
   const marketItems = deals.filter(d => isMarketLike(d));
@@ -697,7 +704,7 @@ export default function Home({ initialDeals = [] }) {
 export async function getServerSideProps() {
   let initialDeals = [];
   try {
-    const r = await fetch('https://www.meridiancapmarkets.com/api/deals?limit=60');
+    const r = await fetch('https://www.meridiancapmarkets.com/api/deals?limit=200&days=7');
     if (r.ok) { const j = await r.json(); initialDeals = j.deals || []; }
   } catch (e) {}
   return { props: { initialDeals } };
