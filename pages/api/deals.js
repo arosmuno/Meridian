@@ -22,6 +22,7 @@ export default async function handler(req, res) {
         let query = supabase
           .from('deals')
           .select('*')
+          .neq('category', 'duplicate')
           .gte('deal_date', cutoffISO)
           .order('deal_date', { ascending: false, nullsFirst: false })
           .order('fetched_at', { ascending: false })
