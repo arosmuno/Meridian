@@ -87,7 +87,7 @@ export default async function handler(req, res) {
     try {
       const { data } = await supabaseAdmin
         .from('deals')
-        .select('buyer,target,headline')
+        .select('buyer,target,headline,value,currency')
         .order('fetched_at', { ascending: false })
         .limit(300);
       existing = data || [];
