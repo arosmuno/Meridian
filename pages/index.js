@@ -80,26 +80,36 @@ function tokenize(d) {
 // (2) fuerte solape de palabras significativas del titular (>=3 comunes y Jaccard >=0.5), que
 // captura casos como "Napa" vs "Genuine Parts' Napa Unit". Conserva el primero (mas reciente).
 function dedupeDeals(arr) {
+  const norm = (s) => String(s == null ? '' : s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b(inc|ltd|plc|sa|nv|ag|spa|group|holding|holdings|co|corp|the)\b/g, '')
+    .replace(/[^a-z0-9]+/g, '');
+  const isNA = (s) => !s || /^n\/?a$/i.test(String(s).trim());
+  const numVal = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+  const tokensOf = (d) => new Set(String(d.headline || '').toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter((w) => w.length > 3));
   const kept = [];
   const meta = [];
-  for (const d of arr) {
-    const b = sigPart(d.buyer), t = sigPart(d.target);
-    const real = b && b !== 'na' && b.length > 2 && t && t !== 'na' && t.length > 2;
-    const key = real ? (b < t ? b + '|' + t : t + '|' + b) : null;
-    const tk = tokenize(d);
+  const seenKeys = new Set();
+  for (const d of (arr || [])) {
+    const structKeys = [];
+    if (!isNA(d.buyer) && !isNA(d.target)) structKeys.push('bt:' + norm(d.buyer) + '|' + norm(d.target));
+    if (!isNA(d.target) && numVal(d.value) > 0) structKeys.push('tv:' + norm(d.target) + '|' + numVal(d.value) + '|' + norm(d.currency));
+    if (structKeys.some((k) => seenKeys.has(k))) continue;
+    const key = norm(d.buyer) + '|' + norm(d.target);
+    const tk = tokensOf(d);
     let dup = false;
     for (let i = 0; i < meta.length; i++) {
-      if (key && meta[i].key === key) { dup = true; break; }
+      if (meta[i].key && key !== '|' && meta[i].key === key) { dup = true; break; }
       let inter = 0;
       for (const x of tk) if (meta[i].tk.has(x)) inter++;
-      // Coeficiente de solape (inter / conjunto mas pequeno): robusto a titulares de
-      // distinta longitud (p.ej. "Aena scraps..." vs "Aena's tender declared void").
-      const minSize = Math.min(tk.size, meta[i].tk.size);
-      if (inter >= 3 && minSize > 0 && inter / minSize >= 0.6) { dup = true; break; }
+      const denom = Math.min(tk.size, meta[i].tk.size) || 1;
+      if (tk.size >= 4 && inter / denom >= 0.6) { dup = true; break; }
     }
     if (dup) continue;
     kept.push(d);
     meta.push({ key, tk });
+    structKeys.forEach((k) => seenKeys.add(k));
   }
   return kept;
 }
