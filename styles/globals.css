@@ -84,7 +84,7 @@ body {
 .card:active { background: var(--bg-hover); }
 
 .ticker-wrap { overflow: hidden; white-space: nowrap; }
-.ticker-inner { display: inline-block; animation: tick 70s linear infinite; }
+.ticker-inner { display: inline-block; animation: tick 140s linear infinite; }
 @keyframes tick { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
 .ad-slot {
