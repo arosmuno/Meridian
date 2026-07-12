@@ -10,17 +10,13 @@
 //
 // Costs zero Anthropic tokens: every source is an ATS JSON API.
 
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin as supabase } from '../../lib/supabase';
 import { fetchAllJobs, upsertJobs } from '../../lib/fetchJobs';
 
 export const config = { maxDuration: 60 };
 
-// SERVICE ROLE, not the anon key: RLS only grants SELECT to anon, so with the
-// anon key every insert fails with 42501 and the run cheerfully reports 0 new.
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// supabaseAdmin is the service-role client. RLS grants SELECT to anon only, so
+// with the anon key every insert fails with 42501 and the run happily reports 0 new.
 
 export default async function handler(req, res) {
   // Vercel Cron signs its requests; a manual run needs the secret.
