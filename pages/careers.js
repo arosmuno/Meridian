@@ -3,6 +3,7 @@
 // hiring firm just worked on. That is something only Meridian can show.
 import Head from 'next/head';
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const DIVISIONS = ['All', 'M&A', 'LBO', 'ECM', 'LevFin', 'Debt Advisory', 'Project Finance', 'Restructuring'];
@@ -42,14 +43,22 @@ function Footer() {
   );
 }
 
+// Read Supabase directly rather than fetching our own /api/jobs over HTTP.
+// rankings.js fetches SITE + '/api/deals', but SITE is the PRODUCTION domain --
+// on a preview deployment that would call production, where this endpoint does
+// not exist yet, and the board would silently render empty. Querying the DB
+// straight from the server also saves a pointless round trip.
 export async function getServerSideProps() {
   let jobs = [];
   try {
-    const r = await fetch(SITE + '/api/jobs?limit=200');
-    if (r.ok) {
-      const j = await r.json();
-      jobs = j.jobs || [];
-    }
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*, deal:related_deal_id (id, headline, buyer, target, value, currency, deal_date)')
+      .eq('status', 'active')
+      .order('posted_at', { ascending: false, nullsFirst: false })
+      .order('first_seen_at', { ascending: false })
+      .limit(200);
+    if (!error && data) jobs = data;
   } catch (e) {}
   return { props: { jobs } };
 }
