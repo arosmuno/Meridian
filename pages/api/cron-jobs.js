@@ -47,17 +47,21 @@ export default async function handler(req, res) {
     const { jobs, healthyFirms } = await fetchAllJobs();
     const { upserted } = await upsertJobs(supabase, jobs, healthyFirms);
 
-    // Sweep + cross-reference. Pure SQL, no tokens. Without these nothing ever
-    // expires and no listing is ever tied to a deal.
+    // Expiry sweep. Pure SQL, no tokens. Without it nothing ever expires.
+    //
+    // The deal cross-reference (link_jobs_to_deals) is deliberately NOT called.
+    // The idea was 'this firm just worked that deal, and is now hiring for it'.
+    // In practice deals.advisor is far too sparse, and the handful of matches that
+    // survived the quality gates ALL pointed at the same deal, repeated across 19
+    // cards. A connection that is true but useless is still noise. The SQL function
+    // stays in the DB for when advisor coverage is good enough to switch it back on.
     const { data: expired } = await supabase.rpc('expire_stale_jobs');
-    const { data: linked } = await supabase.rpc('link_jobs_to_deals');
 
     const result = {
       fetched: jobs.length,
       upserted,
       healthyFirms: healthyFirms.length,
       expired: (expired && expired[0] && expired[0].expired_count) || 0,
-      linkedToDeals: (linked && linked[0] && linked[0].linked_count) || 0,
     };
 
     await supabase.from('cron_runs')
