@@ -205,3 +205,37 @@ body {
     padding: 0 16px !important;
   }
 }
+
+/* ── FIX MÓVIL: pestañas de sección (The Wrap / Analysis / Rankings / Learn) ──
+   Antes: .section-tabs era un flex de una sola fila con margin-left:auto en el
+   primer enlace. En un móvil de 390px el contenido mide ~622px, así que
+   ANALYSIS quedaba cortado y RANKINGS y LEARN caían fuera de pantalla — y como
+   body tiene overflow-x:hidden, no había forma de llegar a ellos.
+   Ahora: fila 1 = DEALS | MARKETS (50/50), fila 2 = los 4 enlaces. Todo visible. */
+@media (max-width: 700px) {
+  .section-tabs {
+    flex-wrap: wrap !important;
+  }
+  .section-tabs > * {
+    margin-left: 0 !important;
+  }
+  .section-tabs button {
+    flex: 1 1 50% !important;
+    padding: 11px 8px !important;
+    font-size: 11px !important;
+  }
+  .section-tabs a {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    padding: 10px 10px !important;
+    font-size: 10.5px !important;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .section-tabs a {
+    padding: 10px 6px !important;
+    font-size: 10px !important;
+  }
+}
