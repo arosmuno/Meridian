@@ -1,48 +1,16 @@
 // pages/api/analysis.js
-// Meridian Analysis editorial commentary via Google Gemini, WITH caching in Supabase.
-// Generated once per deal (key: headline) and reused -> avoids rate limits.
-// Generation logic lives in lib/dealAnalysis.js (flash-lite + retry on 429/503).
+// DESACTIVADO a proposito. No genera comentario editorial.
+//
+// La version anterior le pasaba a un LLM SOLO el titular, el comprador, el objetivo,
+// el valor y el resumen, y le pedia "la lectura financiera y estructural (valoracion,
+// apalancamiento, prima, financiacion)". El modelo no tenia ninguno de esos datos,
+// asi que se los inventaba: multiplos de EBITDA, tramos de deuda, primas. Publicado
+// como analisis de un medio financiero, con el nombre de un periodico real encima.
+//
+// Meridian no tiene mesa editorial. Mientras no la tenga, no publica analisis.
+// Cuando haya comentario escrito por una persona, se guarda en deals.analysis
+// y se renderiza desde ahi. Este endpoint NO vuelve a generar nada.
 
-import { supabaseAdmin } from '../../lib/supabase';
-import { generateAnalysis } from '../../lib/dealAnalysis';
-
-// Peticion EN VIVO: acota el tiempo maximo de la funcion.
-export const config = { maxDuration: 30 };
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const { deal } = req.body || {};
-  if (!deal || !deal.headline) return res.status(400).json({ error: 'No deal provided' });
-
-  // 1) Already cached in the database?
-  try {
-    const { data: existing } = await supabaseAdmin
-      .from('deals')
-      .select('analysis')
-      .eq('headline', deal.headline)
-      .limit(1)
-      .maybeSingle();
-    if (existing && existing.analysis) {
-      return res.status(200).json({ analysis: existing.analysis, cached: true });
-    }
-  } catch (e) {
-    // If the column does not exist yet or the read fails, continue to generate (without caching).
-  }
-
-  try {
-    const analysis = await generateAnalysis(deal, { fast: true });
-    if (!analysis || analysis.length < 40) {
-      return res.status(200).json({ analysis: '' });
-    }
-
-    // 2) Cache it (non-blocking if it fails)
-    try {
-      await supabaseAdmin.from('deals').update({ analysis }).eq('headline', deal.headline);
-    } catch (e) { /* ignore if the column does not exist yet */ }
-
-    return res.status(200).json({ analysis });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
+export default function handler(req, res) {
+  return res.status(200).json({ analysis: '', disabled: true });
 }
