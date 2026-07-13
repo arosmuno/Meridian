@@ -47,7 +47,7 @@ export async function getServerSideProps(ctx) {
   try {
     const { data } = await supabaseAdmin
       .from('deals')
-      .select('id,headline,buyer,target,value_eur,type,sector,source,deal_date')
+      .select('id,headline,buyer,target,value_eur,type,sector,source,deal_date,is_iberian')
       .eq('category', 'deal')
       .is('excluded_reason', null)
       .gt('value_eur', 0)
@@ -56,7 +56,10 @@ export async function getServerSideProps(ctx) {
     all = data || [];
   } catch (e) {}
 
-  const iberian = all.filter((d) => IBERIAN_SOURCES.includes(d.source));
+  // Iberia por senal GEOGRAFICA de la operacion, no por el periodico que la publica.
+  // (Expansion y Cinco Dias tambien cubren noticias globales: usar la fuente como
+  // proxy metia la OPV de SK Hynix en la tabla iberica.)
+  const iberian = all.filter((d) => d.is_iberian);
 
   const tally = (rows, key) => {
     const m = {};
@@ -140,13 +143,28 @@ export default function Rankings(p) {
             <a href="/methodology" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>methodology page</a>.
           </p>
 
-          {/* IBERIA -- el foco del sitio, arriba del todo */}
+          {/* IBERIA -- el foco del sitio. Si no hay masa critica, se dice. */}
           <div style={{ border: '2px solid var(--gold)', padding: '4px', marginBottom: 22 }}>
-            <Card
-              title="&#10022; Iberia &mdash; the focus"
-              sub={`${p.iberianCount} eligible Iberian transactions, ${eur(p.iberianVolume)} combined. Sourced from Expansión, Cinco Días and El Economista -- deals the English-language press does not cover.`}>
-              <DealRows rows={p.iberianBiggest} />
-            </Card>
+            {p.iberianCount >= 25 ? (
+              <Card
+                title="&#10022; Iberia &mdash; the focus"
+                sub={`${p.iberianCount} eligible Iberian transactions, ${eur(p.iberianVolume)} combined.`}>
+                <DealRows rows={p.iberianBiggest} />
+              </Card>
+            ) : (
+              <Card title="&#10022; Iberia &mdash; the focus">
+                <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-body)', lineHeight: 1.8, margin: '0 0 12px' }}>
+                  <strong>Not yet.</strong> Meridian has {p.iberianCount} eligible Iberian transactions on record
+                  ({eur(p.iberianVolume)} combined). That is not enough to publish a league table, and we are not
+                  going to pretend otherwise.
+                </p>
+                <p style={{ fontFamily: 'var(--r)', fontSize: 15, color: 'var(--text-mid)', lineHeight: 1.8, margin: 0 }}>
+                  An incomplete ranking of a market its readers know better than we do is worse than no ranking at all.
+                  Iberian coverage is the point of this site and it is still building: the table goes up when the data
+                  is deep enough to stand behind. Until then, the deals we do have are in the feed, each linked to its source.
+                </p>
+              </Card>
+            )}
           </div>
 
           <Card title="Largest transactions" sub="All geographies, by euro value at deal-date FX.">
