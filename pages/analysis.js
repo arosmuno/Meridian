@@ -1,4 +1,7 @@
-// pages/analysis.js -- Analysis hub: every deal that has a Meridian Analysis, as an articles feed.
+// pages/analysis.js -- Analysis hub.
+// Solo muestra comentario ESCRITO POR UNA PERSONA y guardado en deals.analysis.
+// La generacion automatica esta desactivada (ver pages/api/analysis.js): el modelo
+// no tenia los datos que se le pedia comentar y se los inventaba.
 import Head from 'next/head';
 import { dedupeDeals } from '../lib/dedupe';
 
@@ -47,7 +50,7 @@ export default function AnalysisHub({ items }) {
     <>
       <Head>
         <title>Analysis -- Meridian</title>
-        <meta name="description" content="Meridian Analysis: sharp editorial commentary on the biggest M&A, LBO, ECM and financing deals -- strategic rationale, the financial read, and what each signals for the market." />
+        <meta name="description" content="Meridian Analysis: written commentary on selected M&A, LBO, ECM and financing deals." />
         <link rel="canonical" href={SITE + '/analysis'} />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -56,12 +59,21 @@ export default function AnalysisHub({ items }) {
         </div>
 
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 22px 56px' }}>
-          <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 8 }}>&#10022; The desk</div>
           <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(34px,6vw,54px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.1, margin: '0 0 8px' }}>Meridian Analysis</h1>
-          <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-mid)', fontStyle: 'italic', margin: '0 0 8px' }}>Editorial commentary on the deals that matter -- the rationale, the numbers, and the signal.</p>
+          <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-mid)', fontStyle: 'italic', margin: '0 0 8px' }}>Written commentary on selected deals -- the rationale, the numbers, and the signal.</p>
 
           {items.length === 0 ? (
-            <p style={{ fontFamily: 'var(--r)', color: 'var(--text-mid)', marginTop: 30 }}>Fresh analysis is being written. Check back shortly.</p>
+            <div style={{ marginTop: 34, borderTop: '1px solid var(--border)', paddingTop: 26 }}>
+              <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-body)', lineHeight: 1.8, margin: '0 0 14px' }}>
+                Meridian is not publishing analysis at the moment.
+              </p>
+              <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-mid)', lineHeight: 1.8, margin: '0 0 14px' }}>
+                Commentary here is written by a person, not generated. Until there is something worth
+                signing, this page stays empty rather than filled. The deal feed on the{' '}
+                <a href="/" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>home page</a>{' '}
+                is live and sourced as usual.
+              </p>
+            </div>
           ) : (
             <div style={{ marginTop: 20 }}>
               {items.map((d) => {
