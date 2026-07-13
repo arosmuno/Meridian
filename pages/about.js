@@ -1,4 +1,4 @@
-// pages/about.js -- About Meridian (content page; helps AdSense legitimacy + SEO).
+// pages/about.js -- About Meridian. Proyecto independiente, sin afiliacion.
 import Head from 'next/head';
 
 function Shell({ title, desc, children }) {
@@ -16,6 +16,7 @@ function Shell({ title, desc, children }) {
         <div style={{ borderTop: '3px double var(--border)', background: 'var(--bg-card)', padding: '16px 24px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.06em' }}>
             <a href="/about" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>About</a>
+            <a href="/methodology" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Methodology</a>
             <a href="/contact" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Contact</a>
             <a href="/learn" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Learn</a>
             <a href="/privacy" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>Privacy</a>
@@ -26,32 +27,37 @@ function Shell({ title, desc, children }) {
   );
 }
 
-const H2 = (props) => <h2 style={{ fontFamily: 'var(--s)', fontSize: 12, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--gold)', margin: '30px 0 12px' }}>{props.children}</h2>;
-const P = (props) => <p style={{ fontFamily: 'var(--r)', fontSize: 17, color: 'var(--text-body)', lineHeight: 1.85, margin: '0 0 18px' }}>{props.children}</p>;
+const H2 = (p) => <h2 style={{ fontFamily: 'var(--s)', fontSize: 12, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--gold)', margin: '32px 0 12px' }}>{p.children}</h2>;
+const P = (p) => <p style={{ fontFamily: 'var(--r)', fontSize: 17, color: 'var(--text-body)', lineHeight: 1.85, margin: '0 0 18px' }}>{p.children}</p>;
 
 export default function About() {
   return (
-    <Shell title="About Meridian -- Capital Markets Deal Tracker" desc="Meridian is a curated deal tracker for M&A, LBOs, ECM, leveraged finance, project finance and restructuring. Every entry links to its original source.">
+    <Shell
+      title="About Meridian -- Iberian mid-market & European project finance"
+      desc="Meridian is an independent, curated deal tracker for the Iberian mid-market and European project finance. Every deal links to its source.">
       <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-mid)', textTransform: 'uppercase', marginBottom: 10 }}>About</div>
-      <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(34px,6vw,56px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.1, margin: '0 0 20px' }}>A curated deal tracker for the capital markets</h1>
+      <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(32px,5.5vw,52px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.12, margin: '0 0 20px' }}>An independent deal tracker</h1>
 
-      <P>Meridian tracks the transactions that move money and shape industries -- mergers and acquisitions, leveraged buyouts, equity and debt capital markets, project finance and restructuring -- across Europe and beyond. It is a tracker, not a newsroom: we do not report original stories. What we do is find the deals as they are reported, structure them so they can be compared, and point you to the source.</P>
+      <P>Meridian tracks dealmaking across Europe, with a deliberate focus on two things that are badly served elsewhere: <strong>the Iberian mid-market</strong> and <strong>European project finance</strong>. Spanish and Portuguese deals between roughly &euro;50m and &euro;500m barely register in the English-language financial press. Project finance is technical, slow-moving and rarely explained well. Both are worth following. Almost nobody makes it easy to.</P>
 
-      <H2>What we cover</H2>
-      <P>Meridian surfaces the transactions that matter: who is buying whom, at what value, on what terms. Each deal is tagged by type (M&amp;A, LBO, LevFin, ECM, project finance, restructuring, debt advisory), by sector, by geography and by status. That taxonomy is the point of the site: it lets you see the shape of a market that is otherwise scattered across a hundred outlets and paywalls.</P>
+      <P>It is a tracker, not a newsroom. Meridian does not break stories and does not claim to. What it does is find deals as they are reported, structure them so they can be compared, and send you to the source.</P>
 
-      <H2>How we work -- and what we do not do</H2>
-      <P>Meridian is an automated pipeline, and we would rather say so plainly than pretend otherwise. We ingest headlines in near real time from regulators and exchanges, newswires, corporate press releases and the financial press. A language model is then used for one job only: to translate those headlines into English and structure them into fields. It selects and reformats. It does not report, and it does not write commentary.</P>
-      <P><strong>Every deal on Meridian is tied to a source article, and every deal links to it.</strong> If an item cannot be traced back to a published source, it is not published here. If a transaction value is not stated in the source, we record it as unknown rather than estimate. We do not have an editorial desk, and until we do, Meridian carries no analysis or opinion.</P>
+      <H2>How it works, plainly</H2>
+      <P>Meridian is an automated pipeline, and we would rather say so than pretend there is a newsroom behind it. Headlines are ingested in near real time from regulators, exchanges, newswires and the financial press -- including Spanish outlets the anglophone press does not read. A language model translates them into English and sorts them into fields. It structures. It does not report, it does not add facts, and it does not write commentary.</P>
+      <P><strong>Every deal is tied to a source article, and every deal links to it.</strong> If a record cannot be traced back to something published, it does not go up. If a transaction value is not stated in the source, it is recorded as unknown rather than estimated. The full rules -- what counts, what is thrown out, how currencies are converted -- are set out on the <a href="/methodology" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>methodology page</a>.</P>
+
+      <H2>Who is behind it</H2>
+      <P>Meridian is a one-person, independent project, built and maintained in Madrid. It is not affiliated with, endorsed by or connected to any bank, advisory firm, fund or employer, and nothing on this site should be read as representing the views of any institution.</P>
+      <P>Meridian carries no analysis, no opinion and no recommendations. It reports what public sources report, and links to them. Nothing here is investment advice, and nothing here draws on any information that is not already public.</P>
 
       <H2>Corrections</H2>
-      <P>Automated pipelines make mistakes: a mis-tagged sector, a value read from the wrong line, a deal that turns out to be a rumour. If you spot something wrong, tell us and we will fix or remove it. Reach us via the <a href="/contact" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>contact page</a>.</P>
-
-      <H2>Who it is for</H2>
-      <P>Meridian is built for people who work with, invest in, or are learning about the capital markets -- bankers, investors, advisers, founders and students. If you want to understand how deals are structured, our <a href="/learn" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>Learn</a> library collects books, primers and resources to go deeper.</P>
+      <P>Automated pipelines make mistakes: a mis-tagged sector, a value read from the wrong line, a rumour recorded as signed. If you spot one, tell us and it will be corrected or removed. Reach us through the <a href="/contact" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>contact page</a>. Corrections are the cheapest credibility there is.</P>
 
       <H2>Independence</H2>
-      <P>Meridian is independent and reader-focused. Coverage is not for sale. No party pays to appear, or to be left out.</P>
+      <P>Coverage is not for sale. No party pays to appear here, and no party pays to be left out. The site carries advertising to cover its costs; advertisers have no influence over what is tracked or how it is presented.</P>
+
+      <H2>Learning</H2>
+      <P>Alongside the deal feed, the <a href="/learn" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>Learn</a> library collects the books, courses and resources worth using if you want to understand how these deals are actually structured -- curated, free where possible, and with no paid-course noise.</P>
     </Shell>
   );
 }
