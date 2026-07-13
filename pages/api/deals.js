@@ -1,68 +1,48 @@
 // pages/api/deals.js
-// GET /api/deals - returns latest deals from Supabase
-// GET /api/deals?type=M%26A - filter by type
-// GET /api/deals?days=7 - date cutoff in days (default 7; use 30 for region/sector views)
+// GET /api/deals            - ultimos deals desde Supabase
+// GET /api/deals?type=M%26A - filtrar por tipo
+// GET /api/deals?limit=20   - limitar resultados
+//
+// SIN FALLBACK. La version anterior importaba lib/fallbackDeals.js -- un array
+// codificado a mano, rotulado "Real verified deals", que contenia afirmaciones
+// FALSAS sobre empresas reales (que la fusion Synopsys/Ansys se habia roto; que
+// Thames Water estaba en administracion concursal, con administradores inventados;
+// que EQT compraba Software AG). Se servia automaticamente a usuarios y a los
+// crawlers cada vez que la base de datos fallaba o venia vacia.
+//
+// Una base de datos vacia se sirve vacia. Un feed vacio es honesto. Uno inventado, no.
 
 import { supabase } from '../../lib/supabase';
-import FALLBACK_DEALS from '../../lib/fallbackDeals';
 
 export default async function handler(req, res) {
-    if (req.method !== 'GET') {
-          return res.status(405).json({ error: 'Method not allowed' });
-    }
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { type, limit = 200, days = 7 } = req.query;
-
-  // Compute cutoff date
-  const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - Number(days));
-    const cutoffISO = cutoff.toISOString().split('T')[0]; // YYYY-MM-DD
+  const { type, limit = 50 } = req.query;
 
   try {
-        let query = supabase
-          .from('deals')
-          .select('*')
-          .neq('category', 'duplicate')
-          .gte('deal_date', cutoffISO)
-          .order('deal_date', { ascending: false, nullsFirst: false })
-          .order('fetched_at', { ascending: false })
-          .limit(Number(limit));
+    let query = supabase
+      .from('deals')
+      .select('*')
+      .order('deal_date', { ascending: false, nullsFirst: false })
+      .order('fetched_at', { ascending: false })
+      .limit(Number(limit));
 
-      if (type && type !== 'All') {
-              query = query.eq('type', type);
-      }
+    if (type && type !== 'All') query = query.eq('type', type);
 
-      const { data, error } = await query;
+    const { data, error } = await query;
+    if (error) throw error;
 
-      if (error) throw error;
+    const deals = data || [];
 
-      // If DB is empty or fails, return fallback deals
-      if (!data || data.length === 0) {
-              return res.status(200).json({
-                        deals: FALLBACK_DEALS,
-                        source: 'archive',
-                        count: FALLBACK_DEALS.length,
-              });
-      }
-
-      return res.status(200).json({
-              deals: data,
-              source: data[0]?.data_source || 'db',
-              count: data.length,
-              last_updated: data[0]?.fetched_at,
-      });
-
+    return res.status(200).json({
+      deals,
+      source: 'live',
+      count: deals.length,
+      last_updated: deals[0]?.fetched_at || null,
+    });
   } catch (err) {
-        console.error('[API/deals] Error:', err);
-        return res.status(200).json({
-                deals: FALLBACK_DEALS,
-                source: 'archive',
-                count: FALLBACK_DEALS.length,
-        });
+    console.error('[API/deals] Error:', err);
+    // Un fallo de base de datos es un fallo. No se rellena con nada.
+    return res.status(200).json({ deals: [], source: 'live', count: 0, error: 'unavailable' });
   }
 }
-
-// Cache for 5 minutes on Vercel Edge
-export const config = {
-    api: { bodyParser: false },
-};
