@@ -50,7 +50,7 @@ export async function getServerSideProps(ctx) {
       .eq('category', 'deal').not('excluded_reason', 'is', null);
 
     const { data: rates } = await supabaseAdmin
-      .from('fx_rates').select('currency,eur_per_1').order('currency');
+      .from('fx_daily').select('currency').order('currency');
 
     stats = {
       tracked: tracked || 0,
@@ -58,7 +58,7 @@ export async function getServerSideProps(ctx) {
       excluded: excluded || 0,
       volume: Math.round((elig || []).reduce((s, d) => s + Number(d.value_eur || 0), 0)),
     };
-    fx = rates || [];
+    fx = [...new Set((rates || []).map((r) => r.currency))].sort().map((c) => ({ currency: c }));
 
     const { data: rs } = await supabaseAdmin
       .from('deals').select('excluded_reason').not('excluded_reason', 'is', null).eq('category', 'deal');
@@ -131,17 +131,9 @@ export default function Methodology({ stats, fx, reasons }) {
           <P>Market aggregates are the most common trap. &ldquo;AI groups issue $182bn in bonds&rdquo; is not a transaction; a $2tn IPO valuation is not a deal size; a government infrastructure programme is not an acquisition. All of these are tracked as market news and carry no value in the league tables.</P>
 
           <H2>Currency</H2>
-          <P>Values are recorded in the currency of the source and converted to euros for comparison. Adding dollars, pounds and euros together without converting them produces a number that means nothing, so we convert -- and we publish the rates rather than hide them.</P>
-          {fx && fx.length ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '4px 0 14px' }}>
-              {fx.map((f) => (
-                <span key={f.currency} style={{ fontFamily: 'var(--s)', fontSize: 12, border: '1px solid var(--border)', padding: '5px 10px', color: 'var(--text-body)' }}>
-                  1 {f.currency} = {f.eur_per_1} EUR
-                </span>
-              ))}
-            </div>
-          ) : null}
-          <P style={{ fontSize: 15 }}><em>These are fixed reference rates applied across the whole period, not deal-date rates. That is a simplification, and it is a material one for cross-currency comparisons. We would rather tell you than have you find out.</em></P>
+          <P>Values are recorded in the currency of the source and converted to euros so that they can be compared. Adding dollars, pounds and euros together without converting them produces a number that means nothing.</P>
+          <P><strong>Each transaction is converted at the European Central Bank reference rate for its own date</strong> -- not at a single fixed rate applied across the whole period. A fixed rate quietly distorts any cross-currency table; over six months of a moving euro it can shift a ranking. Where a deal falls on a weekend or a holiday, the most recent preceding ECB rate is used. The rate applied to each deal, and the date it came from, are stored against that record.</P>
+          <P style={{ fontSize: 15 }}><em>Source: European Central Bank daily reference rates. Currencies covered: {fx && fx.length ? fx.map((f) => f.currency).join(', ') : 'EUR, USD, GBP, CAD, SEK, DKK, JPY, KRW, HKD'}. If a deal is denominated in a currency the ECB does not publish, it is recorded but carries no euro value and does not enter the league tables.</em></P>
 
           <H2>What this database is not</H2>
           <P>It is not exhaustive. It captures deals that were reported in the sources we track, which means smaller and private transactions are under-represented, and the Iberian coverage -- although it is our focus -- is still building. Treat the league tables as a picture of <em>reported</em> dealmaking, not of all dealmaking.</P>
