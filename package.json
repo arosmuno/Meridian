@@ -12,6 +12,8 @@
     "react": "18.3.0",
     "react-dom": "18.3.0",
     "@supabase/supabase-js": "2.43.4",
-    "@anthropic-ai/sdk": "0.24.3"
+    "@anthropic-ai/sdk": "0.24.3",
+    "pdf-parse": "1.1.1",
+    "mammoth": "1.7.2"
   }
 }
