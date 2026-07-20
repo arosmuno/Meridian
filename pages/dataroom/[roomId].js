@@ -1,7 +1,8 @@
-// Meridian Dataroom — sala: subir documentos + chat de due diligence con citas.
+// Meridian Dataroom — sala: documentos (subida + descarga firmada) y chat de due diligence.
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
 import { supabase } from '../../lib/supabase';
 
 const dr = () => supabase.schema('dataroom');
@@ -17,8 +18,10 @@ export default function Room() {
   const [sessionId, setSessionId] = useState(null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef();
+  const scrollRef = useRef();
 
   useEffect(() => { if (roomId) load(); /* eslint-disable-next-line */ }, [roomId]);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, busy]);
 
   async function load() {
     const { data: r } = await dr().from('rooms').select('*').eq('id', roomId).single();
@@ -58,12 +61,23 @@ export default function Room() {
     }
   }
 
+  async function download(doc) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const r = await fetch('/api/dataroom/download', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document_id: doc.id, access_token: session.access_token }),
+    });
+    const out = await r.json();
+    if (out.url) window.open(out.url, '_blank');
+    else alert(out.error || 'No se pudo generar la descarga.');
+  }
+
   async function ask(e) {
     e.preventDefault();
     if (!input.trim()) return;
     const q = input.trim();
     setInput('');
-    setMessages(m => [...m, { role: 'user', content: q }]);
+    setMessages((m) => [...m, { role: 'user', content: q }]);
     setBusy(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -74,69 +88,106 @@ export default function Room() {
       const out = await r.json();
       if (!r.ok) throw new Error(out.error);
       setSessionId(out.session_id);
-      setMessages(m => [...m, { role: 'assistant', content: out.answer, citations: out.citations }]);
+      setMessages((m) => [...m, { role: 'assistant', content: out.answer, citations: out.citations }]);
     } catch (err) {
-      setMessages(m => [...m, { role: 'assistant', content: 'Error: ' + (err.message || err) }]);
+      setMessages((m) => [...m, { role: 'assistant', content: 'Error: ' + (err.message || err) }]);
     } finally {
       setBusy(false);
     }
   }
 
-  if (!room) return <div style={wrap}>Cargando…</div>;
+  if (!room) return <div style={S.page}><div style={{ padding: 40, color: '#a59d8f' }}>Cargando…</div></div>;
 
   return (
-    <div style={wrap}>
+    <div style={S.page}>
       <Head><title>{room.name} — Meridian Dataroom</title></Head>
-      <a href="/dataroom" style={{ color: '#667', textDecoration: 'none' }}>← Salas</a>
-      <h1 style={{ marginTop: 8, fontFamily: 'Georgia, serif' }}>{room.name}</h1>
-      <span style={{ color: '#889', fontSize: 13 }}>{room.kind === 'mna' ? 'Proceso M&A' : 'Archivo interno'}</span>
+      <header style={S.top}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+          <span style={S.brand}>MERIDIAN</span><span style={S.brandSub}>DATAROOM</span>
+        </div>
+        <Link href="/dataroom" style={S.ghost}>← Salas</Link>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 16, marginTop: 16 }}>
-        <section style={card}>
-          <h3>Documentos</h3>
-          <input ref={fileRef} type="file" onChange={onUpload} disabled={uploading} accept=".pdf,.docx,.txt,.md" style={{ marginBottom: 12 }} />
-          {uploading && <p style={{ color: '#667' }}>Subiendo e indexando…</p>}
-          <div style={{ display: 'grid', gap: 6 }}>
-            {docs.map(d => (
-              <div key={d.id} style={docRow}>
-                <span>{d.name}</span>
-                <span style={{ fontSize: 12, color: statusColor(d.status) }}>{d.status}</span>
-              </div>
-            ))}
-            {!docs.length && <p style={{ color: '#889' }}>Sube contratos, cuentas, informes…</p>}
-          </div>
-        </section>
+      <div style={{ maxWidth: 1160, margin: '0 auto', padding: '24px 28px' }}>
+        <div style={S.roomHead}>
+          <span style={S.kind}>{room.kind === 'mna' ? 'PROCESO M&A' : 'ARCHIVO INTERNO'}</span>
+          <h1 style={S.title}>{room.name}</h1>
+        </div>
 
-        <section style={{ ...card, display: 'flex', flexDirection: 'column', minHeight: 420 }}>
-          <h3>Chat de due diligence</h3>
-          <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gap: 10, padding: '8px 0' }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{ justifySelf: m.role === 'user' ? 'end' : 'start', maxWidth: '85%' }}>
-                <div style={m.role === 'user' ? bubbleUser : bubbleAI}>{m.content}</div>
-                {m.citations && m.citations.length ? (
-                  <div style={{ fontSize: 11, color: '#889', marginTop: 4 }}>
-                    Fuentes: {m.citations.map(c => `[${c.n}] ${c.document_name}`).join('  ')}
+        <div style={S.grid}>
+          <section style={S.card}>
+            <div style={S.cardHead}>Documentos</div>
+            <label style={S.upload}>
+              {uploading ? 'Subiendo e indexando…' : '+ Subir documento (PDF, DOCX, TXT)'}
+              <input ref={fileRef} type="file" onChange={onUpload} disabled={uploading} accept=".pdf,.docx,.txt,.md" style={{ display: 'none' }} />
+            </label>
+            <div style={{ display: 'grid', gap: 6, marginTop: 12 }}>
+              {docs.map((d) => (
+                <div key={d.id} style={S.docRow}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={S.docName}>{d.name}</div>
+                    <div style={{ ...S.docStatus, color: statusColor(d.status) }}>{statusLabel(d.status)}</div>
                   </div>
-                ) : null}
-              </div>
-            ))}
-            {busy && <div style={bubbleAI}>Analizando documentos…</div>}
-          </div>
-          <form onSubmit={ask} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <input style={inputStyle} placeholder="¿Cuál es el EBITDA? ¿Hay cláusulas de cambio de control?" value={input} onChange={e => setInput(e.target.value)} />
-            <button style={btn} disabled={busy}>Enviar</button>
-          </form>
-        </section>
+                  <button style={S.dl} onClick={() => download(d)} title="Descargar (enlace firmado)">↓</button>
+                </div>
+              ))}
+              {!docs.length && <div style={S.empty}>Sube contratos, cuentas, informes… y pregúntale al chat.</div>}
+            </div>
+          </section>
+
+          <section style={{ ...S.card, display: 'flex', flexDirection: 'column', minHeight: 520 }}>
+            <div style={S.cardHead}>Chat de due diligence</div>
+            <div ref={scrollRef} style={S.chat}>
+              {!messages.length && <div style={S.chatHint}>Pregunta sobre los documentos. Ej.: «¿Cuál es el EBITDA?», «¿Hay cláusulas de cambio de control?». Responde citando las fuentes.</div>}
+              {messages.map((m, i) => (
+                <div key={i} style={{ justifySelf: m.role === 'user' ? 'end' : 'start', maxWidth: '88%' }}>
+                  <div style={m.role === 'user' ? S.bubbleU : S.bubbleA}>{m.content}</div>
+                  {m.citations && m.citations.length ? (
+                    <div style={S.cites}>Fuentes: {m.citations.map((c) => `[${c.n}] ${c.document_name}`).join('  ')}</div>
+                  ) : null}
+                </div>
+              ))}
+              {busy && <div style={S.bubbleA}>Analizando documentos…</div>}
+            </div>
+            <form onSubmit={ask} style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <input style={S.input} placeholder="Escribe tu pregunta de due diligence…" value={input} onChange={(e) => setInput(e.target.value)} />
+              <button style={S.btn} disabled={busy}>Enviar</button>
+            </form>
+          </section>
+        </div>
       </div>
     </div>
   );
 }
 
-function statusColor(s) { return s === 'ready' ? '#16a34a' : s === 'error' ? '#dc2626' : '#ca8a04'; }
-const wrap = { maxWidth: 1000, margin: '0 auto', padding: '32px 20px', fontFamily: 'system-ui, sans-serif' };
-const card = { border: '1px solid #e5e7eb', borderRadius: 12, padding: 16 };
-const docRow = { display: 'flex', justifyContent: 'space-between', padding: 8, background: '#f9fafb', borderRadius: 6, fontSize: 14 };
-const inputStyle = { flex: 1, padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14 };
-const btn = { padding: '10px 16px', background: '#111827', color: '#fff', border: 0, borderRadius: 8, cursor: 'pointer' };
-const bubbleUser = { background: '#111827', color: '#fff', padding: '8px 12px', borderRadius: 12, fontSize: 14 };
-const bubbleAI = { background: '#f3f4f6', color: '#111', padding: '8px 12px', borderRadius: 12, fontSize: 14, whiteSpace: 'pre-wrap' };
+function statusColor(s) { return s === 'ready' ? '#1a7a3a' : s === 'error' ? '#a3341f' : '#9a7d1e'; }
+function statusLabel(s) { return s === 'ready' ? 'Indexado' : s === 'error' ? 'Error' : s === 'processing' ? 'Procesando…' : 'Subido'; }
+
+const serif = "Georgia, 'Times New Roman', serif";
+const ui = "ui-sans-serif, system-ui, -apple-system, sans-serif";
+const S = {
+  page: { minHeight: '100vh', background: '#f3f0e8', color: '#1c1916', fontFamily: ui },
+  top: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 28px', borderBottom: '1px solid #e2ddd0', background: '#fffdf9' },
+  brand: { fontFamily: serif, fontSize: 20, fontWeight: 700 },
+  brandSub: { fontSize: 11, letterSpacing: '.3em', color: '#9a7d1e', fontWeight: 700 },
+  ghost: { padding: '6px 12px', border: '1px solid #d8d2c4', borderRadius: 8, textDecoration: 'none', color: '#1c1916', fontSize: 13 },
+  roomHead: { marginBottom: 18 },
+  kind: { fontSize: 11, fontWeight: 800, letterSpacing: '.14em', color: '#9a7d1e' },
+  title: { fontFamily: serif, fontSize: 32, fontWeight: 700, margin: '4px 0 0' },
+  grid: { display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 18, alignItems: 'start' },
+  card: { background: '#fff', border: '1px solid #e2ddd0', borderRadius: 12, padding: 18 },
+  cardHead: { fontFamily: serif, fontSize: 17, fontWeight: 700, marginBottom: 12 },
+  upload: { display: 'block', textAlign: 'center', padding: '14px', border: '1px dashed #cfc7b6', borderRadius: 10, cursor: 'pointer', color: '#736c61', fontSize: 13, background: '#faf8f3' },
+  docRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#faf8f3', borderRadius: 8 },
+  docName: { fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  docStatus: { fontSize: 11, marginTop: 2, fontWeight: 600 },
+  dl: { flexShrink: 0, width: 30, height: 30, borderRadius: 8, border: '1px solid #d8d2c4', background: '#fff', cursor: 'pointer', fontSize: 15 },
+  empty: { color: '#a59d8f', fontSize: 13, padding: '8px 2px' },
+  chat: { flex: 1, overflowY: 'auto', display: 'grid', gap: 10, padding: '8px 2px', alignContent: 'start' },
+  chatHint: { color: '#a59d8f', fontSize: 13, lineHeight: 1.6 },
+  bubbleU: { background: '#1c1916', color: '#fff', padding: '9px 13px', borderRadius: 12, fontSize: 14, lineHeight: 1.5 },
+  bubbleA: { background: '#f3f0e8', color: '#1c1916', padding: '9px 13px', borderRadius: 12, fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.6, border: '1px solid #e2ddd0' },
+  cites: { fontSize: 11, color: '#9a7d1e', marginTop: 4 },
+  input: { flex: 1, padding: '11px 13px', border: '1px solid #d8d2c4', borderRadius: 9, fontSize: 14, background: '#fff', outline: 'none', fontFamily: ui },
+  btn: { padding: '11px 18px', background: '#1c1916', color: '#fff', border: 0, borderRadius: 9, cursor: 'pointer', fontSize: 14, fontWeight: 600 },
+};
