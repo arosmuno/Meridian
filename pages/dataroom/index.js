@@ -41,10 +41,8 @@ export default function DataroomHome() {
   }
   async function createOrg(e) {
     e.preventDefault();
-    const uid = session.user.id;
-    const { data: org, error } = await dr().from('orgs').insert({ name: orgName, created_by: uid }).select().single();
+    const { data: org, error } = await supabase.rpc('dataroom_create_org', { p_name: orgName });
     if (error) return setMsg(error.message);
-    await dr().from('memberships').insert({ org_id: org.id, user_id: uid, role: 'owner' });
     setOrgName(''); setActiveOrg(org.id); loadOrgs();
   }
   async function createRoom(e) {
