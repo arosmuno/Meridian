@@ -1,3 +1,6 @@
+
+
+<!-- rebuild trigger: 2026-08-08T22:48:46.284Z -->
 # MERIDIAN — Deployment Guide (Mobile-Friendly)
 ## No terminal needed. Do everything from your phone browser.
 
