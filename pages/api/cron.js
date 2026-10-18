@@ -68,7 +68,6 @@ export default async function handler(req, res) {
       rows.push({
         headline: d.headline,
         summary: d.summary,
-        analysis: d.analysis || null,
         buyer: d.buyer || 'N/A',
         target: d.target || 'N/A',
         value: Number(d.value) || 0,

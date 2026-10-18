@@ -1,61 +1,47 @@
+// pages/contact.js -- Contact Meridian (content page; reader trust).
 import Head from 'next/head';
-import Layout, { PageHero } from '../components/Layout';
 
 export default function Contact() {
   return (
     <>
       <Head>
-        <title>Contact &mdash; Meridian Capital Markets</title>
-        <meta name="description" content="Contact Meridian Capital Markets to discuss an M&A or debt advisory situation." />
-        <link rel="canonical" href="https://www.meridiancapmarkets.com/contact" />
+        <title>Contact Meridian</title>
+        <meta name="description" content="Get in touch with Meridian -- tips, corrections, feedback and enquiries. Reach us by email or on X." />
       </Head>
-      <Layout>
-        <PageHero
-          eyebrow="Contact"
-          title="Start with a conversation."
-          sub="Initial discussions are confidential and carry no obligation on either side."
-        />
-        <section className="sec">
-          <div className="wrap g2">
-            <div>
-              <h2 className="h3">Direct contact</h2>
-              <p className="body" style={{ marginTop: 14, fontSize: 15 }}>
-                The quickest route is email. A short note on the situation, the sector and rough size is
-                enough to establish whether it makes sense to speak.
-              </p>
-              <div style={{ marginTop: 34 }}>
-                <div className="contact-line">
-                  <div className="lbl">Email</div>
-                  <a href="mailto:arosmuno@gmail.com">arosmuno@gmail.com</a>
-                </div>
-                <div className="contact-line">
-                  <div className="lbl">LinkedIn</div>
-                  <a href="https://www.linkedin.com/in/arosado6" target="_blank" rel="noopener noreferrer">linkedin.com/in/arosado6</a>
-                </div>
-                <div className="contact-line">
-                  <div className="lbl">Location</div>
-                  <span style={{ fontFamily: 'var(--serif)', fontSize: 26, fontWeight: 500, color: 'var(--ink)' }}>Madrid, Spain</span>
-                </div>
-              </div>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+        <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
+          <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
+        </div>
+
+        <article style={{ maxWidth: 640, margin: '0 auto', padding: '44px 22px 64px' }}>
+          <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-mid)', textTransform: 'uppercase', marginBottom: 10 }}>Contact</div>
+          <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(34px,6vw,52px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.1, margin: '0 0 20px' }}>Get in touch</h1>
+
+          <p style={{ fontFamily: 'var(--r)', fontSize: 17, color: 'var(--text-body)', lineHeight: 1.85, margin: '0 0 28px' }}>
+            We welcome deal tips, corrections, feedback and partnership enquiries. Whether you have spotted an error, want to flag a transaction, or simply want to talk about the markets, we would be glad to hear from you.
+          </p>
+
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 22 }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 6 }}>Email</div>
+              <a href="mailto:arosmuno@gmail.com" style={{ fontFamily: 'var(--d)', fontSize: 22, fontWeight: 700, color: 'var(--gold)', textDecoration: 'none' }}>arosmuno@gmail.com</a>
             </div>
-            <div style={{ borderLeft: '1px solid var(--line)', paddingLeft: 40 }}>
-              <h2 className="h3">What to include</h2>
-              <ul className="ticks" style={{ marginTop: 22 }}>
-                <li>The situation: sale, acquisition, financing or refinancing</li>
-                <li>Sector and geography</li>
-                <li>Approximate size or revenue scale</li>
-                <li>Your timing, if there is any</li>
-                <li>Whether other advisers are already involved</li>
-              </ul>
-              <h2 className="h3" style={{ marginTop: 44 }}>Market Intelligence</h2>
-              <p className="body" style={{ marginTop: 14, fontSize: 15 }}>
-                For corrections, omissions or tips relating to the news coverage, use the same
-                address and mark the subject accordingly. Corrections are made promptly.
-              </p>
+            <div>
+              <div style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 6 }}>On X</div>
+              <a href="https://x.com/meridiancapmark" target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--d)', fontSize: 22, fontWeight: 700, color: 'var(--gold)', textDecoration: 'none' }}>@meridiancapmark</a>
             </div>
           </div>
-        </section>
-      </Layout>
+        </article>
+
+        <div style={{ borderTop: '3px double var(--border)', background: 'var(--bg-card)', padding: '16px 24px', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.06em' }}>
+            <a href="/about" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>About</a>
+            <a href="/contact" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Contact</a>
+            <a href="/learn" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Learn</a>
+            <a href="/privacy" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>Privacy</a>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

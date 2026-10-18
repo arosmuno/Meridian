@@ -1,10 +1,3 @@
-
-<!-- redeploy 1786229972017 -->
-
-<!-- deploy 1786229751883 -->
-
-
-<!-- rebuild trigger: 2026-08-08T22:48:46.284Z -->
 # MERIDIAN — Deployment Guide (Mobile-Friendly)
 ## No terminal needed. Do everything from your phone browser.
 
@@ -144,5 +137,3 @@ User sees live deals + AdSense ads
 | Direct sponsors (law firms, banks) | 10k+ monthly | Negotiate |
 
 Finance audience CPMs are 3-5x general consumer rates.
-
-<!-- rebuild after reconnect 1786230376394 -->

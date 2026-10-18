@@ -1,103 +1,63 @@
+// pages/about.js -- About Meridian. Proyecto independiente, sin afiliacion.
 import Head from 'next/head';
-import Link from 'next/link';
-import Layout, { PageHero } from '../components/Layout';
 
-const CREDS = [
-  'BBVA — Corporate & Investment Banking',
-  'BNP Paribas — Corporate & Investment Banking',
-  'M&A and leveraged finance',
-  'Iberian energy and TMT',
-  'Corporate finance, M&A and private equity postgraduate studies',
-  'BSc Business Economics',
-];
-
-const GOV = [
-  { t: 'Confidentiality', d: 'Mandate information never leaves the engagement. Client names, figures and documents are not used in marketing, in the news brief, or in conversation with other clients, before or after a process closes.' },
-  { t: 'Independence', d: 'Meridian has no lending book, no balance sheet and no products to distribute, and receives no fees from lenders, buyers or other advisers for making an introduction. The only economics in a mandate are the client’s.' },
-  { t: 'Conflicts', d: 'Meridian acts for one side. Where a prospective mandate would put us opposite an existing or recent client, we say so before taking it, and decline.' },
-  { t: 'Information handling', d: 'Data rooms are set up with per-user permissions, watermarking and a full download audit trail. Access is granted by stage and withdrawn when a party leaves the process.' },
-  { t: 'The news brief', d: 'Market News is compiled automatically from public sources, each item linked to its original publication. It uses no confidential or non-public mandate information, it is not original reporting, and it is not investment advice.' },
-  { t: 'Corrections', d: 'Automated pipelines make mistakes. If you find one, tell us and the item is corrected or removed. Corrections are the cheapest credibility available.' },
-];
-
-export default function About() {
+function Shell({ title, desc, children }) {
   return (
     <>
       <Head>
-        <title>About &mdash; Meridian Capital Markets</title>
-        <meta name="description" content="Meridian Capital Markets is an independent corporate finance practice founded by Alberto Rosado Munoz, advising on M&A and debt in the Iberian mid-market." />
-        <link rel="canonical" href="https://www.meridiancapmarkets.com/about" />
+        <title>{title}</title>
+        <meta name="description" content={desc} />
       </Head>
-      <Layout>
-        <PageHero
-          eyebrow="About"
-          title="An independent practice, deliberately small."
-          sub="Meridian exists to bring institutional transaction discipline to mid-market situations that rarely receive it."
-        />
-
-        <section className="sec">
-          <div className="wrap founder">
-            <div>
-              <div
-                className="portrait"
-                role="img"
-                aria-label="Alberto Rosado Munoz"
-                style={{ backgroundImage: 'url(/founder.jpg)', backgroundSize: 'cover', backgroundPosition: 'center top' }}
-              >
-                <span className="mono">AR</span>
-              </div>
-              <div className="chips">
-                <span>Madrid</span>
-                <span>M&amp;A</span>
-                <span>Debt Advisory</span>
-              </div>
-            </div>
-            <div>
-              <div className="eyebrow">Founder</div>
-              <h2 className="h2" style={{ marginTop: 14 }}>Alberto Rosado Mu&ntilde;oz</h2>
-              <div className="role">Founder &amp; Managing Director</div>
-              <p className="body" style={{ marginTop: 28 }}>
-                Alberto founded Meridian to do mid-market work the way large institutions do large-cap work:
-                properly prepared, tightly run, and with the senior person present from the first call to
-                completion.
-              </p>
-              <p className="body">
-                He spent five years in corporate and investment banking at BBVA and BNP Paribas, working on
-                M&amp;A and leveraged finance in the Iberian energy and TMT sectors, before founding the firm.
-                He works in Spanish and English.
-              </p>
-              <div className="chips" style={{ marginTop: 34 }}>
-                {CREDS.map((c) => <span key={c}>{c}</span>)}
-              </div>
-              <div style={{ marginTop: 36, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                <a href="https://www.linkedin.com/in/arosado6" target="_blank" rel="noopener noreferrer" className="btn btn-ghost">LinkedIn profile</a>
-                <Link href="/contact" className="btn btn-solid">Get in touch <span>&rarr;</span></Link>
-              </div>
-            </div>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+        <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
+          <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
+        </div>
+        <article style={{ maxWidth: 760, margin: '0 auto', padding: '44px 22px 64px' }}>{children}</article>
+        <div style={{ borderTop: '3px double var(--border)', background: 'var(--bg-card)', padding: '16px 24px', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.06em' }}>
+            <a href="/about" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>About</a>
+            <a href="/methodology" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Methodology</a>
+            <a href="/contact" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Contact</a>
+            <a href="/learn" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Learn</a>
+            <a href="/privacy" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>Privacy</a>
           </div>
-        </section>
-
-        <section className="sec alt">
-          <div className="wrap">
-            <div className="sec-head">
-              <div className="eyebrow">Governance</div>
-              <h2 className="h2">How we handle information, conflicts and independence.</h2>
-              <p className="lead">
-                A one-person practice has to be more explicit about this than a large firm, not less. These are
-                the rules we work to.
-              </p>
-            </div>
-            <div className="g2">
-              {GOV.map((g) => (
-                <div key={g.t} className="numbered">
-                  <h3 className="h3">{g.t}</h3>
-                  <p className="body">{g.d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      </Layout>
+        </div>
+      </div>
     </>
+  );
+}
+
+const H2 = (p) => <h2 style={{ fontFamily: 'var(--s)', fontSize: 12, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--gold)', margin: '32px 0 12px' }}>{p.children}</h2>;
+const P = (p) => <p style={{ fontFamily: 'var(--r)', fontSize: 17, color: 'var(--text-body)', lineHeight: 1.85, margin: '0 0 18px' }}>{p.children}</p>;
+
+export default function About() {
+  return (
+    <Shell
+      title="About Meridian -- Iberian mid-market & European project finance"
+      desc="Meridian is an independent, curated deal tracker for the Iberian mid-market and European project finance. Every deal links to its source.">
+      <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-mid)', textTransform: 'uppercase', marginBottom: 10 }}>About</div>
+      <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(32px,5.5vw,52px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.12, margin: '0 0 20px' }}>An independent deal tracker</h1>
+
+      <P>Meridian tracks dealmaking across Europe, with a deliberate focus on two things that are badly served elsewhere: <strong>the Iberian mid-market</strong> and <strong>European project finance</strong>. Spanish and Portuguese deals between roughly &euro;50m and &euro;500m barely register in the English-language financial press. Project finance is technical, slow-moving and rarely explained well. Both are worth following. Almost nobody makes it easy to.</P>
+
+      <P>It is a tracker, not a newsroom. Meridian does not break stories and does not claim to. What it does is find deals as they are reported, structure them so they can be compared, and send you to the source.</P>
+
+      <H2>How it works, plainly</H2>
+      <P>Meridian is an automated pipeline, and we would rather say so than pretend there is a newsroom behind it. Headlines are ingested in near real time from regulators, exchanges, newswires and the financial press -- including Spanish outlets the anglophone press does not read. A language model translates them into English and sorts them into fields. It structures. It does not report, it does not add facts, and it does not write commentary.</P>
+      <P><strong>Every deal is tied to a source article, and every deal links to it.</strong> If a record cannot be traced back to something published, it does not go up. If a transaction value is not stated in the source, it is recorded as unknown rather than estimated. The full rules -- what counts, what is thrown out, how currencies are converted -- are set out on the <a href="/methodology" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>methodology page</a>.</P>
+
+      <H2>Who is behind it</H2>
+      <P>Meridian is a one-person, independent project, built and maintained in Madrid. It is not affiliated with, endorsed by or connected to any bank, advisory firm, fund or employer, and nothing on this site should be read as representing the views of any institution.</P>
+      <P>Meridian carries no analysis, no opinion and no recommendations. It reports what public sources report, and links to them. Nothing here is investment advice, and nothing here draws on any information that is not already public.</P>
+
+      <H2>Corrections</H2>
+      <P>Automated pipelines make mistakes: a mis-tagged sector, a value read from the wrong line, a rumour recorded as signed. If you spot one, tell us and it will be corrected or removed. Reach us through the <a href="/contact" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>contact page</a>. Corrections are the cheapest credibility there is.</P>
+
+      <H2>Independence</H2>
+      <P>Coverage is not for sale. No party pays to appear here, and no party pays to be left out. The site carries advertising to cover its costs; advertisers have no influence over what is tracked or how it is presented.</P>
+
+      <H2>Learning</H2>
+      <P>Alongside the deal feed, the <a href="/learn" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>Learn</a> library collects the books, courses and resources worth using if you want to understand how these deals are actually structured -- curated, free where possible, and with no paid-course noise.</P>
+    </Shell>
   );
 }
