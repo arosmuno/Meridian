@@ -1,4 +1,4 @@
-// pages/contact.js -- Contact Meridian (content page; AdSense legitimacy + reader trust).
+// pages/contact.js -- Contact Meridian (content page; reader trust).
 import Head from 'next/head';
 
 export default function Contact() {

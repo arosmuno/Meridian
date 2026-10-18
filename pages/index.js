@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import Head from 'next/head';
-import AdSlot from '../components/AdSlot';
 import NewsletterSignup from '../components/NewsletterSignup';
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
@@ -116,7 +115,7 @@ function dedupeDeals(arr) {
 }
 
 // Procesa deals crudos de la API a la forma que renderiza la home (enrich + orden + filtro + dedupe).
-// Se usa tanto para el estado inicial (SSR: contenido visible para Google/AdSense) como en loadDeals.
+// Se usa tanto para el estado inicial (SSR: contenido visible para Google) como en loadDeals.
 function processDeals(arr) {
   const raw = (arr || []).map(enrich);
   const parseDate = (d) => {
@@ -325,8 +324,6 @@ function DealModal({ deal, mode, onClose }) {
             </div>
           )}
 
-          <AdSlot slot="3456789012" style={{ marginBottom: 20 }} />
-
           {/* AI Analysis */}
           <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:'20px 24px'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
@@ -517,11 +514,6 @@ export default function Home({ initialDeals = [] }) {
 <a href="/dataroom" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>DATAROOM &#8250;</a>
           </div>
 
-          {/* Ad banner */}
-          <div style={{padding:'8px 24px',borderBottom:`1px solid ${C.border}`,background:C.bg}}>
-            <AdSlot slot="1234567890" format="horizontal" style={{maxWidth:728,margin:'0 auto'}} />
-          </div>
-
           {/* Ticker */}
           <div style={{display:'flex',borderTop:`1px solid ${C.border}`}}>
             <div style={{background:'#e63946',padding:'5px 14px',flexShrink:0,display:'flex',alignItems:'center'}}>
@@ -603,18 +595,7 @@ export default function Home({ initialDeals = [] }) {
           <div className="main-grid" style={{display:'grid',gridTemplateColumns:section==='deals'?'1fr 280px':'1fr',gap:24,padding:'18px 0 48px',alignItems:'start'}}>
             <div>
               <div className="cards-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                {rest.flatMap((d, i) => {
-                  const out = [<DealCard key={d.id} deal={d} onClick={setSelected}/>];
-                  // Anuncio in-feed cada 6 tarjetas (ancho completo)
-                  if ((i + 1) % 6 === 0 && i < rest.length - 1) {
-                    out.push(
-                      <div key={`adfeed-${i}`} style={{gridColumn:'1 / -1'}}>
-                        <AdSlot slot="2233445566" format="horizontal" />
-                      </div>
-                    );
-                  }
-                  return out;
-                })}
+                {rest.map((d) => <DealCard key={d.id} deal={d} onClick={setSelected}/>)}
                 {rest.length === 0 && (
                   <div style={{gridColumn:'1/-1',textAlign:'center',padding:'60px 0',fontFamily:"var(--r)",color:C.textMid,fontStyle:'italic'}}>No deals match this filter.</div>
                 )}
@@ -624,7 +605,12 @@ export default function Home({ initialDeals = [] }) {
             {/* Sidebar — only in deals section */}
             {section === 'deals' && (
             <div className="sidebar" style={{display:'flex',flexDirection:'column',gap:18}}>
-              <AdSlot slot="1122334455" format="vertical" style={{minHeight:250}}/>
+              <a href="/academy" style={{display:'block',background:C.bgCard,border:`1px solid ${C.border}`,borderTop:`3px solid ${C.gold}`,padding:'16px 16px 14px',textDecoration:'none'}}>
+                <div style={{fontFamily:"var(--s)",fontSize:9,fontWeight:800,letterSpacing:'.16em',color:C.gold,textTransform:'uppercase'}}>Meridian Academy</div>
+                <div style={{fontFamily:"var(--d)",fontSize:19,fontWeight:800,color:C.textHi,lineHeight:1.25,margin:'6px 0 6px'}}>PF, LBO &amp; DCF models, the guide and 1:1 coaching</div>
+                <div style={{fontFamily:"var(--r)",fontSize:12.5,color:C.textBody,lineHeight:1.6}}>Desk-grade templates and honest interview prep.</div>
+                <div style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,color:C.gold,letterSpacing:'.08em',marginTop:8}}>EXPLORE &rarr;</div>
+              </a>
 
               {/* Type breakdown - last 30 days */}
               <div style={{background:C.bgCard,border:`1px solid ${C.border}`}}>
@@ -685,7 +671,6 @@ export default function Home({ initialDeals = [] }) {
             )}
           </div>
 
-          <AdSlot slot="3344556677" format="horizontal" style={{maxWidth:728,margin:'8px auto 36px'}} />
           <div style={{maxWidth:720,margin:'0 auto 40px',padding:'26px 22px',background:C.bgCard,border:`1px solid ${C.border}`,borderTop:`3px solid ${C.gold}`,textAlign:'center'}}>
             <div style={{fontFamily:"var(--s)",fontSize:9,fontWeight:800,letterSpacing:'.2em',color:C.gold,textTransform:'uppercase',marginBottom:6}}>Free, every Monday</div>
             <h2 style={{fontFamily:"var(--d)",fontSize:28,fontWeight:800,color:C.textHi,margin:'0 0 8px'}}>The Meridian Weekly</h2>
@@ -719,7 +704,7 @@ export default function Home({ initialDeals = [] }) {
   );
 }
 
-// Server-render the latest deals into the initial HTML so Google / AdSense see real
+// Server-render the latest deals into the initial HTML so Google sees real
 // content (not just the loading shell) on the page that carries ads.
 export async function getServerSideProps() {
   let initialDeals = [];

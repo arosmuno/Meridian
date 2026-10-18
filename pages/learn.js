@@ -1,7 +1,6 @@
 // pages/learn.js -- MERIDIAN LEARN: a curated library (Books / Resources / Podcasts / Miscellaneous).
 import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
-import AdSlot from '../components/AdSlot';
 import NewsletterSignup from '../components/NewsletterSignup';
 import { RESOURCES, GROUPS } from '../lib/learnResources';
 
@@ -237,11 +236,6 @@ export default function Learn() {
               style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-hi)', padding: '6px 12px', fontFamily: 'var(--s)', fontSize: 12, minWidth: 220, outline: 'none' }} />
           </div>
 
-          {/* Ad banner */}
-          <div style={{ padding: '14px 0 4px' }}>
-            <AdSlot slot="learn-top" format="horizontal" style={{ maxWidth: 728, margin: '0 auto' }} />
-          </div>
-
           {/* SECTIONS */}
           <div style={{ padding: '8px 0 44px' }}>
             {shownGroups.map((g, gi) => {
@@ -261,11 +255,6 @@ export default function Learn() {
                   <div className="cards-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                     {items.map((r) => <ResourceCard key={r.name} r={r} accent={meta.accent} />)}
                   </div>
-                  {gi === 0 && group === 'All' && (
-                    <div style={{ marginTop: 20 }}>
-                      <AdSlot slot="learn-mid" format="horizontal" />
-                    </div>
-                  )}
                 </section>
               );
             })}

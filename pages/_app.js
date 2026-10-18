@@ -11,14 +11,6 @@ export default function App({ Component, pageProps }) {
         <meta name="theme-color" content="#faf8f3" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
-        {/* Google AdSense — el mensaje de consentimiento UE lo gestiona el CMP de Google (Funding Choices) */}
-        {process.env.NEXT_PUBLIC_ADSENSE_ID && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
-            crossOrigin="anonymous"
-          />
-        )}
       </Head>
       <Component {...pageProps} />
     </>

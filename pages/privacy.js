@@ -45,18 +45,13 @@ export default function Privacy() {
           </Section>
 
           <Section title="3. Cookies">
-            We use <strong>essential</strong> cookies needed for the site to work. If you give your consent,
-            we may use <strong>advertising</strong> cookies through Google AdSense to show ads and help
-            sustain the project. You can accept or reject non-essential cookies via the consent banner, and
-            change your choice by clearing the site data in your browser.
+            Meridian does not use advertising or tracking cookies. The site only stores your light/dark
+            theme choice in your own browser.
           </Section>
 
           <Section title="4. Third parties">
             We use the following providers, which may process technical data under their own policies:{' '}
-            <strong>Vercel</strong> (hosting), <strong>Supabase</strong> (database), <strong>Resend</strong> (newsletter delivery) and, when active,
-            <strong> Google AdSense</strong> (advertising). Google may use cookies to personalise ads; you can
-            manage your preferences at{' '}
-            <a href="https://adssettings.google.com" style={{ color: C.gold }}>adssettings.google.com</a>.
+            <strong>Vercel</strong> (hosting), <strong>Supabase</strong> (database) and <strong>Resend</strong> (newsletter delivery).
           </Section>
 
           <Section title="5. Legal basis and your rights">

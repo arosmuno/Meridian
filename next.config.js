@@ -11,12 +11,11 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.googleadservices.com https://adservice.google.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co https://*.googlesyndication.com https://*.google.com",
-      "frame-src https://*.googlesyndication.com https://*.google.com",
+      "connect-src 'self' https://*.supabase.co",
       "object-src 'none'",
       "base-uri 'self'",
     ].join('; '),
@@ -44,7 +43,7 @@ const nextConfig = {
   async redirects() {
     return [
       // La pagina de privacidad ahora vive en /privacy (ingles). El antiguo
-      // /privacidad redirige de forma permanente para no romper enlaces ni AdSense.
+      // /privacidad redirige de forma permanente para no romper enlaces.
       { source: '/privacidad', destination: '/privacy', permanent: true },
     ];
   },
