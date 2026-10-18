@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import AdSlot from '../components/AdSlot';
+import NewsletterSignup from '../components/NewsletterSignup';
 import { RESOURCES, GROUPS } from '../lib/learnResources';
 
 const GROUP_META = {
@@ -272,6 +273,21 @@ export default function Learn() {
             {total === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 0', fontFamily: 'var(--r)', color: 'var(--text-mid)', fontStyle: 'italic' }}>No resources match your search.</div>
             )}
+          </div>
+        </div>
+
+        {/* ACADEMY + NEWSLETTER */}
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px 44px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+          <a href="/academy" className="card" style={{ textDecoration: 'none', padding: '22px', gap: 8, borderTop: '3px solid var(--gold)' }}>
+            <span style={{ fontFamily: 'var(--s)', fontSize: 9, fontWeight: 800, letterSpacing: '.18em', color: 'var(--gold)', textTransform: 'uppercase' }}>Meridian Academy</span>
+            <h3 style={{ fontFamily: 'var(--d)', fontSize: 22, fontWeight: 800, color: 'var(--text-hi)', margin: 0 }}>Models, the guide and 1:1 coaching</h3>
+            <p style={{ fontFamily: 'var(--r)', fontSize: 13.5, color: 'var(--text-body)', lineHeight: 1.65, margin: 0 }}>PF, LBO and DCF templates, a guide to breaking in in Spain, CV reviews and mock interviews.</p>
+            <span style={{ fontFamily: 'var(--s)', fontSize: 11, color: 'var(--gold)', fontWeight: 700, letterSpacing: '.06em' }}>Explore &rarr;</span>
+          </a>
+          <div className="card" style={{ cursor: 'default', padding: '22px', gap: 10, borderTop: '3px solid var(--text-hi)' }}>
+            <span style={{ fontFamily: 'var(--s)', fontSize: 9, fontWeight: 800, letterSpacing: '.18em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Free, every Monday</span>
+            <h3 style={{ fontFamily: 'var(--d)', fontSize: 22, fontWeight: 800, color: 'var(--text-hi)', margin: 0 }}>The Meridian Weekly</h3>
+            <NewsletterSignup compact source="learn" />
           </div>
         </div>
 

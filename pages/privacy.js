@@ -15,7 +15,7 @@ function Section({ title, children }) {
 }
 
 export default function Privacy() {
-  const updated = '29 June 2026';
+  const updated = '18 October 2026';
   return (
     <>
       <Head>
@@ -36,8 +36,10 @@ export default function Privacy() {
           </Section>
 
           <Section title="2. What data we process">
-            Meridian does not require registration and does not directly collect identifying personal
-            data (there are no user accounts or forms). Like any website, our hosting provider may record
+            Meridian does not require registration. If you subscribe to The Meridian Weekly or join an
+            Academy waitlist, we store your email address and the products you asked about, only to send
+            you that newsletter or launch notice. Every email includes a one-click unsubscribe link, and
+            you can ask us to delete your address at any time. Like any website, our hosting provider may record
             basic technical data (IP address, browser type, date and time) in the server logs for security
             and operational purposes.
           </Section>
@@ -51,7 +53,7 @@ export default function Privacy() {
 
           <Section title="4. Third parties">
             We use the following providers, which may process technical data under their own policies:{' '}
-            <strong>Vercel</strong> (hosting), <strong>Supabase</strong> (content database) and, when active,
+            <strong>Vercel</strong> (hosting), <strong>Supabase</strong> (database), <strong>Resend</strong> (newsletter delivery) and, when active,
             <strong> Google AdSense</strong> (advertising). Google may use cookies to personalise ads; you can
             manage your preferences at{' '}
             <a href="https://adssettings.google.com" style={{ color: C.gold }}>adssettings.google.com</a>.

@@ -3,6 +3,10 @@
     {
       "path": "/api/cron-jobs",
       "schedule": "7 6 * * *"
+    },
+    {
+      "path": "/api/newsletter",
+      "schedule": "13 7 * * 1"
     }
   ]
 }

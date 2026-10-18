@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import Head from 'next/head';
 import AdSlot from '../components/AdSlot';
+import NewsletterSignup from '../components/NewsletterSignup';
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const TYPE_STYLE = {
@@ -512,6 +513,7 @@ export default function Home({ initialDeals = [] }) {
             <a href="/rankings" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>RANKINGS</a>
             <a href="/careers" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>CAREERS</a>
             <a href="/learn" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>LEARN &#8250;</a>
+            <a href="/academy" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>ACADEMY &#8250;</a>
 <a href="/dataroom" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>DATAROOM &#8250;</a>
           </div>
 
@@ -684,6 +686,12 @@ export default function Home({ initialDeals = [] }) {
           </div>
 
           <AdSlot slot="3344556677" format="horizontal" style={{maxWidth:728,margin:'8px auto 36px'}} />
+          <div style={{maxWidth:720,margin:'0 auto 40px',padding:'26px 22px',background:C.bgCard,border:`1px solid ${C.border}`,borderTop:`3px solid ${C.gold}`,textAlign:'center'}}>
+            <div style={{fontFamily:"var(--s)",fontSize:9,fontWeight:800,letterSpacing:'.2em',color:C.gold,textTransform:'uppercase',marginBottom:6}}>Free, every Monday</div>
+            <h2 style={{fontFamily:"var(--d)",fontSize:28,fontWeight:800,color:C.textHi,margin:'0 0 8px'}}>The Meridian Weekly</h2>
+            <p style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,maxWidth:540,margin:'0 auto 16px',lineHeight:1.6}}>The week's largest deals in one email, with an Iberia section. Sourced, five minutes, no noise.</p>
+            <NewsletterSignup source="home" />
+          </div>
         </div>
         <div style={{borderTop:`3px double ${C.border}`,background:C.bgCard,padding:'16px 24px',textAlign:'center'}}>
           <div style={{fontFamily:"var(--d)",fontSize:18,color:C.border,letterSpacing:'.15em'}}>MERIDIAN</div>
@@ -691,7 +699,7 @@ export default function Home({ initialDeals = [] }) {
             M&A · LEVFIN · PROJECT FINANCE · RESTRUCTURING · ECM
           </div>
           <div style={{marginTop:10}}>
-            <a href="/wrap" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>The Wrap</a><a href="/analysis" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Analysis</a><a href="/rankings" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Rankings</a><a href="/careers" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Careers</a><a href="/learn" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Learn</a>
+            <a href="/wrap" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>The Wrap</a><a href="/analysis" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Analysis</a><a href="/rankings" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Rankings</a><a href="/careers" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Careers</a><a href="/learn" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Learn</a><a href="/academy" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Academy</a>
           </div>
           <div style={{marginTop:6,fontFamily:"var(--s)",fontSize:9,letterSpacing:'.06em',lineHeight:1.9}}>
             <a href="/sector/tmt" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>TMT</a><a href="/sector/healthcare" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Healthcare</a><a href="/sector/energy-renewables" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Energy</a><a href="/sector/financial-services" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Financial Services</a><a href="/sector/industrials" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Industrials</a><a href="/sector/consumer" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Consumer</a><a href="/sector/real-estate" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Real Estate</a><a href="/sector/infrastructure" style={{color:C.textLo,textDecoration:'none'}}>Infrastructure</a>
