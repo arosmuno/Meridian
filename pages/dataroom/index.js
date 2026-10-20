@@ -74,7 +74,11 @@ export default function DataroomHome() {
     e.preventDefault();
     const { error } = await supabase.rpc('dataroom_invite_member', { p_org_id: activeOrg, p_email: inviteEmail, p_role: inviteRole });
     if (error) return setMsg(error.message);
-    setInviteEmail(''); setMsg('Invitación registrada. Accederá al iniciar sesión con ese email.'); loadTeam(activeOrg);
+    // Antes solo se apuntaba la invitacion y nadie se enteraba: ahora le llega un enlace de acceso.
+    const { error: mailErr } = await supabase.auth.signInWithOtp({ email: inviteEmail, options: { emailRedirectTo: window.location.origin + '/dataroom' } });
+    setInviteEmail('');
+    setMsg(mailErr ? 'Invitación registrada, pero no se pudo enviar el email (' + mailErr.message + '). Pídele que entre en /dataroom con ese email.' : 'Invitación enviada: le llega un enlace de acceso por email.');
+    loadTeam(activeOrg);
   }
 
   const org = orgs.find((o) => o.id === activeOrg);
@@ -181,7 +185,7 @@ export default function DataroomHome() {
                   </select>
                   <button style={S.btn}>Invitar</button>
                 </form>
-                <p style={S.hint}>La persona recibe acceso automáticamente al iniciar sesión con ese email.</p>
+                <p style={S.hint}>Le enviamos un enlace de acceso por email; al entrar, ve las salas de la organización.</p>
               </section>
 
               {/* Salas */}

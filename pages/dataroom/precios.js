@@ -8,9 +8,9 @@ const PLANS = [
   { id: 'free', name: 'Free', price: '0€', period: '', tagline: 'Para probar el producto',
     features: ['1 sala de datos', '20 documentos por sala', '2 asientos', 'Chat de due diligence con IA', 'Cifrado en reposo'] },
   { id: 'pro', name: 'Pro', price: '149€', period: '/mes', tagline: 'Para procesos y equipos', highlight: true,
-    features: ['10 salas de datos', '500 documentos por sala', '10 asientos', 'Invitaciones de equipo y roles', 'Descargas firmadas + auditoría', 'Soporte prioritario'] },
+    features: ['10 salas de datos', '500 documentos por sala', '10 asientos', 'Invitaciones de equipo por email', 'Descargas firmadas + registro de auditoría', 'Soporte prioritario'] },
   { id: 'enterprise', name: 'Enterprise', price: 'A medida', period: '', tagline: 'Para firmas y volúmenes altos',
-    features: ['Salas y asientos ilimitados', 'Cifrado por organización (envelope)', 'SSO y residencia de datos', 'Log de auditoría avanzado', 'SLA y onboarding dedicado'] },
+    features: ['Salas y asientos a medida', 'Volúmenes de documentos altos', 'Onboarding dedicado'] },
 ];
 
 export default function Precios() {
@@ -50,7 +50,7 @@ export default function Precios() {
       <div style={{ maxWidth: 1040, margin: '0 auto', padding: '48px 24px' }}>
         <div style={S.kicker}>PLANES</div>
         <h1 style={S.h1}>Elige tu plan</h1>
-        <p style={S.sub}>Empieza gratis. Sube de plan cuando necesites más salas, más equipo o funciones enterprise.</p>
+        <p style={S.sub}>Empieza gratis. Si necesitas más salas o más equipo, escríbenos y activamos Pro en tu organización.</p>
         <div style={S.grid}>
           {PLANS.map((p) => (
             <div key={p.id} style={{ ...S.card, ...(p.highlight ? S.cardHi : {}) }}>
@@ -62,7 +62,9 @@ export default function Precios() {
                 {p.features.map((f) => <li key={f} style={S.li}>· {f}</li>)}
               </ul>
               {p.id === 'free' && <div style={S.current}>{org && org.plan === 'free' ? 'Tu plan actual' : 'Incluido'}</div>}
-              {p.id === 'pro' && <button style={S.btn} onClick={() => upgrade('pro')}>{org && org.plan === 'pro' ? 'Plan actual' : 'Actualizar a Pro'}</button>}
+              {p.id === 'pro' && (org && org.plan === 'pro'
+                ? <div style={S.current}>Tu plan actual</div>
+                : <a style={S.btn} href={'mailto:arosmuno@gmail.com?subject=Meridian%20Dataroom%20Pro' + (org ? '&body=Organizaci%C3%B3n%3A%20' + encodeURIComponent(org.name) : '')}>Solicitar Pro</a>)}
               {p.id === 'enterprise' && <a style={S.btnGhost} href="mailto:arosmuno@gmail.com?subject=Meridian%20Dataroom%20Enterprise">Contactar</a>}
             </div>
           ))}
@@ -94,7 +96,7 @@ const S = {
   pPeriod: { fontSize: 14, color: '#736c61', fontWeight: 400, fontFamily: ui },
   ul: { listStyle: 'none', padding: 0, margin: '16px 0 20px', display: 'grid', gap: 8 },
   li: { fontSize: 14, color: '#403a33', lineHeight: 1.4 },
-  btn: { width: '100%', padding: '11px 16px', background: '#1c1916', color: '#fff', border: 0, borderRadius: 9, cursor: 'pointer', fontSize: 14, fontWeight: 600 },
+  btn: { width: '100%', padding: '11px 16px', background: '#1c1916', color: '#fff', border: 0, borderRadius: 9, cursor: 'pointer', fontSize: 14, fontWeight: 600, display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' },
   btnGhost: { display: 'block', textAlign: 'center', padding: '11px 16px', background: 'transparent', color: '#1c1916', border: '1px solid #d8d2c4', borderRadius: 9, textDecoration: 'none', fontSize: 14 },
   current: { textAlign: 'center', padding: '11px 16px', color: '#736c61', fontSize: 13, border: '1px dashed #d8d2c4', borderRadius: 9 },
   msg: { textAlign: 'center', color: '#736c61', marginTop: 18 },

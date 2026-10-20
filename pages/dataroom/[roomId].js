@@ -17,6 +17,7 @@ export default function Room() {
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [loadErr, setLoadErr] = useState('');
   const fileRef = useRef();
   const scrollRef = useRef();
 
@@ -24,7 +25,11 @@ export default function Room() {
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, busy]);
 
   async function load() {
-    const { data: r } = await dr().from('rooms').select('*').eq('id', roomId).single();
+    // Sin sesion (enlace abierto en otro navegador, sesion caducada): a la portada para entrar.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.replace('/dataroom'); return; }
+    const { data: r, error } = await dr().from('rooms').select('*').eq('id', roomId).maybeSingle();
+    if (error || !r) { setLoadErr('Esta sala no existe o no tienes acceso.'); return; }
     setRoom(r);
     refreshDocs();
   }
@@ -39,7 +44,10 @@ export default function Room() {
     setUploading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const path = `${room.org_id}/${roomId}/${crypto.randomUUID()}/${file.name}`;
+      // Supabase Storage rechaza claves con acentos, ñ, comillas y otros simbolos ("Invalid key"),
+      // asi que el nombre original se guarda en la tabla y la ruta usa una version saneada.
+      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-120) || 'documento';
+      const path = `${room.org_id}/${roomId}/${crypto.randomUUID()}/${safeName}`;
       const { error: upErr } = await supabase.storage.from('datarooms').upload(path, file);
       if (upErr) throw upErr;
       const { data: doc, error } = await dr().from('documents').insert({
@@ -100,6 +108,7 @@ export default function Room() {
     }
   }
 
+  if (loadErr) return <div style={S.page}><div style={{ padding: 40, color: '#a59d8f' }}>{loadErr} <Link href="/dataroom" style={{ color: '#9a7d1e' }}>Volver a tus salas</Link></div></div>;
   if (!room) return <div style={S.page}><div style={{ padding: 40, color: '#a59d8f' }}>Cargando…</div></div>;
 
   return (
