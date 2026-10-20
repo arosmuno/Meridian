@@ -26,18 +26,6 @@ export default function Precios() {
     supabase.schema('dataroom').from('orgs').select('*').order('created_at').then(({ data }) => setOrg(data && data[0]));
   }, [session]);
 
-  async function upgrade(planId) {
-    if (!session) { setMsg('Inicia sesión primero.'); return; }
-    setMsg('Redirigiendo al pago…');
-    const res = await fetch('/api/dataroom/checkout', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: planId, org_id: org && org.id, email: session.user.email }),
-    });
-    const out = await res.json();
-    if (out.url) { window.location.href = out.url; return; }
-    setMsg(out.error || 'No se pudo iniciar el pago.');
-  }
-
   return (
     <div style={S.page}>
       <Head><title>Meridian Dataroom — Planes</title></Head>

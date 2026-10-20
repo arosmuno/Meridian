@@ -95,7 +95,24 @@ export default async function handler(req, res) {
     });
   } catch (e) {
     // el paso que fallo ya esta registrado
-  } finally {
+  }
+  // --- Resto de la web: APIs publicas ---
+  const site = async (name, fn) => { try { await step(name, fn); } catch (_) {} };
+  await site('api_deals', async () => {
+    const r = await fetch(base + '/api/deals?days=7&limit=150'); const j = await r.json();
+    const ds = j.deals || [];
+    return { status: r.status, count: ds.length, duplicates: ds.filter((d) => d.dup_of).length, excluded: ds.filter((d) => d.category === 'excluded').length, newest: ds[0] && ds[0].created_at, with_analysis: ds.filter((d) => d.analysis).length };
+  });
+  await site('api_jobs', async () => { const r = await fetch(base + '/api/jobs'); const j = await r.json(); return { status: r.status, count: j.count }; });
+  await site('subscribe', async () => {
+    const em = 'selftest+' + Date.now() + '@meridiancapmarkets.com';
+    const r = await fetch(base + '/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: em, source: 'selftest' }) });
+    const j = await r.json().catch(() => ({}));
+    await admin.from('subscribers').delete().eq('email', em);
+    if (!r.ok) throw new Error(r.status + ' ' + JSON.stringify(j));
+    return j;
+  });
+  await site('newsletter_env', async () => ({ resend: !!process.env.RESEND_API_KEY, from: process.env.NEWSLETTER_FROM || null })); finally {
     try { if (path) await admin.storage.from('datarooms').remove([path]); } catch (_) {}
     try { if (orgId) await admin.schema('dataroom').from('orgs').delete().eq('id', orgId); } catch (_) {}
     try { if (userId) await admin.auth.admin.deleteUser(userId); } catch (_) {}

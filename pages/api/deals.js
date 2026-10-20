@@ -18,15 +18,22 @@ import { cleanAnalysis } from '../../lib/analysisQuality';
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { type, limit = 50 } = req.query;
+  const { type, limit = 150, days } = req.query;
 
   try {
     let query = supabase
       .from('deals')
       .select('*')
-      .order('deal_date', { ascending: false, nullsFirst: false })
-      .order('fetched_at', { ascending: false })
-      .limit(Number(limit));
+      // Por fecha de entrada, no por deal_date: esa fecha la pone el modelo y a veces viene
+      // mal (una operacion de julio salia la primera del feed de hoy).
+      .order('created_at', { ascending: false })
+      .limit(Math.min(Number(limit) || 150, 300));
+
+    // Los duplicados de una misma operacion ya estan marcados en la base: no se sirven.
+    query = query.or('dup_of.is.null');
+    if (days && Number(days) > 0) {
+      query = query.gte('created_at', new Date(Date.now() - Number(days) * 86400000).toISOString());
+    }
 
     // Lo que no pasa el filtro editorial se conserva en la base pero no se sirve.
     query = query.or('category.is.null,category.neq.excluded');
