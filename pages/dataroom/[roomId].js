@@ -73,6 +73,26 @@ export default function Room() {
     }
   }
 
+  async function removeDoc(doc) {
+    if (!window.confirm('¿Eliminar «' + doc.name + '»? No se puede deshacer.')) return;
+    await supabase.storage.from('datarooms').remove([doc.storage_path]);
+    const { error } = await dr().from('documents').delete().eq('id', doc.id);
+    if (error) alert('No se pudo eliminar: ' + error.message);
+    refreshDocs();
+  }
+
+  async function reindex(doc) {
+    const { data: { session } } = await supabase.auth.getSession();
+    await dr().from('documents').update({ status: 'processing', error: null }).eq('id', doc.id);
+    refreshDocs();
+    const r = await fetch('/api/dataroom/ingest', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document_id: doc.id, access_token: session.access_token }),
+    });
+    if (!r.ok) { const j = await r.json().catch(() => ({})); alert('No se pudo indexar: ' + (j.error || r.status)); }
+    refreshDocs();
+  }
+
   async function download(doc) {
     const { data: { session } } = await supabase.auth.getSession();
     const r = await fetch('/api/dataroom/download', {
@@ -141,7 +161,11 @@ export default function Room() {
                     <div style={S.docName}>{d.name}</div>
                     <div style={{ ...S.docStatus, color: statusColor(d.status) }}>{statusLabel(d.status)}</div>
                   </div>
-                  <button style={S.dl} onClick={() => download(d)} title="Descargar (enlace firmado)">↓</button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {d.status === 'error' && <button style={S.dl} onClick={() => reindex(d)} title={d.error || 'Reintentar indexación'}>↻</button>}
+                    <button style={S.dl} onClick={() => download(d)} title="Descargar (enlace firmado)">↓</button>
+                    <button style={S.dl} onClick={() => removeDoc(d)} title="Eliminar documento">✕</button>
+                  </div>
                 </div>
               ))}
               {!docs.length && <div style={S.empty}>Sube contratos, cuentas, informes… y pregúntale al chat.</div>}

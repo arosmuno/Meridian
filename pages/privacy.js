@@ -36,22 +36,27 @@ export default function Privacy() {
           </Section>
 
           <Section title="2. What data we process">
-            Meridian does not require registration. If you subscribe to The Meridian Weekly or join an
+            Reading Meridian does not require registration. If you subscribe to The Meridian Weekly or join an
             Academy waitlist, we store your email address and the products you asked about, only to send
             you that newsletter or launch notice. Every email includes a one-click unsubscribe link, and
             you can ask us to delete your address at any time. Like any website, our hosting provider may record
             basic technical data (IP address, browser type, date and time) in the server logs for security
-            and operational purposes.
+            and operational purposes. If you use Meridian Dataroom, we store your email address, the
+            organisations and rooms you create, the documents you upload and your questions to the
+            assistant, so that the service works; uploaded files are kept in private storage and are only
+            accessible to members of your organisation. You can delete documents yourself or ask us to delete
+            your account and all its data.
           </Section>
 
           <Section title="3. Cookies">
             Meridian does not use advertising or tracking cookies. The site only stores your light/dark
-            theme choice in your own browser.
+            theme choice in your own browser and, if you sign in to Dataroom, a session token needed to keep
+            you signed in.
           </Section>
 
           <Section title="4. Third parties">
             We use the following providers, which may process technical data under their own policies:{' '}
-            <strong>Vercel</strong> (hosting), <strong>Supabase</strong> (database) and <strong>Resend</strong> (newsletter delivery).
+            <strong>Vercel</strong> (hosting), <strong>Supabase</strong> (database, file storage and sign-in emails), <strong>Resend</strong> (newsletter delivery) and <strong>Anthropic</strong> (the Dataroom assistant processes the relevant excerpts of your documents to answer your questions).
           </Section>
 
           <Section title="5. Legal basis and your rights">
