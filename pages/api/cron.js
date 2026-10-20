@@ -1,5 +1,6 @@
 import { fetchDealsFromWeb, backfillAnalysis, isIberianText } from '../../lib/fetchDeals';
 import { supabaseAdmin } from '../../lib/supabase';
+import { ineligibleReason } from '../../lib/eligibility';
 
 export const config = { maxDuration: 300 };
 
@@ -20,11 +21,17 @@ async function runBackfill() {
       .limit(15);
     if (!data || !data.length) return 0;
     const filled = await backfillAnalysis(data);
+    if (!filled) return 0;   // LLM caido: se reintenta en el siguiente ciclo
     let n = 0;
     for (const f of filled) {
       const { error } = await supabaseAdmin.from('deals').update({ analysis: f.analysis }).eq('id', f.id).is('analysis', null);
       if (!error) n++;
     }
+    // Las que no pasaron el control de calidad se marcan con '' para no reintentarlas siempre:
+    // el bloque de analisis no se muestra y la ficha queda solo con los hechos.
+    const done = new Set(filled.map((f) => f.id));
+    const skipped = data.filter((r) => !done.has(r.id)).map((r) => r.id);
+    if (skipped.length) await supabaseAdmin.from('deals').update({ analysis: '' }).in('id', skipped).is('analysis', null);
     return n;
   } catch (e) {
     console.error('[CRON] backfill fallo:', e.message);
@@ -119,6 +126,9 @@ export default async function handler(req, res) {
         fetched_at: new Date().toISOString(),
         data_source: 'live',
       });
+      const last = rows[rows.length - 1];
+      // Se publica en el feed, pero no cuenta para las league tables si no es una operacion cerrada/anunciada.
+      if (last.category === 'deal') last.excluded_reason = ineligibleReason(last);
     }
 
     if (rejected) console.warn(`[CRON] ${rejected} registros rechazados por falta de fuente`);

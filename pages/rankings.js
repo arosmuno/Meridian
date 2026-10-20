@@ -8,6 +8,8 @@
 // y usa value_eur -- convertido con el tipo del BCE de la FECHA DE CADA OPERACION.
 import Head from 'next/head';
 import { supabaseAdmin } from '../lib/supabase';
+import { ineligibleReason, collapseSameDeal } from '../lib/eligibility';
+import { dedupeDeals } from '../lib/dedupe';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const ACCENT = {
@@ -47,14 +49,20 @@ export async function getServerSideProps(ctx) {
   try {
     const { data } = await supabaseAdmin
       .from('deals')
-      .select('id,headline,buyer,target,value_eur,type,sector,source,deal_date,is_iberian')
+      .select('id,headline,buyer,target,value,currency,value_eur,type,sector,status,source,deal_date,created_at,is_iberian')
       .eq('category', 'deal')
       .is('excluded_reason', null)
       .gt('value_eur', 0)
       .order('value_eur', { ascending: false })
-      .limit(600);
-    all = data || [];
+      .limit(1500);
+    // Misma regla que /methodology, aplicada al leer: un error antiguo de clasificacion
+    // no entra en las tablas. Luego se colapsan los titulares repetidos de la misma
+    // operacion (anuncio, aprobacion, cierre...) quedandose con el mas reciente.
+    const eligible = (data || []).filter((d) => !ineligibleReason(d));
+    const byDate = eligible.slice().sort((a, b) => String(b.deal_date || b.created_at).localeCompare(String(a.deal_date || a.created_at)));
+    all = collapseSameDeal(dedupeDeals(byDate)).sort((a, b) => Number(b.value_eur) - Number(a.value_eur));
   } catch (e) {}
+  const since = all.reduce((m, d) => { const x = String(d.deal_date || d.created_at || '').slice(0, 10); return x && (!m || x < m) ? x : m; }, '');
 
   // Iberia por senal GEOGRAFICA de la operacion, no por el periodico que la publica.
   // (Expansion y Cinco Dias tambien cubren noticias globales: usar la fuente como
@@ -73,13 +81,15 @@ export async function getServerSideProps(ctx) {
     return Object.values(m);
   };
 
+  const strip = (d) => ({ id: d.id, headline: d.headline, buyer: d.buyer, target: d.target, value_eur: d.value_eur, type: d.type });
   const props = {
+    since,
     count: all.length,
     volume: Math.round(all.reduce((s, d) => s + Number(d.value_eur || 0), 0)),
-    biggest: all.slice(0, 10),
+    biggest: all.slice(0, 10).map(strip),
     iberianCount: iberian.length,
     iberianVolume: Math.round(iberian.reduce((s, d) => s + Number(d.value_eur || 0), 0)),
-    iberianBiggest: iberian.slice(0, 10),
+    iberianBiggest: iberian.slice(0, 10).map(strip),
     acquirers: tally(all, 'buyer').sort((a, b) => b.v - a.v).slice(0, 10),
     sectors: tally(all, 'sector').sort((a, b) => b.v - a.v).slice(0, 8),
     types: tally(all, 'type').sort((a, b) => b.v - a.v).slice(0, 8),
@@ -135,7 +145,7 @@ export default function Rankings(p) {
           <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 8 }}>&#10022; League tables</div>
           <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(34px,6vw,54px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.1, margin: '0 0 10px' }}>The rankings</h1>
           <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-body)', lineHeight: 1.7, margin: '0 0 6px' }}>
-            <strong>{p.count}</strong> eligible transactions &middot; <strong>{eur(p.volume)}</strong> in combined value.
+            <strong>{p.count}</strong> eligible transactions{p.since ? <> since {new Date(p.since + 'T00:00:00Z').toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</> : null} &middot; <strong>{eur(p.volume)}</strong> in combined value.
             Values are converted to euros at the <strong>ECB reference rate for each deal&rsquo;s own date</strong>.
           </p>
           <p style={{ fontFamily: 'var(--r)', fontSize: 14, color: 'var(--text-mid)', fontStyle: 'italic', margin: '0 0 24px' }}>

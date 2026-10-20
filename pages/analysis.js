@@ -4,6 +4,8 @@
 // no tenia los datos que se le pedia comentar y se los inventaba.
 import Head from 'next/head';
 import { dedupeDeals } from '../lib/dedupe';
+import { supabaseAdmin } from '../lib/supabase';
+import { cleanAnalysis } from '../lib/analysisQuality';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const ACCENT = {
@@ -32,10 +34,17 @@ function Footer() {
 export async function getServerSideProps() {
   let items = [];
   try {
-    const r = await fetch(SITE + '/api/deals?limit=100');
-    if (r.ok) {
-      const j = await r.json();
-      items = dedupeDeals((j.deals || []).filter((d) => d.analysis && d.analysis.length > 60 && d.headline))
+    const { data } = await supabaseAdmin
+      .from('deals')
+      .select('id, headline, summary, buyer, target, value, currency, type, sector, date, analysis')
+      .eq('category', 'deal')
+      .is('dup_of', null)
+      .not('analysis', 'is', null)
+      .neq('analysis', '')
+      .order('created_at', { ascending: false })
+      .limit(120);
+    if (data) {
+      items = dedupeDeals(data.map((d) => ({ ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) })).filter((d) => d.analysis && d.headline)).slice(0, 60)
         .map((d) => ({
           id: d.id, headline: d.headline, type: d.type || 'DEAL', sector: d.sector || '',
           date: d.date || '', excerpt: String(d.analysis).replace(/\s+/g, ' ').slice(0, 240),

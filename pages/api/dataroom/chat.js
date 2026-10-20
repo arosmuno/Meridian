@@ -6,7 +6,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = process.env.DATAROOM_MODEL || 'claude-sonnet-4-20250514';
+const MODEL = process.env.DATAROOM_MODEL || 'claude-sonnet-5-5';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });

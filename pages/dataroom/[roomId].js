@@ -48,11 +48,15 @@ export default function Room() {
       }).select().single();
       if (error) throw error;
       await refreshDocs();
-      await fetch('/api/dataroom/ingest', {
+      const ir = await fetch('/api/dataroom/ingest', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ document_id: doc.id, access_token: session.access_token }),
       });
       await refreshDocs();
+      if (!ir.ok) {
+        const j = await ir.json().catch(() => ({}));
+        throw new Error('el documento se subió pero no se pudo indexar: ' + (j.error || ir.status));
+      }
     } catch (err) {
       alert('Error subiendo: ' + (err.message || err));
     } finally {

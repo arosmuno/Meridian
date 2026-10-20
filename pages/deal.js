@@ -5,6 +5,8 @@
 // loads and shows INLINE automatically -- no click needed.
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { supabaseAdmin } from '../lib/supabase';
+import { cleanAnalysis } from '../lib/analysisQuality';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const ACCENT = {
@@ -30,14 +32,13 @@ export async function getServerSideProps(ctx) {
     id = m ? m[1] : '';
   }
   let deal = null;
-  if (id) {
+  // Lectura directa por id: antes buscaba solo entre los ultimos 100 deals, asi que
+  // cualquier enlace desde Rankings o Analysis a una operacion antigua daba "no disponible".
+  if (/^\d+$/.test(id)) {
     try {
-      const r = await fetch(SITE + '/api/deals?limit=100');
-      if (r.ok) {
-        const j = await r.json();
-        const arr = (j && j.deals) || [];
-        deal = arr.find((d) => String(d.id) === id) || null;
-      }
+      const { data } = await supabaseAdmin.from('deals').select('*').eq('id', Number(id)).neq('category', 'excluded').limit(1);
+      deal = (data && data[0]) || null;
+      if (deal) deal = JSON.parse(JSON.stringify({ ...deal, analysis: cleanAnalysis(deal.analysis, `${deal.headline} ${deal.summary || ''}`) }));
     } catch (e) {}
   }
   return { props: { deal, id } };
@@ -48,7 +49,7 @@ export default function DealPage({ deal, id }) {
   const [loadingA, setLoadingA] = useState(false);
 
   useEffect(() => {
-    if (!deal || analysis) return;
+    if (!deal || analysis || deal.analysis !== undefined) return;
     let alive = true;
     setLoadingA(true);
     fetch('/api/analysis', {
@@ -164,7 +165,7 @@ export default function DealPage({ deal, id }) {
             <div style={{ marginBottom: 30, paddingTop: 22, borderTop: '1px solid var(--border)' }}>
               <div style={{ fontFamily: 'var(--s)', fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: accent, textTransform: 'uppercase', marginBottom: 12 }}>&#10022; Meridian Analysis</div>
               {loadingA && !analysis ? (
-                <div style={{ fontFamily: 'var(--r)', fontSize: 14, color: 'var(--text-mid)', fontStyle: 'italic' }}>Drafting editorial analysis...</div>
+                <div style={{ fontFamily: 'var(--r)', fontSize: 14, color: 'var(--text-mid)', fontStyle: 'italic' }}>Loading analysis...</div>
               ) : null}
               {analysis ? (
                 <div style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-body)', lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>{analysis}</div>
