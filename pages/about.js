@@ -33,7 +33,7 @@ const P = (p) => <p style={{ fontFamily: 'var(--r)', fontSize: 17, color: 'var(-
 export default function About() {
   return (
     <Shell
-      title="About Meridian -- Iberian mid-market & European project finance"
+      title="About Meridian -- Alberto Rosado, Iberian mid-market & European project finance"
       desc="Meridian is an independent, curated deal tracker for the Iberian mid-market and European project finance. Every deal links to its source.">
       <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-mid)', textTransform: 'uppercase', marginBottom: 10 }}>About</div>
       <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(32px,5.5vw,52px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.12, margin: '0 0 20px' }}>An independent deal tracker</h1>
@@ -47,14 +47,22 @@ export default function About() {
       <P><strong>Every deal is tied to a source article, and every deal links to it.</strong> If a record cannot be traced back to something published, it does not go up. If a transaction value is not stated in the source, it is recorded as unknown rather than estimated. The full rules -- what counts, what is thrown out, how currencies are converted -- are set out on the <a href="/methodology" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>methodology page</a>.</P>
 
       <H2>Who is behind it</H2>
-      <P>Meridian is a one-person, independent project, built and maintained in Madrid. It is not affiliated with, endorsed by or connected to any bank, advisory firm, fund or employer, and nothing on this site should be read as representing the views of any institution.</P>
-      <P>Meridian carries no analysis, no opinion and no recommendations. It reports what public sources report, and links to them. Nothing here is investment advice, and nothing here draws on any information that is not already public.</P>
+      <div style={{ borderLeft: '3px solid var(--gold)', padding: '4px 0 4px 20px', margin: '0 0 26px' }}>
+        <div style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', margin: '0 0 4px' }}>Alberto Rosado</div>
+        <div style={{ fontFamily: 'var(--s)', fontSize: 11, letterSpacing: '.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Founder &middot; Madrid</div>
+      </div>
+      <P>I&rsquo;ve spent the last five years on the financing side of deals, in corporate &amp; investment banking at BBVA and BNP Paribas, working across Project Finance, M&amp;A, Leveraged Finance and Debt Advisory, mostly for energy and infrastructure sponsors.</P>
+      <P>That meant sitting between clients and execution teams: screening opportunities, building the first numbers, preparing credit papers and pitch books, and seeing which deals made it through committee and which didn&rsquo;t. Today I work on the corporate side, in value creation at an infrastructure investor.</P>
+      <P>Meridian is where I put that experience to use. The deal tracker follows transactions across Iberia and Europe, and the <a href="/academy" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>Academy</a> is where I share the models, frameworks and practical guidance I wish I&rsquo;d had when I started.</P>
+      <P>I also build, fix and review financial models for founders and small companies: models that hold up when an investor or a bank opens them. If you&rsquo;re working on a deal, a financing or a career move into M&amp;A, LevFin or Project Finance, I&rsquo;m happy to hear from you through the <a href="/contact" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>contact page</a>.</P>
+      <div style={{ fontFamily: 'var(--s)', fontSize: 12, color: 'var(--text-mid)', lineHeight: 1.8, margin: '0 0 26px' }}>BSc (Hons) Business Economics &middot; Master&rsquo;s in M&amp;A and Corporate Finance (ISBIF)</div>
+      <P>Meridian is an independent project. It is not affiliated with, endorsed by or connected to any bank, advisory firm, fund or employer, and nothing on this site represents the views of any institution. The deal feed reports what public sources report and links to them. Nothing here is investment advice, and nothing here draws on information that is not already public.</P>
 
       <H2>Corrections</H2>
       <P>Automated pipelines make mistakes: a mis-tagged sector, a value read from the wrong line, a rumour recorded as signed. If you spot one, tell us and it will be corrected or removed. Reach us through the <a href="/contact" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>contact page</a>. Corrections are the cheapest credibility there is.</P>
 
       <H2>Independence</H2>
-      <P>Coverage is not for sale. No party pays to appear here, and no party pays to be left out. The site carries advertising to cover its costs; advertisers have no influence over what is tracked or how it is presented.</P>
+      <P>Coverage is not for sale. No party pays to appear here, and no party pays to be left out. The site carries no advertising.</P>
 
       <H2>Learning</H2>
       <P>Alongside the deal feed, the <a href="/learn" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>Learn</a> library collects the books, courses and resources worth using if you want to understand how these deals are actually structured -- curated, free where possible, and with no paid-course noise.</P>
