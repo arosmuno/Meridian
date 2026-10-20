@@ -95,6 +95,10 @@ export default async function handler(req, res) {
     });
   } catch (e) {
     // el paso que fallo ya esta registrado
+  } finally {
+    try { if (path) await admin.storage.from('datarooms').remove([path]); } catch (_) {}
+    try { if (orgId) await admin.schema('dataroom').from('orgs').delete().eq('id', orgId); } catch (_) {}
+    try { if (userId) await admin.auth.admin.deleteUser(userId); } catch (_) {}
   }
   // --- Resto de la web: APIs publicas ---
   const site = async (name, fn) => { try { await step(name, fn); } catch (_) {} };
@@ -112,10 +116,6 @@ export default async function handler(req, res) {
     if (!r.ok) throw new Error(r.status + ' ' + JSON.stringify(j));
     return j;
   });
-  await site('newsletter_env', async () => ({ resend: !!process.env.RESEND_API_KEY, from: process.env.NEWSLETTER_FROM || null })); finally {
-    try { if (path) await admin.storage.from('datarooms').remove([path]); } catch (_) {}
-    try { if (orgId) await admin.schema('dataroom').from('orgs').delete().eq('id', orgId); } catch (_) {}
-    try { if (userId) await admin.auth.admin.deleteUser(userId); } catch (_) {}
-  }
+  await site('newsletter_env', async () => ({ resend: !!process.env.RESEND_API_KEY, from: process.env.NEWSLETTER_FROM || null }));
   return res.status(200).json({ ok: steps.every((s) => s.ok), steps });
 }
