@@ -1,6 +1,7 @@
 // pages/sector.js -- per-sector deal feed. Clean URL /sector/<slug> (rewrite) or ?name=<sector>.
 import Head from 'next/head';
 import { dedupeDeals } from '../lib/dedupe';
+import { supabaseAdmin } from '../lib/supabase';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const SECTORS = ['Healthcare', 'TMT', 'Infrastructure', 'Energy & Renewables', 'Financial Services', 'Consumer', 'Industrials', 'Real Estate', 'Macro', 'General'];
@@ -38,10 +39,15 @@ export async function getServerSideProps(ctx) {
   let deals = [];
   if (sector) {
     try {
-      const r = await fetch(SITE + '/api/deals?limit=100');
-      if (r.ok) {
-        const j = await r.json();
-        deals = dedupeDeals((j.deals || []).filter((d) => d.headline && (d.sector || '').toLowerCase() === sector.toLowerCase()))
+      // Directo a la base: antes miraba solo las ultimas 100 noticias de toda la web,
+      // asi que cada sector salia con cuatro o cinco items, mezclados con noticias de mercado.
+      const { data } = await supabaseAdmin
+        .from('deals')
+        .select('id, headline, summary, type, value, currency, date, status, sector, buyer, target')
+        .eq('category', 'deal').is('dup_of', null).ilike('sector', sector)
+        .order('created_at', { ascending: false }).limit(120);
+      if (data) {
+        deals = dedupeDeals(data.filter((d) => d.headline)).slice(0, 60)
           .map((d) => ({ id: d.id, headline: d.headline, summary: (d.summary || '').slice(0, 160), type: d.type || 'DEAL', value: fmtValue(d.value, curSym(d.currency)), date: d.date || '', status: (d.status || '').toUpperCase() }));
       }
     } catch (e) {}

@@ -3,6 +3,8 @@
 // metodologia publicada no es un producto, es una lista.
 import Head from 'next/head';
 import { supabaseAdmin } from '../lib/supabase';
+import { ineligibleReason, collapseSameDeal } from '../lib/eligibility';
+import { dedupeDeals } from '../lib/dedupe';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 
@@ -41,9 +43,13 @@ export async function getServerSideProps(ctx) {
     const { count: tracked } = await supabaseAdmin
       .from('deals').select('id', { count: 'exact', head: true }).eq('category', 'deal');
 
-    const { data: elig } = await supabaseAdmin
-      .from('deals').select('value_eur')
-      .eq('category', 'deal').is('excluded_reason', null).gt('value_eur', 0);
+    // Misma regla que /rankings, para que las dos paginas den las mismas cifras.
+    const { data: raw } = await supabaseAdmin
+      .from('deals').select('id,headline,buyer,target,value,currency,value_eur,type,status,deal_date,created_at')
+      .eq('category', 'deal').is('excluded_reason', null).gt('value_eur', 0).limit(1500);
+    const okRows = (raw || []).filter((d) => !ineligibleReason(d));
+    const byDate = okRows.slice().sort((a, b) => String(b.deal_date || b.created_at).localeCompare(String(a.deal_date || a.created_at)));
+    const elig = collapseSameDeal(dedupeDeals(byDate));
 
     const { count: excluded } = await supabaseAdmin
       .from('deals').select('id', { count: 'exact', head: true })
@@ -108,7 +114,7 @@ export default function Methodology({ stats, fx, reasons }) {
 
           <H2>Where the data comes from</H2>
           <P>Meridian ingests headlines in near real time from regulators and exchanges, newswires and company releases, and the financial press -- with a deliberate weight towards Iberian outlets, because Iberian mid-market deals are poorly covered in English.</P>
-          <P><strong>Every record is tied to a published source article, and every record links to it.</strong> A language model is used for one job: to translate headlines into English and sort them into fields. It selects and structures. It does not report, it does not add facts, and it does not write commentary. If a record cannot be traced to a source article, it is not published.</P>
+          <P><strong>Every record is tied to a published source article, and every record links to it.</strong> A language model translates headlines into English and sorts them into fields; it selects and structures, and does not add facts. It also writes the short <em>Meridian analysis</em> note on each item, under the same rule: only what the source states, with no invented prices, multiples, leverage or outcomes, and an explicit note of what the source does not disclose. Notes that merely restate the summary are discarded. If a record cannot be traced to a source article, it is not published.</P>
 
           <H2>What counts as a deal</H2>
           <LI>A single, identifiable transaction: an acquisition, a buyout, an equity or debt issue, a project financing, a restructuring.</LI>

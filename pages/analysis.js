@@ -59,7 +59,7 @@ export default function AnalysisHub({ items }) {
     <>
       <Head>
         <title>Analysis -- Meridian</title>
-        <meta name="description" content="Meridian Analysis: written commentary on selected M&A, LBO, ECM and financing deals." />
+        <meta name="description" content="Meridian Analysis: short, source-grounded notes on M&A, LBO, ECM and financing deals." />
         <link rel="canonical" href={SITE + '/analysis'} />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -69,7 +69,7 @@ export default function AnalysisHub({ items }) {
 
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 22px 56px' }}>
           <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(34px,6vw,54px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.1, margin: '0 0 8px' }}>Meridian Analysis</h1>
-          <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-mid)', fontStyle: 'italic', margin: '0 0 8px' }}>Written commentary on selected deals -- the rationale, the numbers, and the signal.</p>
+          <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-mid)', fontStyle: 'italic', margin: '0 0 8px' }}>Short notes on each deal: what kind of transaction it is, who is doing what, and what the source does not disclose. Model-written from the source article and checked against it -- no invented numbers.</p>
 
           {items.length === 0 ? (
             <div style={{ marginTop: 34, borderTop: '1px solid var(--border)', paddingTop: 26 }}>
@@ -77,8 +77,7 @@ export default function AnalysisHub({ items }) {
                 Meridian is not publishing analysis at the moment.
               </p>
               <p style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-mid)', lineHeight: 1.8, margin: '0 0 14px' }}>
-                Commentary here is written by a person, not generated. Until there is something worth
-                signing, this page stays empty rather than filled. The deal feed on the{' '}
+                Notes appear here once they pass the source check. The deal feed on the{' '}
                 <a href="/" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>home page</a>{' '}
                 is live and sourced as usual.
               </p>
