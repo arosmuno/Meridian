@@ -269,6 +269,7 @@ function DealModal({ deal, mode, onClose }) {
   const c = curSym(deal.currency);
 
   const runAnalysis = async () => {
+    if (deal.analysis) { setAnalysis(deal.analysis); return; }
     setLoadingAnalysis(true); setAnalysis('');
     try {
       const res = await fetch('/api/analysis', {
@@ -277,9 +278,8 @@ function DealModal({ deal, mode, onClose }) {
         body: JSON.stringify({ deal, lang: 'en', langName: 'English' }),
       });
       const data = await res.json();
-      if (data.analysis) setAnalysis(data.analysis);
-      else setAnalysis('The analysis is not available right now.');
-    } catch (e) { setAnalysis('The analysis is not available right now.'); }
+      setAnalysis(data.analysis || '');
+    } catch (e) { setAnalysis(''); }
     setLoadingAnalysis(false);
   };
 
@@ -324,14 +324,14 @@ function DealModal({ deal, mode, onClose }) {
             </div>
           )}
 
-          {/* AI Analysis */}
-          <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:'20px 24px'}}>
+          {/* Meridian analysis (guardado en deals.analysis) */}
+          {(analysis || loadingAnalysis) && <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:'20px 24px'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
               <div style={{fontFamily:"var(--s)",fontSize:10,fontWeight:700,letterSpacing:'.14em',color:deal.accent}}>✦ MERIDIAN ANALYSIS</div>
             </div>
-            {loadingAnalysis && <div style={{fontFamily:"var(--r)",fontSize:13,color:C.textMid,fontStyle:'italic'}}>Drafting editorial analysis…</div>}
+            {loadingAnalysis && <div style={{fontFamily:"var(--r)",fontSize:13,color:C.textMid,fontStyle:'italic'}}>Loading analysis…</div>}
             {analysis && <p style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.9,margin:0,whiteSpace:'pre-wrap'}}>{analysis}</p>}
-          </div>
+          </div>}
         </div>
       </div>
     </div>

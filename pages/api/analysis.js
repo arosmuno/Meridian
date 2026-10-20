@@ -1,16 +1,27 @@
 // pages/api/analysis.js
-// DESACTIVADO a proposito. No genera comentario editorial.
+// Devuelve el "Meridian analysis" GUARDADO para un deal. No genera nada en vivo.
 //
-// La version anterior le pasaba a un LLM SOLO el titular, el comprador, el objetivo,
-// el valor y el resumen, y le pedia "la lectura financiera y estructural (valoracion,
-// apalancamiento, prima, financiacion)". El modelo no tenia ninguno de esos datos,
-// asi que se los inventaba: multiplos de EBITDA, tramos de deuda, primas. Publicado
-// como analisis de un medio financiero, con el nombre de un periodico real encima.
-//
-// Meridian no tiene mesa editorial. Mientras no la tenga, no publica analisis.
-// Cuando haya comentario escrito por una persona, se guarda en deals.analysis
-// y se renderiza desde ahi. Este endpoint NO vuelve a generar nada.
+// El analisis se escribe en el cron (lib/fetchDeals.js) a partir del titular y el snippet
+// de origen, con reglas de grounding estrictas: nada de multiplos, apalancamiento, primas
+// o resultados que no esten en la fuente. Aqui solo se lee de deals.analysis.
 
-export default function handler(req, res) {
-  return res.status(200).json({ analysis: '', disabled: true });
+import { supabase } from '../../lib/supabase';
+
+export default async function handler(req, res) {
+  const body = req.method === 'POST' ? (req.body || {}) : req.query;
+  const deal = body.deal || {};
+  if (deal.analysis) return res.status(200).json({ analysis: deal.analysis });
+
+  const id = deal.id || body.id;
+  const headline = deal.headline || body.headline;
+  try {
+    let q = supabase.from('deals').select('analysis').limit(1);
+    if (id && Number(id) > 1000) q = q.eq('id', id);
+    else if (headline) q = q.eq('headline', headline);
+    else return res.status(200).json({ analysis: '' });
+    const { data } = await q;
+    return res.status(200).json({ analysis: (data && data[0] && data[0].analysis) || '' });
+  } catch {
+    return res.status(200).json({ analysis: '' });
+  }
 }

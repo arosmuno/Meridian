@@ -1,7 +1,36 @@
-import { fetchDealsFromWeb } from '../../lib/fetchDeals';
+import { fetchDealsFromWeb, backfillAnalysis, isIberianText } from '../../lib/fetchDeals';
 import { supabaseAdmin } from '../../lib/supabase';
 
 export const config = { maxDuration: 300 };
+
+// Rellena el analisis de filas recientes que se quedaron sin el (p. ej. si el LLM cayo).
+// Pocas por ciclo para no comerse la cuota gratuita.
+async function runBackfill() {
+  try {
+    const since = new Date(Date.now() - 10 * 86400000).toISOString();
+    const { data } = await supabaseAdmin
+      .from('deals')
+      .select('id, headline, summary, buyer, target, value, currency, type')
+      .is('analysis', null)
+      .is('dup_of', null)
+      .neq('category', 'duplicate')
+      .neq('category', 'excluded')
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(15);
+    if (!data || !data.length) return 0;
+    const filled = await backfillAnalysis(data);
+    let n = 0;
+    for (const f of filled) {
+      const { error } = await supabaseAdmin.from('deals').update({ analysis: f.analysis }).eq('id', f.id).is('analysis', null);
+      if (!error) n++;
+    }
+    return n;
+  } catch (e) {
+    console.error('[CRON] backfill fallo:', e.message);
+    return 0;
+  }
+}
 
 export default async function handler(req, res) {
   const authHeader = req.headers.authorization;
@@ -44,7 +73,8 @@ export default async function handler(req, res) {
 
     if (!deals || deals.length === 0) {
       // Un ciclo sin noticias es un resultado valido. No se rellena con nada.
-      await logRun({ fetched: 0, saved: 0, message: 'sin titulares anclables' });
+      const backfilled = await runBackfill();
+      await logRun({ fetched: 0, saved: 0, backfilled, message: 'sin titulares anclables' });
       return res.status(200).json({ ok: true, saved: 0, message: 'No deals found' });
     }
 
@@ -68,6 +98,8 @@ export default async function handler(req, res) {
       rows.push({
         headline: d.headline,
         summary: d.summary,
+        analysis: d.analysis || null,
+        is_iberian: d.iberian === true || isIberianText(`${d.headline} ${d.buyer} ${d.target} ${d.summary}`),
         buyer: d.buyer || 'N/A',
         target: d.target || 'N/A',
         value: Number(d.value) || 0,
@@ -107,8 +139,9 @@ export default async function handler(req, res) {
     }
 
     console.log(`[CRON] Guardados ${rows.length} deals (${rejected} rechazados)`);
-    await logRun({ fetched: deals.length, saved: rows.length, rejected });
-    return res.status(200).json({ ok: true, saved: rows.length, rejected });
+    const backfilled = await runBackfill();
+    await logRun({ fetched: deals.length, saved: rows.length, rejected, backfilled });
+    return res.status(200).json({ ok: true, saved: rows.length, rejected, backfilled });
 
   } catch (err) {
     console.error('[CRON] Fatal error:', err.message);

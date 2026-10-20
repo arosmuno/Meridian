@@ -27,6 +27,9 @@ export default async function handler(req, res) {
       .order('fetched_at', { ascending: false })
       .limit(Number(limit));
 
+    // Lo que no pasa el filtro editorial se conserva en la base pero no se sirve.
+    query = query.or('category.is.null,category.neq.excluded');
+
     if (type && type !== 'All') query = query.eq('type', type);
 
     const { data, error } = await query;
