@@ -44,7 +44,9 @@ export default async function handler(req, res) {
     const { data, error } = await query;
     if (error) throw error;
 
-    const deals = (data || []).filter((d) => d.category !== 'macro' || isRelevantMacro(d.headline)).map((d) => (d.analysis ? { ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) } : d));
+    // Filas antiguas marcadas como "deal" que no son operaciones: se tratan como mercado.
+    const fixed = (data || []).map((d) => (d.category === 'deal' && d.excluded_reason === 'Not a transaction' ? { ...d, category: 'macro', value: 0 } : d));
+    const deals = fixed.filter((d) => d.category !== 'macro' || isRelevantMacro(d.headline)).map((d) => (d.analysis ? { ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) } : d));
 
     return res.status(200).json({
       deals,
