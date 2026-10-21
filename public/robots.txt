@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dataroom/
+
+Sitemap: https://www.meridiancapmarkets.com/sitemap.xml
