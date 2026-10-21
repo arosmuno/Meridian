@@ -1,4 +1,5 @@
-import { fetchDealsFromWeb, backfillAnalysis, isIberianText } from '../../lib/fetchDeals';
+import { fetchDealsFromWeb, backfillAnalysis, isIberianText, translateRows } from '../../lib/fetchDeals';
+import { looksSpanish } from '../../lib/eligibility';
 import { supabaseAdmin } from '../../lib/supabase';
 import { ineligibleReason } from '../../lib/eligibility';
 
@@ -7,6 +8,24 @@ export const config = { maxDuration: 300 };
 // Rellena el analisis de filas recientes que se quedaron sin el (p. ej. si el LLM cayo).
 // Pocas por ciclo para no comerse la cuota gratuita.
 async function runBackfill() {
+  // 1) Titulares que el modelo dejo en espanol: se traducen (el diario es en ingles y la
+  //    portada los ocultaba, asi que se perdian justo las noticias ibericas).
+  try {
+    const since = new Date(Date.now() - 10 * 86400000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from('deals').select('id, headline, summary')
+      .gte('created_at', since).neq('category', 'excluded')
+      .order('created_at', { ascending: false }).limit(400);
+    const es = (recent || []).filter((r) => looksSpanish(r.headline)).slice(0, 15);
+    if (es.length) {
+      const tr = await translateRows(es);
+      for (const t of tr) {
+        await supabaseAdmin.from('deals').update({ headline: t.headline, summary: t.summary }).eq('id', t.id);
+      }
+    }
+  } catch (e) {
+    console.error('[CRON] traduccion fallo:', e.message);
+  }
   try {
     const since = new Date(Date.now() - 10 * 86400000).toISOString();
     const { data } = await supabaseAdmin
@@ -84,6 +103,15 @@ export default async function handler(req, res) {
       await logRun({ fetched: 0, saved: 0, backfilled, message: 'sin titulares anclables' });
       return res.status(200).json({ ok: true, saved: 0, message: 'No deals found' });
     }
+
+    // Lo que el modelo dejo en espanol se traduce antes de guardar.
+    try {
+      const es = deals.map((d, i) => ({ ...d, id: i })).filter((d) => looksSpanish(d.headline));
+      if (es.length) {
+        const tr = await translateRows(es);
+        for (const t of tr) { deals[t.id].headline = t.headline; deals[t.id].summary = t.summary; }
+      }
+    } catch (e) { console.error('[CRON] traduccion previa fallo:', e.message); }
 
     const rows = [];
     let rejected = 0;

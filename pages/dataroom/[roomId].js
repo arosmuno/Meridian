@@ -18,6 +18,7 @@ export default function Room() {
   const [sessionId, setSessionId] = useState(null);
   const [busy, setBusy] = useState(false);
   const [loadErr, setLoadErr] = useState('');
+  const [canWrite, setCanWrite] = useState(false);
   const fileRef = useRef();
   const scrollRef = useRef();
 
@@ -31,6 +32,9 @@ export default function Room() {
     const { data: r, error } = await dr().from('rooms').select('*').eq('id', roomId).maybeSingle();
     if (error || !r) { setLoadErr('Esta sala no existe o no tienes acceso.'); return; }
     setRoom(r);
+    // Rol en la organizacion: "Solo lectura" puede consultar y descargar, pero no subir ni borrar.
+    const { data: m } = await supabase.schema('dataroom').from('memberships').select('role').eq('org_id', r.org_id).eq('user_id', session.user.id).maybeSingle();
+    setCanWrite(!!m && m.role !== 'viewer');
     refreshDocs();
   }
   async function refreshDocs() {
@@ -150,10 +154,10 @@ export default function Room() {
         <div style={S.grid}>
           <section style={S.card}>
             <div style={S.cardHead}>Documentos</div>
-            <label style={S.upload}>
+            {canWrite ? <label style={S.upload}>
               {uploading ? 'Subiendo e indexando…' : '+ Subir documento (PDF, DOCX, TXT)'}
               <input ref={fileRef} type="file" onChange={onUpload} disabled={uploading} accept=".pdf,.docx,.txt,.md" style={{ display: 'none' }} />
-            </label>
+            </label> : <div style={S.empty}>Acceso de solo lectura: puedes consultar y descargar.</div>}
             <div style={{ display: 'grid', gap: 6, marginTop: 12 }}>
               {docs.map((d) => (
                 <div key={d.id} style={S.docRow}>
@@ -162,9 +166,9 @@ export default function Room() {
                     <div style={{ ...S.docStatus, color: statusColor(d.status) }}>{statusLabel(d.status)}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    {d.status === 'error' && <button style={S.dl} onClick={() => reindex(d)} title={d.error || 'Reintentar indexación'}>↻</button>}
+                    {canWrite && d.status === 'error' && <button style={S.dl} onClick={() => reindex(d)} title={d.error || 'Reintentar indexación'}>↻</button>}
                     <button style={S.dl} onClick={() => download(d)} title="Descargar (enlace firmado)">↓</button>
-                    <button style={S.dl} onClick={() => removeDoc(d)} title="Eliminar documento">✕</button>
+                    {canWrite && <button style={S.dl} onClick={() => removeDoc(d)} title="Eliminar documento">✕</button>}
                   </div>
                 </div>
               ))}

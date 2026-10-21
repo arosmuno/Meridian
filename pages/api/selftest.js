@@ -93,10 +93,34 @@ export default async function handler(req, res) {
       await admin.auth.admin.deleteUser(u2.user.id);
       return { other_user_sees_room: (rooms || []).length > 0 };
     });
+    await step('viewer_role', async () => {
+      // Un invitado "Solo lectura" ve los documentos pero no puede subir ni borrar,
+      // y un usuario cualquiera no puede colarse como miembro.
+      const e3 = 'selftest3+' + Date.now() + '@meridiancapmarkets.com';
+      const { error: ie } = await user.rpc('dataroom_invite_member', { p_org_id: orgId, p_email: e3, p_role: 'viewer' });
+      if (ie) throw ie;
+      const { data: u3 } = await admin.auth.admin.createUser({ email: e3, password, email_confirm: true });
+      const c3 = createClient(url, anon, { auth: { persistSession: false } });
+      await c3.auth.signInWithPassword({ email: e3, password });
+      await c3.rpc('dataroom_accept_invites');
+      const { data: seen } = await c3.schema('dataroom').from('documents').select('id').eq('room_id', roomId);
+      const up = await c3.storage.from('datarooms').upload(orgId + '/' + roomId + '/selftest/viewer.txt', Buffer.from('x'), { contentType: 'text/plain' });
+      const { data: delRows } = await c3.schema('dataroom').from('documents').delete().eq('id', docId).select();
+      const e4 = 'selftest4+' + Date.now() + '@meridiancapmarkets.com';
+      const { data: u4 } = await admin.auth.admin.createUser({ email: e4, password, email_confirm: true });
+      const c4 = createClient(url, anon, { auth: { persistSession: false } });
+      await c4.auth.signInWithPassword({ email: e4, password });
+      const { error: joinErr } = await c4.schema('dataroom').from('memberships').insert({ org_id: orgId, user_id: u4.user.id, role: 'owner' });
+      await admin.schema('dataroom').from('memberships').delete().eq('org_id', orgId).in('user_id', [u3.user.id, u4.user.id]);
+      await admin.auth.admin.deleteUser(u3.user.id); await admin.auth.admin.deleteUser(u4.user.id);
+      const out = { viewer_sees_docs: (seen || []).length, viewer_upload_blocked: !!up.error, viewer_delete_blocked: !(delRows || []).length, outsider_join_blocked: !!joinErr };
+      if (!out.viewer_sees_docs || !out.viewer_upload_blocked || !out.viewer_delete_blocked || !out.outsider_join_blocked) throw new Error(JSON.stringify(out));
+      return out;
+    });
   } catch (e) {
     // el paso que fallo ya esta registrado
   } finally {
-    try { if (path) await admin.storage.from('datarooms').remove([path]); } catch (_) {}
+    try { if (path) await admin.storage.from('datarooms').remove([path, path.replace('spa.pdf', 'viewer.txt')]); } catch (_) {}
     try { if (orgId) await admin.schema('dataroom').from('orgs').delete().eq('id', orgId); } catch (_) {}
     try { if (userId) await admin.auth.admin.deleteUser(userId); } catch (_) {}
   }

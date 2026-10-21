@@ -125,7 +125,7 @@ function processDeals(arr) {
     return 0;
   };
   const sorted = [...raw].sort((a, b) => parseDate(b) - parseDate(a));
-  return dedupeDeals(sorted.filter((d) => !looksSpanish(d.headline)));
+  return dedupeDeals(sorted);
 }
 
 // ── THEMES ────────────────────────────────────────────────────────────────────

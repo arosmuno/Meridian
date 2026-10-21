@@ -14,6 +14,7 @@
 
 import { supabase } from '../../lib/supabase';
 import { cleanAnalysis } from '../../lib/analysisQuality';
+import { isRelevantMacro } from '../../lib/eligibility';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
     const { data, error } = await query;
     if (error) throw error;
 
-    const deals = (data || []).map((d) => (d.analysis ? { ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) } : d));
+    const deals = (data || []).filter((d) => d.category !== 'macro' || isRelevantMacro(d.headline)).map((d) => (d.analysis ? { ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) } : d));
 
     return res.status(200).json({
       deals,
