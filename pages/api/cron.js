@@ -38,7 +38,8 @@ async function runBackfill() {
         .gte('created_at', since).order('created_at', { ascending: false }).limit(n);
       return data || [];
     };
-    const rows = [...(await pick('deal', 9)), ...(await pick('macro', 3))];
+    // 8 por pasada: cada analisis lleva busqueda + verificacion y la funcion tiene 300 s.
+    const rows = [...(await pick('deal', 6)), ...(await pick('macro', 2))];
     if (!rows.length) return 0;
     let n = 0;
     // De cuatro en cuatro: lectura del articulo + llamada al modelo en paralelo.
