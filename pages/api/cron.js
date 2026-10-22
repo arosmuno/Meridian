@@ -38,7 +38,7 @@ async function runBackfill() {
         .gte('created_at', since).order('created_at', { ascending: false }).limit(n);
       return data || [];
     };
-    const rows = [...(await pick('deal', 6)), ...(await pick('macro', 2))];
+    const rows = [...(await pick('deal', 9)), ...(await pick('macro', 3))];
     if (!rows.length) return 0;
     let n = 0;
     // De cuatro en cuatro: lectura del articulo + llamada al modelo en paralelo.
