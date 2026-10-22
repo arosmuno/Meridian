@@ -101,6 +101,7 @@ export default function Academy() {
             <h2 style={{ fontFamily: 'var(--d)', fontSize: 28, fontWeight: 800, color: 'var(--text-hi)', margin: '0 0 8px' }}>The Meridian Weekly</h2>
             <p style={{ fontFamily: 'var(--r)', fontSize: 14, color: 'var(--text-body)', maxWidth: 560, margin: '0 auto 16px', lineHeight: 1.6 }}>The week's largest M&amp;A, LevFin and infrastructure deals, with an Iberia section. Five minutes, sourced, no noise.</p>
             <NewsletterSignup source="academy-page" />
+            <div style={{ marginTop: 12, fontFamily: 'var(--s)', fontSize: 12 }}><a href="/weekly" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>Read this week's issue &rarr;</a></div>
           </section>
 
           <p style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-lo)', textAlign: 'center', marginTop: 22, lineHeight: 1.7 }}>

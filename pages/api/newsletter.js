@@ -7,6 +7,7 @@
 // Envio con Resend (plan gratuito, 3.000 emails/mes). Sin RESEND_API_KEY no envia nada.
 
 import { supabaseAdmin } from '../../lib/supabase';
+import { loadWeek } from '../../lib/weekly';
 
 export const config = { maxDuration: 60 };
 
@@ -26,23 +27,8 @@ function fmtEur(v) {
 }
 
 async function loadDeals() {
-  const since = new Date(Date.now() - 7 * 864e5).toISOString();
-  const { data, error } = await supabaseAdmin
-    .from('deals')
-    .select('id, headline, summary, value_eur, type, sector, geography, is_iberian, source, source_url')
-    .eq('category', 'deal')
-    .is('excluded_reason', null)
-    .is('dup_of', null)
-    .gte('fetched_at', since)
-    .order('value_eur', { ascending: false, nullsFirst: false })
-    .limit(60);
-  if (error) throw error;
-  const deals = data || [];
-  return {
-    top: deals.slice(0, 8),
-    iberia: deals.filter((d) => d.is_iberian).slice(0, 5),
-    count: deals.length,
-  };
+  // Misma seleccion que la edicion web (/weekly): solo operaciones elegibles y sin duplicados.
+  return loadWeek();
 }
 
 function dealRow(d) {
@@ -72,6 +58,7 @@ ${rows.map(dealRow).join('')}` : '';
 </td></tr>
 ${section('The week’s largest deals', top)}
 ${section('Iberia', iberia)}
+<tr><td style="padding:22px 0 0;text-align:center;font:13px Georgia,serif"><a href="${SITE}/weekly" style="color:#9a7d1e">Read this issue on the web</a></td></tr>
 <tr><td style="padding:28px 0;text-align:center">
 <a href="${SITE}/academy" style="display:inline-block;border:1px solid #9a7d1e;color:#9a7d1e;font:700 12px Arial,sans-serif;letter-spacing:.08em;padding:10px 18px;text-decoration:none">MERIDIAN ACADEMY · MODELS, GUIDE &amp; COACHING</a>
 </td></tr>

@@ -3,7 +3,7 @@
 import { supabaseAdmin } from '../lib/supabase';
 
 const SITE = 'https://www.meridiancapmarkets.com';
-const STATIC = ['', '/rankings', '/analysis', '/careers', '/learn', '/academy', '/methodology', '/about', '/contact', '/privacy'];
+const STATIC = ['', '/weekly', '/rankings', '/analysis', '/careers', '/learn', '/academy', '/methodology', '/about', '/contact', '/privacy'];
 const SECTORS = ['healthcare', 'tmt', 'infrastructure', 'energy-renewables', 'financial-services', 'consumer', 'industrials', 'real-estate'];
 const slugify = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
