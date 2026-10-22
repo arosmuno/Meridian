@@ -46,10 +46,13 @@ export default async function handler(req, res) {
 
     // Filas antiguas marcadas como "deal" que no son operaciones: se tratan como mercado.
     const fixed = (data || []).map((d) => (d.category === 'deal' && d.excluded_reason === 'Not a transaction' ? { ...d, category: 'macro', value: 0 } : d));
+    const lite = req.query.lite === '1';
     const deals = fixed.filter((d) => d.category !== 'macro' || isRelevantMacro(d.headline)).map((d) => (d.analysis ? { ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) } : d));
 
+    // lite=1 (portada): sin el analisis largo, que se carga al abrir cada noticia.
+    const out = lite ? deals.map(({ analysis, ...d }) => ({ ...d, has_analysis: !!analysis })) : deals;
     return res.status(200).json({
-      deals,
+      deals: out,
       source: 'live',
       count: deals.length,
       last_updated: deals[0]?.fetched_at || null,

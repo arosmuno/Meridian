@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const deal = body.deal || {};
   if (deal.analysis) return res.status(200).json({ analysis: deal.analysis });
 
-  const id = deal.id || body.id;
+  const id = deal.dbId || deal.id || body.id;
   const headline = deal.headline || body.headline;
   try {
     let q = supabase.from('deals').select('analysis').limit(1);

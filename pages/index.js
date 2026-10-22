@@ -57,7 +57,7 @@ const cleanHeadline = (h) => {
 };
 // El diario es SIEMPRE en ingles: detecta titulares en espanol para no mostrarlos.
 const looksSpanish = (h) => /[ñ¿¡]/.test(h || '') || /\b(millones|adquiere|compra|deuda|cr[eé]dito|pr[eé]stamo|fusi[oó]n|ampliaci[oó]n|accionista|espa[nñ]ola?|empresa|negocio|bolsa|beneficio|salida a bolsa|puja|retrasa|colocar)\b/i.test(h || '');
-const enrich = (d, i) => ({ ...d, id:i+1, headline: cleanHeadline(d.headline), value: isMarketLike(d) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
+const enrich = (d, i) => ({ ...d, dbId: d.id, id:i+1, headline: cleanHeadline(d.headline), value: isMarketLike(d) ? 0 : d.value, ...getStyle(d.type), kicker: KICKER_MAP[d.type]||d.type?.toUpperCase()||'DEAL' });
 
 // Firma de una entidad: minusculas, sin acentos ni signos, y sin sufijos corporativos
 // (group, holdings, inc, corp, plc, ag, ltd, partners, automotive...). Asi "Renk" y
@@ -374,7 +374,7 @@ export default function Home({ initialDeals = [] }) {
   const loadDeals = useCallback(async (days = 7) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/deals?days=${days}`);
+      const res = await fetch(`/api/deals?days=${days}&lite=1`);
       const data = await res.json();
       setDeals(processDeals(data.deals || []));
       setMode(data.source || 'archive');
@@ -710,7 +710,7 @@ export default function Home({ initialDeals = [] }) {
 export async function getServerSideProps() {
   let initialDeals = [];
   try {
-    const r = await fetch('https://www.meridiancapmarkets.com/api/deals?limit=150&days=7');
+    const r = await fetch('https://www.meridiancapmarkets.com/api/deals?limit=150&days=7&lite=1');
     if (r.ok) { const j = await r.json(); initialDeals = j.deals || []; }
   } catch (e) {}
   return { props: { initialDeals } };
