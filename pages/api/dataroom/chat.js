@@ -1,12 +1,11 @@
-// Chat de due diligence (RAG): valida acceso, busca chunks y responde con Claude citando fuentes.
+// Chat de due diligence (RAG): valida acceso, busca chunks y responde citando fuentes.
+// Modelo: el failover gratuito (Gemini -> Groq) de lib/llm.js.
 import { createClient } from '@supabase/supabase-js';
-import Anthropic from '@anthropic-ai/sdk';
+import { llmComplete } from '../../../lib/llm';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY);
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = process.env.DATAROOM_MODEL || 'claude-sonnet-5-5';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
@@ -50,13 +49,12 @@ export default async function handler(req, res) {
 
     await admin.schema('dataroom').from('messages').insert({ session_id, room_id, role: 'user', content: message });
 
-    const completion = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 1500,
-      system,
-      messages: [{ role: 'user', content: `Extractos del dataroom:\n\n${ctx || '(sin documentos indexados)'}\n\nPregunta: ${message}` }],
-    });
-    const answer = (completion.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    const answer = (await llmComplete({
+      prompt: `${system}\n\nExtractos del dataroom:\n\n${ctx || '(sin documentos indexados)'}\n\nPregunta: ${message}`,
+      maxTokens: 1500,
+      temperature: 0.1,
+      fast: true,
+    })).trim();
 
     await admin.schema('dataroom').from('messages').insert({ session_id, room_id, role: 'assistant', content: answer, citations });
 
