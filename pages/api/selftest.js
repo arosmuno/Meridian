@@ -17,9 +17,8 @@ export default async function handler(req, res) {
     const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
     const { data: d } = await db.from('deals').select('*').eq('id', Number(req.query.analysis)).maybeSingle();
     if (!d) return res.status(404).json({ error: 'no deal' });
-    const [article, related] = await Promise.all([fetchArticle(d.source_url), relatedDeals(db, d)]);
-    const text = await writeAnalysis(db, d);
-    return res.status(200).json({ headline: d.headline, article_chars: article.length, related, analysis: text });
+    const out = await writeAnalysis(db, d, { debug: true });
+    return res.status(200).json({ headline: d.headline, ...out });
   }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
