@@ -10,17 +10,17 @@ import { supabase } from '../../lib/supabase';
 export default async function handler(req, res) {
   const body = req.method === 'POST' ? (req.body || {}) : req.query;
   const deal = body.deal || {};
-  if (deal.analysis) return res.status(200).json({ analysis: deal.analysis });
+  if (deal.analysis) return res.status(200).json({ analysis: deal.analysis, sources: deal.analysis_sources || [] });
 
   const id = deal.dbId || deal.id || body.id;
   const headline = deal.headline || body.headline;
   try {
-    let q = supabase.from('deals').select('analysis').limit(1);
+    let q = supabase.from('deals').select('analysis, analysis_sources').limit(1);
     if (id && Number(id) > 1000) q = q.eq('id', id);
     else if (headline) q = q.eq('headline', headline);
     else return res.status(200).json({ analysis: '' });
     const { data } = await q;
-    return res.status(200).json({ analysis: (data && data[0] && data[0].analysis) || '' });
+    return res.status(200).json({ analysis: (data && data[0] && data[0].analysis) || '', sources: (data && data[0] && data[0].analysis_sources) || [] });
   } catch {
     return res.status(200).json({ analysis: '' });
   }

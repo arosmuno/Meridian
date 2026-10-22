@@ -43,11 +43,13 @@ async function runBackfill() {
     let n = 0;
     // De cuatro en cuatro: lectura del articulo + llamada al modelo en paralelo.
     for (let i = 0; i < rows.length; i += 4) {
-      const out = await Promise.all(rows.slice(i, i + 4).map(async (r) => ({ r, text: await writeAnalysis(supabaseAdmin, r) })));
-      for (const { r, text } of out) {
-        if (text === null) continue;                  // LLM caido: se reintenta
-        const { error } = await supabaseAdmin.from('deals').update({ analysis: text || '' }).eq('id', r.id).is('analysis', null);
-        if (!error && text) n++;
+      const out = await Promise.all(rows.slice(i, i + 4).map(async (r) => ({ r, res: await writeAnalysis(supabaseAdmin, r) })));
+      for (const { r, res } of out) {
+        if (res === null) continue;                   // LLM caido: se reintenta
+        const patch = { analysis: res.text || '' };
+        if (res.text && res.sources && res.sources.length) patch.analysis_sources = res.sources;
+        const { error } = await supabaseAdmin.from('deals').update(patch).eq('id', r.id).is('analysis', null);
+        if (!error && res.text) n++;
       }
     }
     return n;

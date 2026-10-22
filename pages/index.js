@@ -266,6 +266,7 @@ function DealCard({ deal, onClick }) {
 function DealModal({ deal, mode, onClose }) {
   const { C, theme } = useTheme();
   const [analysis, setAnalysis] = useState('');
+  const [sources, setSources] = useState([]);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const c = curSym(deal.currency);
 
@@ -280,6 +281,7 @@ function DealModal({ deal, mode, onClose }) {
       });
       const data = await res.json();
       setAnalysis(data.analysis || '');
+      setSources(Array.isArray(data.sources) ? data.sources : []);
     } catch (e) { setAnalysis(''); }
     setLoadingAnalysis(false);
   };
@@ -332,6 +334,11 @@ function DealModal({ deal, mode, onClose }) {
             </div>
             {loadingAnalysis && <div style={{fontFamily:"var(--r)",fontSize:13,color:C.textMid,fontStyle:'italic'}}>Loading analysis…</div>}
             {analysis && <p style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.9,margin:0,whiteSpace:'pre-wrap'}}>{analysis}</p>}
+            {analysis && sources.length > 0 && (
+              <div style={{marginTop:12,fontFamily:"var(--s)",fontSize:11,color:C.textMid,lineHeight:1.8}}>
+                Additional sources: {sources.map((s,i)=>(<span key={s.url}>{i?' · ':''}<a href={s.url} target="_blank" rel="noopener noreferrer nofollow" style={{color:deal.accent,textDecoration:'none'}}>{s.title}</a></span>))}
+              </div>
+            )}
           </div>}
         </div>
       </div>

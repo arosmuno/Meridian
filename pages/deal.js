@@ -170,6 +170,14 @@ export default function DealPage({ deal, id }) {
               {analysis ? (
                 <div style={{ fontFamily: 'var(--r)', fontSize: 16, color: 'var(--text-body)', lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>{analysis}</div>
               ) : null}
+              {analysis && Array.isArray(deal.analysis_sources) && deal.analysis_sources.length ? (
+                <div style={{ marginTop: 14, fontFamily: 'var(--s)', fontSize: 12, color: 'var(--text-mid)', lineHeight: 1.8 }}>
+                  Additional sources:{' '}
+                  {deal.analysis_sources.map((s, i) => (
+                    <span key={s.url}>{i ? ' · ' : ''}<a href={s.url} target="_blank" rel="noopener noreferrer nofollow" style={{ color: accent, textDecoration: 'none' }}>{s.title}</a></span>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
