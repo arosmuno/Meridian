@@ -38,20 +38,20 @@ async function runBackfill() {
         .gte('created_at', since).order('created_at', { ascending: false }).limit(n);
       return data || [];
     };
-    // 8 por pasada: cada analisis lleva busqueda + verificacion y la funcion tiene 300 s.
+    // Hasta 8 por pasada, de uno en uno: los limites gratuitos de Groq son por minuto y en
+    // paralelo se agotaban. Se para a los 200 s para no pasar del limite de 300 s de la funcion.
     const rows = [...(await pick('deal', 6)), ...(await pick('macro', 2))];
     if (!rows.length) return 0;
+    const t0 = Date.now();
     let n = 0;
-    // De cuatro en cuatro: lectura del articulo + llamada al modelo en paralelo.
-    for (let i = 0; i < rows.length; i += 4) {
-      const out = await Promise.all(rows.slice(i, i + 4).map(async (r) => ({ r, res: await writeAnalysis(supabaseAdmin, r) })));
-      for (const { r, res } of out) {
-        if (res === null) continue;                   // LLM caido: se reintenta
-        const patch = { analysis: res.text || '' };
-        if (res.text && res.sources && res.sources.length) patch.analysis_sources = res.sources;
-        const { error } = await supabaseAdmin.from('deals').update(patch).eq('id', r.id).is('analysis', null);
-        if (!error && res.text) n++;
-      }
+    for (const r of rows) {
+      if (Date.now() - t0 > 200000) break;
+      const res = await writeAnalysis(supabaseAdmin, r);
+      if (res === null) break;                       // modelos sin cuota: se reintenta en el siguiente ciclo
+      const patch = { analysis: res.text || '' };
+      if (res.text && res.sources && res.sources.length) patch.analysis_sources = res.sources;
+      const { error } = await supabaseAdmin.from('deals').update(patch).eq('id', r.id).is('analysis', null);
+      if (!error && res.text) n++;
     }
     return n;
   } catch (e) {
