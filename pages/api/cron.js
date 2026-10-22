@@ -31,7 +31,7 @@ async function runBackfill() {
   //    Primero operaciones y despues mercado; pocas por ciclo para no agotar la cuota gratuita.
   try {
     const since = new Date(Date.now() - 7 * 86400000).toISOString();
-    const cols = 'id, headline, summary, buyer, target, value, currency, type, sector, geography, status, is_iberian, source, source_url, category';
+    const cols = 'id, analysis_attempts, headline, summary, buyer, target, value, currency, type, sector, geography, status, is_iberian, source, source_url, category';
     const pick = async (cat, n) => {
       const { data } = await supabaseAdmin.from('deals').select(cols)
         .is('analysis', null).is('dup_of', null).eq('category', cat)
@@ -48,7 +48,14 @@ async function runBackfill() {
       if (Date.now() - t0 > 200000) break;
       const res = await writeAnalysis(supabaseAdmin, r);
       if (res === null) break;                       // modelos sin cuota: se reintenta en el siguiente ciclo
-      const patch = { analysis: res.text || '' };
+      // Rechazado por el control de calidad: hasta 3 intentos (cada borrador sale distinto);
+      // despues se deja vacio y no se vuelve a intentar.
+      const attempts = (r.analysis_attempts || 0) + 1;
+      if (!res.text && attempts < 3) {
+        await supabaseAdmin.from('deals').update({ analysis_attempts: attempts }).eq('id', r.id);
+        continue;
+      }
+      const patch = { analysis: res.text || '', analysis_attempts: attempts };
       if (res.text && res.sources && res.sources.length) patch.analysis_sources = res.sources;
       const { error } = await supabaseAdmin.from('deals').update(patch).eq('id', r.id).is('analysis', null);
       if (!error && res.text) n++;
