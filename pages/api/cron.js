@@ -1,5 +1,6 @@
-import { fetchDealsFromWeb, backfillAnalysis, isIberianText, translateRows } from '../../lib/fetchDeals';
+import { fetchDealsFromWeb, isIberianText, translateRows } from '../../lib/fetchDeals';
 import { looksSpanish } from '../../lib/eligibility';
+import { writeAnalysis } from '../../lib/analysisWriter';
 import { supabaseAdmin } from '../../lib/supabase';
 import { ineligibleReason } from '../../lib/eligibility';
 
@@ -26,31 +27,29 @@ async function runBackfill() {
   } catch (e) {
     console.error('[CRON] traduccion fallo:', e.message);
   }
+  // 2) Meridian analysis largo (2-3 parrafos) para las filas recientes que no lo tienen.
+  //    Primero operaciones y despues mercado; pocas por ciclo para no agotar la cuota gratuita.
   try {
-    const since = new Date(Date.now() - 10 * 86400000).toISOString();
-    const { data } = await supabaseAdmin
-      .from('deals')
-      .select('id, headline, summary, buyer, target, value, currency, type')
-      .is('analysis', null)
-      .is('dup_of', null)
-      .neq('category', 'duplicate')
-      .neq('category', 'excluded')
-      .gte('created_at', since)
-      .order('created_at', { ascending: false })
-      .limit(15);
-    if (!data || !data.length) return 0;
-    const filled = await backfillAnalysis(data);
-    if (!filled) return 0;   // LLM caido: se reintenta en el siguiente ciclo
+    const since = new Date(Date.now() - 7 * 86400000).toISOString();
+    const cols = 'id, headline, summary, buyer, target, value, currency, type, sector, geography, status, is_iberian, source, source_url, category';
+    const pick = async (cat, n) => {
+      const { data } = await supabaseAdmin.from('deals').select(cols)
+        .is('analysis', null).is('dup_of', null).eq('category', cat)
+        .gte('created_at', since).order('created_at', { ascending: false }).limit(n);
+      return data || [];
+    };
+    const rows = [...(await pick('deal', 6)), ...(await pick('macro', 2))];
+    if (!rows.length) return 0;
     let n = 0;
-    for (const f of filled) {
-      const { error } = await supabaseAdmin.from('deals').update({ analysis: f.analysis }).eq('id', f.id).is('analysis', null);
-      if (!error) n++;
+    // De cuatro en cuatro: lectura del articulo + llamada al modelo en paralelo.
+    for (let i = 0; i < rows.length; i += 4) {
+      const out = await Promise.all(rows.slice(i, i + 4).map(async (r) => ({ r, text: await writeAnalysis(supabaseAdmin, r) })));
+      for (const { r, text } of out) {
+        if (text === null) continue;                  // LLM caido: se reintenta
+        const { error } = await supabaseAdmin.from('deals').update({ analysis: text || '' }).eq('id', r.id).is('analysis', null);
+        if (!error && text) n++;
+      }
     }
-    // Las que no pasaron el control de calidad se marcan con '' para no reintentarlas siempre:
-    // el bloque de analisis no se muestra y la ficha queda solo con los hechos.
-    const done = new Set(filled.map((f) => f.id));
-    const skipped = data.filter((r) => !done.has(r.id)).map((r) => r.id);
-    if (skipped.length) await supabaseAdmin.from('deals').update({ analysis: '' }).in('id', skipped).is('analysis', null);
     return n;
   } catch (e) {
     console.error('[CRON] backfill fallo:', e.message);
@@ -133,7 +132,7 @@ export default async function handler(req, res) {
       rows.push({
         headline: d.headline,
         summary: d.summary,
-        analysis: d.analysis || null,
+        analysis: null,   // el analisis largo lo escribe runBackfill (lib/analysisWriter.js)
         is_iberian: d.iberian === true || isIberianText(`${d.headline} ${d.buyer} ${d.target} ${d.summary}`),
         buyer: d.buyer || 'N/A',
         target: d.target || 'N/A',

@@ -2,6 +2,7 @@
 // Crea un usuario temporal, organizacion, sala, sube un PDF, lo indexa, pregunta al chat,
 // pide la descarga firmada y lo borra todo. Protegido por SELFTEST_TOKEN (env de Vercel).
 import { createClient } from '@supabase/supabase-js';
+import { writeAnalysis, fetchArticle, relatedDeals } from '../../lib/analysisWriter';
 
 export const config = { maxDuration: 60 };
 
@@ -11,6 +12,15 @@ export default async function handler(req, res) {
   const token = process.env.SELFTEST_TOKEN;
   if (!token || req.query.token !== token) return res.status(404).end();
 
+  // Modo de prueba del analisis largo: ?analysis=<id> genera el texto (sin guardarlo).
+  if (req.query.analysis) {
+    const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+    const { data: d } = await db.from('deals').select('*').eq('id', Number(req.query.analysis)).maybeSingle();
+    if (!d) return res.status(404).json({ error: 'no deal' });
+    const [article, related] = await Promise.all([fetchArticle(d.source_url), relatedDeals(db, d)]);
+    const text = await writeAnalysis(db, d);
+    return res.status(200).json({ headline: d.headline, article_chars: article.length, related, analysis: text });
+  }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const admin = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
