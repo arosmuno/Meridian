@@ -90,7 +90,8 @@ export async function getServerSideProps(ctx) {
     iberianCount: iberian.length,
     iberianVolume: Math.round(iberian.reduce((s, d) => s + Number(d.value_eur || 0), 0)),
     iberianBiggest: iberian.slice(0, 10).map(strip),
-    acquirers: tally(all, 'buyer').sort((a, b) => b.v - a.v).slice(0, 10),
+    // Solo compras: en una financiacion el "buyer" es el prestamista o el emisor, no un adquirente.
+    acquirers: tally(all.filter((d) => d.type === 'M&A' || d.type === 'LBO'), 'buyer').sort((a, b) => b.v - a.v).slice(0, 10),
     sectors: tally(all, 'sector').sort((a, b) => b.v - a.v).slice(0, 8),
     types: tally(all, 'type').sort((a, b) => b.v - a.v).slice(0, 8),
   };
@@ -182,7 +183,7 @@ export default function Rankings(p) {
           </Card>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }} className="cards-grid">
-            <Card title="Most active acquirers" sub="By combined euro value.">
+            <Card title="Most active acquirers" sub="M&A and buyouts, by combined euro value.">
               {p.acquirers.length ? p.acquirers.map((a, i) => (
                 <Row key={a.k} n={i + 1} main={a.k} sub={a.n + (a.n === 1 ? ' deal' : ' deals')} right={eur(a.v)} />
               )) : <div style={{ fontFamily: 'var(--r)', fontSize: 14, color: 'var(--text-mid)', fontStyle: 'italic' }}>No data yet.</div>}

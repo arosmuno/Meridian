@@ -4,6 +4,8 @@
 // no tenia los datos que se le pedia comentar y se los inventaba.
 import Head from 'next/head';
 import { editorialReject } from '../lib/eligibility';
+
+const fmtDay = (s) => { const t = new Date(s); return s && !isNaN(t) ? t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''; };
 import { dedupeDeals } from '../lib/dedupe';
 import { supabaseAdmin } from '../lib/supabase';
 import { cleanAnalysis } from '../lib/analysisQuality';
@@ -48,7 +50,7 @@ export async function getServerSideProps() {
       items = dedupeDeals(data.map((d) => ({ ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) })).filter((d) => d.analysis && d.headline && !editorialReject(d))).slice(0, 60)
         .map((d) => ({
           id: d.id, headline: d.headline, type: d.type || 'DEAL', sector: d.sector || '',
-          date: d.date || '', excerpt: String(d.analysis).replace(/\s+/g, ' ').slice(0, 240),
+          date: fmtDay(d.date), excerpt: String(d.analysis).replace(/\s+/g, ' ').slice(0, 240),
         }));
     }
   } catch (e) {}

@@ -1,6 +1,8 @@
 // pages/sector.js -- per-sector deal feed. Clean URL /sector/<slug> (rewrite) or ?name=<sector>.
 import Head from 'next/head';
 import { editorialReject } from '../lib/eligibility';
+
+const fmtDay = (s) => { const t = new Date(s); return s && !isNaN(t) ? t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''; };
 import { dedupeDeals } from '../lib/dedupe';
 import { supabaseAdmin } from '../lib/supabase';
 
@@ -49,7 +51,7 @@ export async function getServerSideProps(ctx) {
         .order('created_at', { ascending: false }).limit(120);
       if (data) {
         deals = dedupeDeals(data.filter((d) => d.headline && !editorialReject(d))).slice(0, 60)
-          .map((d) => ({ id: d.id, headline: d.headline, summary: (d.summary || '').slice(0, 160), type: d.type || 'DEAL', value: fmtValue(d.value, curSym(d.currency)), date: d.date || '', status: (d.status || '').toUpperCase() }));
+          .map((d) => ({ id: d.id, headline: d.headline, summary: (d.summary || '').slice(0, 160), type: d.type || 'DEAL', value: fmtValue(d.value, curSym(d.currency)), date: fmtDay(d.date), status: (d.status || '').toUpperCase() }));
       }
     } catch (e) {}
   }
