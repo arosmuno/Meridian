@@ -14,7 +14,7 @@
 
 import { supabase } from '../../lib/supabase';
 import { cleanAnalysis } from '../../lib/analysisQuality';
-import { isRelevantMacro } from '../../lib/eligibility';
+import { isRelevantMacro, editorialReject, fixSector } from '../../lib/eligibility';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -47,7 +47,11 @@ export default async function handler(req, res) {
     // Filas antiguas marcadas como "deal" que no son operaciones: se tratan como mercado.
     const fixed = (data || []).map((d) => (d.category === 'deal' && d.excluded_reason === 'Not a transaction' ? { ...d, category: 'macro', value: 0 } : d));
     const lite = req.query.lite === '1';
-    const deals = fixed.filter((d) => d.category !== 'macro' || isRelevantMacro(d.headline)).map((d) => (d.analysis ? { ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) } : d));
+    const deals = fixed
+      .filter((d) => d.category !== 'macro' || isRelevantMacro(d.headline))
+      // Filas antiguas que hoy no pasarian el filtro editorial: se quedan en la base, no se sirven.
+      .filter((d) => d.category !== 'deal' || !editorialReject(d))
+      .map((d) => (d.category === 'deal' ? { ...d, sector: fixSector(d) } : d)).map((d) => (d.analysis ? { ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) } : d));
 
     // lite=1 (portada): sin el analisis largo, que se carga al abrir cada noticia.
     const out = lite ? deals.map(({ analysis, ...d }) => ({ ...d, has_analysis: !!analysis })) : deals;

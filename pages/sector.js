@@ -1,5 +1,6 @@
 // pages/sector.js -- per-sector deal feed. Clean URL /sector/<slug> (rewrite) or ?name=<sector>.
 import Head from 'next/head';
+import { editorialReject } from '../lib/eligibility';
 import { dedupeDeals } from '../lib/dedupe';
 import { supabaseAdmin } from '../lib/supabase';
 
@@ -43,11 +44,11 @@ export async function getServerSideProps(ctx) {
       // asi que cada sector salia con cuatro o cinco items, mezclados con noticias de mercado.
       const { data } = await supabaseAdmin
         .from('deals')
-        .select('id, headline, summary, type, value, currency, date, status, sector, buyer, target')
+        .select('id, headline, summary, type, value, currency, value_eur, date, status, sector, buyer, target, geography, is_iberian')
         .eq('category', 'deal').is('dup_of', null).ilike('sector', sector)
         .order('created_at', { ascending: false }).limit(120);
       if (data) {
-        deals = dedupeDeals(data.filter((d) => d.headline)).slice(0, 60)
+        deals = dedupeDeals(data.filter((d) => d.headline && !editorialReject(d))).slice(0, 60)
           .map((d) => ({ id: d.id, headline: d.headline, summary: (d.summary || '').slice(0, 160), type: d.type || 'DEAL', value: fmtValue(d.value, curSym(d.currency)), date: d.date || '', status: (d.status || '').toUpperCase() }));
       }
     } catch (e) {}

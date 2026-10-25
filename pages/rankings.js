@@ -49,7 +49,7 @@ export async function getServerSideProps(ctx) {
   try {
     const { data } = await supabaseAdmin
       .from('deals')
-      .select('id,headline,buyer,target,value,currency,value_eur,type,sector,status,source,deal_date,created_at,is_iberian')
+      .select('id,headline,summary,buyer,target,value,currency,value_eur,type,sector,status,source,deal_date,created_at,is_iberian,geography')
       .eq('category', 'deal')
       .is('excluded_reason', null)
       .gt('value_eur', 0)

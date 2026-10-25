@@ -45,7 +45,7 @@ export async function getServerSideProps(ctx) {
 
     // Misma regla que /rankings, para que las dos paginas den las mismas cifras.
     const { data: raw } = await supabaseAdmin
-      .from('deals').select('id,headline,buyer,target,value,currency,value_eur,type,status,deal_date,created_at')
+      .from('deals').select('id,headline,summary,buyer,target,value,currency,value_eur,type,status,deal_date,created_at,geography,is_iberian')
       .eq('category', 'deal').is('excluded_reason', null).gt('value_eur', 0).limit(1500);
     const okRows = (raw || []).filter((d) => !ineligibleReason(d));
     const byDate = okRows.slice().sort((a, b) => String(b.deal_date || b.created_at).localeCompare(String(a.deal_date || a.created_at)));

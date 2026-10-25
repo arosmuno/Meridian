@@ -3,6 +3,7 @@
 // La generacion automatica esta desactivada (ver pages/api/analysis.js): el modelo
 // no tenia los datos que se le pedia comentar y se los inventaba.
 import Head from 'next/head';
+import { editorialReject } from '../lib/eligibility';
 import { dedupeDeals } from '../lib/dedupe';
 import { supabaseAdmin } from '../lib/supabase';
 import { cleanAnalysis } from '../lib/analysisQuality';
@@ -36,7 +37,7 @@ export async function getServerSideProps() {
   try {
     const { data } = await supabaseAdmin
       .from('deals')
-      .select('id, headline, summary, buyer, target, value, currency, type, sector, date, analysis')
+      .select('id, headline, summary, buyer, target, value, currency, value_eur, type, sector, date, analysis, geography, is_iberian')
       .eq('category', 'deal')
       .is('dup_of', null)
       .not('analysis', 'is', null)
@@ -44,7 +45,7 @@ export async function getServerSideProps() {
       .order('created_at', { ascending: false })
       .limit(120);
     if (data) {
-      items = dedupeDeals(data.map((d) => ({ ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) })).filter((d) => d.analysis && d.headline)).slice(0, 60)
+      items = dedupeDeals(data.map((d) => ({ ...d, analysis: cleanAnalysis(d.analysis, `${d.headline} ${d.summary || ''}`) })).filter((d) => d.analysis && d.headline && !editorialReject(d))).slice(0, 60)
         .map((d) => ({
           id: d.id, headline: d.headline, type: d.type || 'DEAL', sector: d.sector || '',
           date: d.date || '', excerpt: String(d.analysis).replace(/\s+/g, ' ').slice(0, 240),
