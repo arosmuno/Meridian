@@ -133,8 +133,8 @@ export default async function handler(req, res) {
         continue;
       }
 
-      let deal_date = null;
-      if (d.date) {
+      let deal_date = new Date().toISOString().split('T')[0];
+      if (d.date && !/^today$/i.test(String(d.date).trim())) {
         const parsed = new Date(d.date);
         if (!isNaN(parsed)) deal_date = parsed.toISOString().split('T')[0];
       }
@@ -152,7 +152,7 @@ export default async function handler(req, res) {
         sector: d.sector || 'General',
         geography: d.geography || 'Global',
         status: d.status || 'Signed',
-        date: d.date || new Date().toLocaleDateString('en-GB'),
+        date: deal_date,
         deal_date,
         advisor: d.advisor || '',
         source: d.source,

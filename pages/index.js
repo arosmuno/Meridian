@@ -117,11 +117,17 @@ function dedupeDeals(arr) {
 
 // Procesa deals crudos de la API a la forma que renderiza la home (enrich + orden + filtro + dedupe).
 // Se usa tanto para el estado inicial (SSR: contenido visible para Google) como en loadDeals.
+function fmtDay(d) {
+  const raw = d.deal_date || (d.date && !isNaN(new Date(d.date)) ? d.date : d.created_at);
+  return raw ? new Date(raw).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+}
+
 function processDeals(arr) {
   const raw = (arr || []).map(enrich);
   const parseDate = (d) => {
     if (d.deal_date) return new Date(d.deal_date).getTime();
-    if (d.date) { const p = new Date(d.date); return isNaN(p) ? 0 : p.getTime(); }
+    if (d.date) { const p = new Date(d.date); if (!isNaN(p)) return p.getTime(); }
+    if (d.created_at) return new Date(d.created_at).getTime();
     return 0;
   };
   const sorted = [...raw].sort((a, b) => parseDate(b) - parseDate(a));
@@ -253,7 +259,7 @@ function DealCard({ deal, onClick }) {
           </div>
           <div style={{textAlign:'right'}}>
             <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textMid,fontWeight:400}}>
-              {deal.deal_date ? new Date(deal.deal_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : deal.date}
+              {fmtDay(deal)}
             </div>
             <div style={{fontFamily:"var(--s)",fontSize:10,color:C.textLo,marginTop:2}}>{deal.sector}</div>
           </div>
@@ -309,7 +315,7 @@ function DealModal({ deal, mode, onClose }) {
 
         {/* Metrics */}
         <div className="modal-metrics" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',borderBottom:`1px solid ${C.border}`}}>
-          {[{l:'VALUE',v:fmt(deal.value,c),big:true},{l:'TYPE',v:deal.type},{l:'SECTOR',v:deal.sector},{l:'BUYER',v:deal.buyer},{l:'TARGET',v:deal.target},{l:'DATE',v:deal.date}].map((m,i)=>(
+          {[{l:'VALUE',v:fmt(deal.value,c),big:true},{l:'TYPE',v:deal.type},{l:'SECTOR',v:deal.sector},{l:'BUYER',v:deal.buyer},{l:'TARGET',v:deal.target},{l:'DATE',v:fmtDay(deal)}].map((m,i)=>(
             <div key={i} style={{padding:'13px 20px',borderRight:i%3!==2?`1px solid ${C.border}`:'none',borderBottom:i<3?`1px solid ${C.border}`:'none'}}>
               <div style={{fontFamily:"var(--s)",fontSize:9,letterSpacing:'.1em',color:C.textMid,marginBottom:4,textTransform:'uppercase'}}>{m.l}</div>
               <div style={{fontFamily:m.big?"var(--d)":"var(--s)",fontSize:m.big?22:13,fontWeight:m.big?700:500,color:m.big?deal.accent:C.textBody}}>{m.v||'N/A'}</div>
