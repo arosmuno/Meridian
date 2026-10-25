@@ -93,7 +93,7 @@ export default function DataroomHome() {
         <div style={S.authWrap}>
           <div style={S.kicker}>MERIDIAN</div>
           <h1 style={S.authTitle}>Dataroom</h1>
-          <p style={S.authSub}>Inteligencia de due diligence con IA. Sube documentos y pregunta; responde citando las fuentes.</p>
+          <p style={S.authSub}>Sala de datos para procesos de M&A y financiación: índice por carpetas, permisos por carpeta, marca de agua, NDA, Q&A y auditoría. Pregunta a los documentos y te responde citando documento y página. Y cada Excel que subes se revisa solo: errores, valores a mano y checks que no cuadran.</p>
           {sent ? (
             <div style={S.notice}>Te enviamos un enlace de acceso a <b>{email}</b>. Ábrelo para entrar.</div>
           ) : (

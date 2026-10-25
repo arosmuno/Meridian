@@ -6,9 +6,9 @@ import { supabase } from '../../lib/supabase';
 
 const PLANS = [
   { id: 'free', name: 'Free', price: '0€', period: '', tagline: 'Para probar el producto',
-    features: ['1 sala de datos', '20 documentos por sala', '2 asientos', 'Chat de due diligence con IA', 'Cifrado en reposo'] },
+    features: ['1 sala de datos', '20 documentos por sala', '2 asientos', 'Chat de due diligence con citas por página', 'Revisión automática de modelos Excel', 'Marca de agua y NDA'] },
   { id: 'pro', name: 'Pro', price: '149€', period: '/mes', tagline: 'Para procesos y equipos', highlight: true,
-    features: ['10 salas de datos', '500 documentos por sala', '10 asientos', 'Invitaciones de equipo por email', 'Descargas firmadas + registro de auditoría', 'Soporte prioritario'] },
+    features: ['10 salas de datos', '500 documentos por sala', '10 asientos', 'Carpetas restringidas por persona', 'Q&A con borradores de respuesta', 'Registro de actividad exportable', 'Soporte prioritario'] },
   { id: 'enterprise', name: 'Enterprise', price: 'A medida', period: '', tagline: 'Para firmas y volúmenes altos',
     features: ['Salas y asientos a medida', 'Volúmenes de documentos altos', 'Onboarding dedicado'] },
 ];
