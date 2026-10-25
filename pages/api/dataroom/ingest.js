@@ -38,6 +38,11 @@ export default async function handler(req, res) {
     const { data: allowed } = await userClient.schema('dataroom').from('documents').select('id').eq('id', document_id).single();
     if (!allowed) return res.status(403).json({ error: 'sin acceso al documento' });
 
+    const { data: meta } = await admin.schema('dataroom').from('documents').select('org_id').eq('id', document_id).single();
+    // Indexar es escribir: un miembro de solo lectura no puede reindexar documentos.
+    const { data: canWrite } = await userClient.schema('dataroom').rpc('can_write', { p_org_id: meta && meta.org_id });
+    if (canWrite !== true) return res.status(403).json({ error: 'sin permiso de escritura' });
+
     const { data: doc, error } = await admin.schema('dataroom').from('documents').select('*').eq('id', document_id).single();
     if (error || !doc) return res.status(404).json({ error: 'documento no encontrado' });
     req._docId = document_id;
