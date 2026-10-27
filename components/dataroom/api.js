@@ -31,12 +31,26 @@ export async function uploadFile({ roomId, folderId, file, onStage }) {
   const { error } = await supabase.storage.from('datarooms').uploadToSignedUrl(up.path, up.token, file, { contentType: file.type || undefined });
   if (error) throw new Error('No se pudo subir el archivo: ' + error.message);
   onStage && onStage('Indexando…');
-  let p = await api('/api/dataroom/ingest', { document_id: up.document.id });
-  for (let i = 0; i < 40 && p.total && p.done < p.total; i++) {
-    onStage && onStage(`Indexando ${Math.round((100 * p.done) / p.total)}%`);
-    p = await api('/api/dataroom/embed', { document_id: up.document.id });
-  }
+  const p = await api('/api/dataroom/ingest', { document_id: up.document.id });
+  await finishIndexing(up.document.id, onStage, p);
   return up.document;
+}
+
+// Sigue embebiendo hasta terminar. Si Gemini pide esperar (cuota por minuto), espera y sigue;
+// si el usuario cierra la pagina, el cron lo termina.
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+export async function finishIndexing(documentId, onStage, p = null) {
+  if (!p) p = await api('/api/dataroom/embed', { document_id: documentId });
+  for (let i = 0; i < 60 && p.total && p.done < p.total; i++) {
+    const pct = Math.round((100 * p.done) / p.total);
+    if (p.wait_ms) {
+      onStage && onStage(`Indexando ${pct}% (esperando cuota)`);
+      await pause(Math.min(Math.max(p.wait_ms, 3000), 45000));
+    }
+    onStage && onStage(`Indexando ${pct}%`);
+    p = await api('/api/dataroom/embed', { document_id: documentId });
+  }
+  return p;
 }
 
 export const KIND = (name) => {

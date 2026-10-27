@@ -10,6 +10,6 @@ export default route(async (req) => {
   const { document_id } = req.body || {};
   if (!document_id) throw new HttpError(400, 'document_id requerido');
   const { doc } = await loadDoc(ctx, document_id);
-  await processPending({ documentId: doc.id, deadline: started + 52000 });
-  return { ok: true, ...(await refreshDocStatus(doc.id)) };
+  const run = await processPending({ documentId: doc.id, deadline: started + 52000 });
+  return { ok: true, ...(await refreshDocStatus(doc.id)), wait_ms: run.wait_ms };
 });

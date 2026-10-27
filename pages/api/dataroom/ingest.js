@@ -42,9 +42,9 @@ export default route(async (req) => {
       try { await runReview({ doc, buffer, userId: ctx.user.id }); } catch (_) { /* la revision tiene su propio estado */ }
     }
 
-    await processPending({ documentId: doc.id, deadline: started + 52000 });
+    const run = await processPending({ documentId: doc.id, deadline: started + 52000 });
     const progress = await refreshDocStatus(doc.id);
-    return { ok: true, ...progress };
+    return { ok: true, ...progress, wait_ms: run.wait_ms };
   } catch (e) {
     await dra().from('documents').update({ status: 'error', error: String((e && e.message) || e).slice(0, 300) }).eq('id', doc.id);
     throw new HttpError(422, String((e && e.message) || e));

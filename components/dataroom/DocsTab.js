@@ -1,7 +1,7 @@
 // Pestana Documentos: arbol de carpetas con indice numerado (1, 1.1, 1.1.2...), subida
 // multiple con progreso, mover/reordenar, carpetas restringidas y acceso por persona.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { api, dr, uploadFile, KIND, isXlsx, fmtSize } from './api';
+import { api, dr, uploadFile, finishIndexing, KIND, isXlsx, fmtSize } from './api';
 import { S, C } from './styles';
 
 // Indice: dentro de cada carpeta van primero las subcarpetas y luego los documentos.
@@ -124,8 +124,10 @@ export default function DocsTab({ room, canWrite, isAdmin, canDownload, members,
   async function reindex(d) {
     setProgress((p) => ({ ...p, [d.id]: `${d.name}: Indexando…` }));
     try {
-      let p = await api('/api/dataroom/ingest', { document_id: d.id });
-      for (let i = 0; i < 40 && p.total && p.done < p.total; i++) p = await api('/api/dataroom/embed', { document_id: d.id });
+      const stage = (s) => setProgress((p) => ({ ...p, [d.id]: `${d.name}: ${s}` }));
+      // Si el texto ya esta troceado, solo falta embeber: no hace falta reprocesar el archivo.
+      if (d.chunk_count > 0 && d.embedded_count < d.chunk_count) await finishIndexing(d.id, stage);
+      else await finishIndexing(d.id, stage, await api('/api/dataroom/ingest', { document_id: d.id }));
     } catch (e) { setMsg(`${d.name}: ${e.message}`); }
     setProgress((p) => { const n = { ...p }; delete n[d.id]; return n; });
     reload();
