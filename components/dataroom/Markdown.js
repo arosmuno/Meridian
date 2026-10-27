@@ -36,6 +36,7 @@ export default function Markdown({ text, onCite }) {
   while (i < lines.length) {
     const l = lines[i];
     if (!l.trim()) { i++; continue; }
+    if (/^\s*([-*_])\1{2,}\s*$/.test(l)) { blocks.push({ t: 'hr' }); i++; continue; }
     if (isRow(l) && i + 1 < lines.length && isSep(lines[i + 1])) {
       const head = cells(l);
       const rows = [];
@@ -55,7 +56,7 @@ export default function Markdown({ text, onCite }) {
       continue;
     }
     const para = [];
-    while (i < lines.length && lines[i].trim() && !isRow(lines[i]) && !/^\s*([-*•]|\d+[.)])\s+/.test(lines[i])) {
+    while (i < lines.length && lines[i].trim() && !isRow(lines[i]) && !/^\s*([-*•]|\d+[.)])\s+/.test(lines[i]) && !/^\s*([-*_])\1{2,}\s*$/.test(lines[i])) {
       para.push(lines[i].replace(/^#+\s*/, ''));
       i++;
     }
@@ -65,6 +66,7 @@ export default function Markdown({ text, onCite }) {
   return (
     <div style={{ display: 'grid', gap: 8 }}>
       {blocks.map((b, bi) => {
+        if (b.t === 'hr') return <hr key={bi} style={{ border: 0, borderTop: `1px solid ${C.line}`, margin: '4px 0' }} />;
         if (b.t === 'p') return <p key={bi} style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{inline(b.text, onCite, bi)}</p>;
         if (b.t === 'ul' || b.t === 'ol') {
           const Tag = b.t;
