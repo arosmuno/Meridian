@@ -31,8 +31,16 @@ export default function DataroomHome() {
   useEffect(() => {
     // Enlace caducado o ya usado: Supabase vuelve con #error=... en la URL. Antes no se mostraba
     // y la pantalla de acceso parecia un bucle. Se explica y se limpia la URL.
-    const h = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    if (h.get('error') || h.get('error_code')) {
+    // El hash puede traer a la vez un error viejo y un token nuevo ("#error=...&sb=#access_token=...")
+    // si el enlace se pidio desde una URL que ya tenia el error pegado. Manda el token.
+    const h = new URLSearchParams(window.location.hash.replace(/#/g, '&').replace(/^&+/, ''));
+    if (h.get('access_token') && h.get('refresh_token')) {
+      supabase.auth.setSession({ access_token: h.get('access_token'), refresh_token: h.get('refresh_token') }).then(({ data, error }) => {
+        window.history.replaceState(null, '', window.location.pathname);
+        if (error) setMsg('No se pudo iniciar sesión con ese enlace (' + error.message + '). Pide uno nuevo.');
+        else setSession(data.session);
+      });
+    } else if (h.get('error') || h.get('error_code')) {
       const code = h.get('error_code') || h.get('error');
       setMsg(code === 'otp_expired'
         ? 'Ese enlace ya no vale: caduca a la hora y solo funciona el último que hayas pedido. Pide uno nuevo y abre ese.'
