@@ -39,6 +39,9 @@ export default function DataroomHome() {
         window.history.replaceState(null, '', window.location.pathname);
         if (error) setMsg('No se pudo iniciar sesión con ese enlace (' + error.message + '). Pide uno nuevo.');
         else setSession(data.session);
+      }).catch((e) => {
+        window.history.replaceState(null, '', window.location.pathname);
+        setMsg('No se pudo iniciar sesión con ese enlace (' + ((e && e.message) || e) + '). Pide uno nuevo.');
       });
     } else if (h.get('error') || h.get('error_code')) {
       const code = h.get('error_code') || h.get('error');
