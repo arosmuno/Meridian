@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase';
 import { api, dr } from '../../components/dataroom/api';
 import { S, C } from '../../components/dataroom/styles';
 import DocsTab from '../../components/dataroom/DocsTab';
-import ChatTab from '../../components/dataroom/ChatTab';
+import ChatTab, { emptyChat } from '../../components/dataroom/ChatTab';
 import QaTab from '../../components/dataroom/QaTab';
 import ModelsTab from '../../components/dataroom/ModelsTab';
 import ActivityTab from '../../components/dataroom/ActivityTab';
@@ -33,6 +33,7 @@ export default function Room() {
   const [selectedModel, setSelectedModel] = useState(null);
   const [loadErr, setLoadErr] = useState('');
   const [flash, setFlash] = useState('');
+  const [chat, setChat] = useState(emptyChat); // vive aqui para que cambiar de pestana no lo borre
 
   const isAdmin = role === 'owner' || role === 'admin';
   const canWrite = !!role && role !== 'viewer';
@@ -116,8 +117,8 @@ export default function Room() {
     );
   }
 
-  const tabs = [['docs', 'Documentos'], ['chat', 'Chat'], ['qa', 'Q&A'], ['models', 'Modelos']];
-  if (isAdmin) tabs.push(['activity', 'Actividad'], ['settings', 'Ajustes']);
+  const tabs = [['docs', 'Documentos'], ['chat', 'Chat'], ['qa', 'Q&A'], ['models', 'Modelos'], ['activity', 'Actividad']];
+  if (isAdmin) tabs.push(['settings', 'Ajustes']);
   const openViewer = (d, page) => setViewer({ doc: d, page: page || 1 });
 
   return (
@@ -144,10 +145,10 @@ export default function Room() {
         {flash && <div style={S.err} onClick={() => setFlash('')}>{flash}</div>}
 
         {tab === 'docs' && <DocsTab room={room} canWrite={canWrite} isAdmin={isAdmin} canDownload={canDownload} members={members} folders={folders} docs={docs} reload={refresh} openViewer={openViewer} onDownload={download} goReview={(d) => { setSelectedModel(d.id); setTab('models'); }} />}
-        {tab === 'chat' && <ChatTab room={room} docs={docs} openViewer={openViewer} />}
+        {tab === 'chat' && <ChatTab room={room} docs={docs} openViewer={openViewer} userId={session.user.id} chat={chat} setChat={setChat} />}
         {tab === 'qa' && <QaTab room={room} canWrite={canWrite} members={members} docs={docs} openViewer={openViewer} />}
         {tab === 'models' && <ModelsTab room={room} canWrite={canWrite} docs={docs} selected={selectedModel} setSelected={setSelectedModel} reload={refresh} />}
-        {tab === 'activity' && isAdmin && <ActivityTab room={room} members={members} />}
+        {tab === 'activity' && <ActivityTab room={room} members={members} isAdmin={isAdmin} docs={docs} openViewer={openViewer} />}
         {tab === 'settings' && isAdmin && <SettingsTab room={room} onSaved={reloadRoom} />}
       </div>
       {viewer && <Viewer doc={viewer.doc} startPage={viewer.page} canDownload={canDownload} onDownload={download} onClose={() => setViewer(null)} />}
