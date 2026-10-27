@@ -39,6 +39,12 @@ export function buildIndex(folders, docs) {
 }
 
 const statusTxt = (d) => d.status === 'ready' ? 'Indexado' : d.status === 'error' ? 'Error' : d.status === 'indexing' ? `Indexando ${d.chunk_count ? Math.round((100 * d.embedded_count) / d.chunk_count) : 0}%` : d.status === 'uploading' ? 'Subiendo' : 'Procesando';
+// Error legible en una linea; el detalle completo queda en el tooltip.
+const shortErr = (e) => {
+  const t = String(e || '');
+  if (/embeddings/i.test(t)) return 'falló el indexado; pulsa ↻ para reanudarlo';
+  return t.length > 90 ? t.slice(0, 90) + '…' : t;
+};
 const statusCol = (s) => s === 'ready' ? C.green : s === 'error' ? C.red : C.gold;
 
 export default function DocsTab({ room, canWrite, isAdmin, canDownload, members, folders, docs, reload, openViewer, onDownload, goReview }) {
@@ -190,7 +196,7 @@ export default function DocsTab({ room, canWrite, isAdmin, canDownload, members,
                 <div style={{ fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }} onClick={() => openViewer(d)}>{d.name}</div>
                 <div style={{ fontSize: 11, marginTop: 2, display: 'flex', gap: 8 }}>
                   <span style={S.tag}>{KIND(d.name)}</span>
-                  <span style={{ color: statusCol(d.status), fontWeight: 600 }} title={d.error || ''}>{statusTxt(d)}{d.status === 'error' && d.error ? ` — ${d.error}` : ''}</span>
+                  <span style={{ color: statusCol(d.status), fontWeight: 600 }} title={d.error || ''}>{statusTxt(d)}{d.status === 'error' && d.error ? ` — ${shortErr(d.error)}` : ''}</span>
                   <span style={{ color: C.lo }}>{fmtSize(d.size_bytes)}{d.pages ? ` · ${d.pages} ${isXlsx(d.name) ? 'hojas' : 'págs.'}` : ''}</span>
                 </div>
               </div>
