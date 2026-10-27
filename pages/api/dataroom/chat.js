@@ -6,6 +6,7 @@ import { answer } from '../../../lib/dataroom/rag';
 export const config = { maxDuration: 60 };
 
 export default route(async (req) => {
+  const started = Date.now();
   const ctx = await getCtx(req);
   let { room_id, session_id, message } = req.body || {};
   message = String(message || '').trim().slice(0, 4000);
@@ -29,7 +30,7 @@ export default route(async (req) => {
 
   let out;
   try {
-    out = await answer({ room, userId: ctx.user.id, question: message, history });
+    out = await answer({ room, userId: ctx.user.id, question: message, history, deadline: started + 54000 });
   } catch (e) {
     out = { answer: 'No he podido completar el análisis ahora mismo (' + String((e && e.message) || e).slice(0, 120) + '). Vuelve a intentarlo en un momento.', citations: [] };
   }

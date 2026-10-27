@@ -70,13 +70,13 @@ export default function ChatTab({ room, docs, openViewer, userId, chat, setChat 
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', gap: 18, alignItems: 'start' }}>
-      <aside style={{ ...S.card, padding: 12, display: 'grid', gap: 6, maxHeight: 680, overflowY: 'auto' }}>
-        <button style={{ ...S.btn, width: '100%' }} onClick={newChat} disabled={chat.busy}>+ Nueva conversación</button>
+      <aside style={{ ...S.card, padding: 12, display: 'grid', gap: 6, maxHeight: 680, overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
+        <button style={{ ...S.btn, width: '100%', boxSizing: 'border-box' }} onClick={newChat} disabled={chat.busy}>+ Nueva conversación</button>
         <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', color: C.lo, margin: '8px 2px 2px' }}>MIS CONVERSACIONES</div>
         {!sessions.length && <div style={S.empty}>Aún no has preguntado nada en esta sala.</div>}
         {sessions.map((s) => (
           <button key={s.id} onClick={() => openSession(s.id)} style={{
-            textAlign: 'left', border: 0, borderRadius: 8, padding: '8px 10px', cursor: 'pointer',
+            textAlign: 'left', border: 0, borderRadius: 8, padding: '8px 10px', cursor: 'pointer', width: '100%', minWidth: 0, boxSizing: 'border-box',
             background: chat.sessionId === s.id ? C.paper : 'transparent', color: C.ink,
           }}>
             <div style={{ fontSize: 13, fontWeight: chat.sessionId === s.id ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title || 'Conversación'}</div>
