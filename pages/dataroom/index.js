@@ -26,8 +26,19 @@ export default function DataroomHome() {
   const [activeOrg, setActiveOrg] = useState(null);
   const [msg, setMsg] = useState('');
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    // Enlace caducado o ya usado: Supabase vuelve con #error=... en la URL. Antes no se mostraba
+    // y la pantalla de acceso parecia un bucle. Se explica y se limpia la URL.
+    const h = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    if (h.get('error') || h.get('error_code')) {
+      const code = h.get('error_code') || h.get('error');
+      setMsg(code === 'otp_expired'
+        ? 'Ese enlace ya no vale: caduca a la hora y solo funciona el último que hayas pedido. Pide uno nuevo y abre ese.'
+        : 'No se pudo iniciar sesión con ese enlace (' + (h.get('error_description') || code) + '). Pide uno nuevo.');
+      window.history.replaceState(null, '', window.location.pathname);
+    }
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => sub.subscription.unsubscribe();
@@ -54,8 +65,14 @@ export default function DataroomHome() {
   }
   async function login(e) {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
-    if (error) return setMsg(error.message);
+    if (sending) return; // un segundo envio invalida el primer enlace
+    setSending(true); setMsg('');
+    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: window.location.origin + '/dataroom' } });
+    setSending(false);
+    if (error) {
+      const tooMany = error.status === 429 || /rate limit|security purposes/i.test(error.message || '');
+      return setMsg(tooMany ? 'Se han pedido demasiados enlaces seguidos. Espera unos minutos y usa el último correo que te haya llegado.' : error.message);
+    }
     setSent(true);
   }
   async function createOrg(e) {
@@ -95,11 +112,11 @@ export default function DataroomHome() {
           <h1 style={S.authTitle}>Dataroom</h1>
           <p style={S.authSub}>Sala de datos para procesos de M&A y financiación: índice por carpetas, permisos por carpeta, marca de agua, NDA, Q&A y auditoría. Pregunta a los documentos y te responde citando documento y página. Y cada Excel que subes se revisa solo: errores, valores a mano y checks que no cuadran.</p>
           {sent ? (
-            <div style={S.notice}>Te enviamos un enlace de acceso a <b>{email}</b>. Ábrelo para entrar.</div>
+            <div style={S.notice}>Te enviamos un enlace de acceso a <b>{email}</b>. Ábrelo en este mismo navegador; si pides otro, solo vale el último.</div>
           ) : (
             <form onSubmit={login} style={{ display: 'flex', gap: 8, marginTop: 18 }}>
               <input style={S.input} type="email" placeholder="tu@empresa.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <button style={S.btn}>Enviar enlace</button>
+              <button style={S.btn} disabled={sending}>{sending ? 'Enviando…' : 'Enviar enlace'}</button>
             </form>
           )}
           {msg && <p style={S.err}>{msg}</p>}
