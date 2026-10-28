@@ -1,6 +1,6 @@
 // Descarga: bloqueada si la sala es de solo consulta (salvo owner/admin); los PDF salen con
 // marca de agua si la sala la tiene activada. Enlace firmado de 5 minutos + auditoria.
-import { route, getCtx, loadDoc, requireNda, isAdminRole, audit, HttpError } from '../../../lib/dataroom/server';
+import { route, getCtx, rateLimit, loadDoc, requireNda, isAdminRole, audit, HttpError } from '../../../lib/dataroom/server';
 import { deliver } from '../../../lib/dataroom/delivery';
 
 export const config = { maxDuration: 60 };
@@ -11,6 +11,7 @@ export default route(async (req) => {
   const { document_id, original = false } = req.body || {};
   if (!document_id) throw new HttpError(400, 'document_id requerido');
   const { doc, room, role } = await loadDoc(ctx, document_id);
+  await rateLimit(ctx, 'download');
   await requireNda(ctx, room, role);
   if (!room.allow_download && !isAdminRole(role)) throw new HttpError(403, 'Esta sala es de solo consulta: las descargas están desactivadas');
   const raw = !!original && isAdminRole(role);

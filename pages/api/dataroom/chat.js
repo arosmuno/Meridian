@@ -1,6 +1,6 @@
 // Chat de due diligence (RAG): respeta NDA y permisos de carpeta, cita documento y pagina.
 // Cada conversacion es de su autor y queda guardada; el equipo ve las preguntas en Actividad.
-import { route, getCtx, loadRoom, requireNda, dra, audit, HttpError } from '../../../lib/dataroom/server';
+import { route, getCtx, rateLimit, loadRoom, requireNda, dra, audit, HttpError } from '../../../lib/dataroom/server';
 import { answer } from '../../../lib/dataroom/rag';
 
 export const config = { maxDuration: 60 };
@@ -13,6 +13,7 @@ export default route(async (req) => {
   if (!room_id || !message) throw new HttpError(400, 'room_id y message requeridos');
   const { room, role } = await loadRoom(ctx, room_id);
   await requireNda(ctx, room, role);
+  await rateLimit(ctx, 'chat');
 
   if (session_id) {
     const { data: s } = await dra().from('chat_sessions').select('id').eq('id', session_id).eq('room_id', room.id).eq('user_id', ctx.user.id).maybeSingle();

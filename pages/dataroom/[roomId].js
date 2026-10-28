@@ -53,8 +53,17 @@ export default function Room() {
     const { data: { session: s } } = await supabase.auth.getSession();
     if (!s) { router.replace('/dataroom'); return; }
     setSession(s);
+    // Verificacion en dos pasos: si falta el codigo (o la organizacion la exige y no esta activada),
+    // la portada lo pide y luego vuelve aqui.
+    const toGate = () => router.replace(`/dataroom?next=${encodeURIComponent('/dataroom/' + roomId)}`);
+    const { data: lvl } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (lvl && lvl.nextLevel === 'aal2' && lvl.currentLevel !== 'aal2') { toGate(); return; }
     const { data: r } = await dr().from('rooms').select('*').eq('id', roomId).maybeSingle();
-    if (!r) { setLoadErr('Esta sala no existe o no tienes acceso.'); return; }
+    if (!r) {
+      const { data: mo } = await supabase.rpc('dataroom_my_orgs');
+      if ((mo || []).some((o) => o.require_mfa) && !(lvl && lvl.currentLevel === 'aal2')) { toGate(); return; }
+      setLoadErr('Esta sala no existe o no tienes acceso.'); return;
+    }
     setRoom(r);
     dr().from('orgs').select('name').eq('id', r.org_id).maybeSingle().then(({ data: o }) => setOrgName((o && o.name) || ''));
     const { data: acc } = await supabase.rpc('dataroom_my_room_access', { p_room: r.id });

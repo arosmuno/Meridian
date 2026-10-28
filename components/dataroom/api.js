@@ -24,13 +24,23 @@ export async function api(path, body = {}) {
   return j;
 }
 
+// Tipo con el que se guarda el fichero, por extension (nunca el que diga el navegador).
+const SAFE_TYPE = (name) => {
+  const n = String(name || '').toLowerCase();
+  if (n.endsWith('.pdf')) return 'application/pdf';
+  if (n.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  if (n.endsWith('.xlsx') || n.endsWith('.xlsm')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (n.endsWith('.csv')) return 'text/csv';
+  return 'text/plain';
+};
+
 // Subida completa: alta + archivo a la URL firmada + indexado por lotes hasta terminar.
 // replacesId: sube una version nueva de ese documento. quick=true (subida masiva): extrae y trocea
 // pero deja el embebido para despues (lo hace finishRoomIndexing o el cron).
 export async function uploadFile({ roomId, folderId, file, onStage, replacesId = null, versionNote = null, quick = false }) {
   onStage && onStage('Subiendo…');
   const up = await api('/api/dataroom/upload', { room_id: roomId, folder_id: folderId || null, name: file.name, size: file.size, mime: file.type, replaces_document_id: replacesId, version_note: versionNote });
-  const { error } = await supabase.storage.from('datarooms').uploadToSignedUrl(up.path, up.token, file, { contentType: file.type || undefined });
+  const { error } = await supabase.storage.from('datarooms').uploadToSignedUrl(up.path, up.token, file, { contentType: SAFE_TYPE(file.name) });
   if (error) throw new Error('No se pudo subir el archivo: ' + error.message);
   onStage && onStage('Indexando…');
   const p = await api('/api/dataroom/ingest', { document_id: up.document.id, embed: !quick });

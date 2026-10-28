@@ -11,13 +11,17 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // El visor de PDF carga pdf.js (y su worker) desde cdnjs.
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com",
+      "worker-src 'self' blob: https://cdnjs.cloudflare.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdnjs.cloudflare.com",
       "object-src 'none'",
       "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'self'",
     ].join('; '),
   },
 ];

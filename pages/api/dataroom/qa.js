@@ -2,7 +2,7 @@
 // Cada pregunta va de un equipo (el de quien pregunta) a otro (to_group_id; null = equipo
 // organizador). La ven los dos equipos y los admins; responde el equipo al que va dirigida.
 // El borrador de IA usa los documentos que puede ver quien responde.
-import { route, getCtx, loadRoom, requireNda, canWriteIn, isAdminRole, sameTeam, dra, audit, READ_ONLY_MSG, HttpError } from '../../../lib/dataroom/server';
+import { route, getCtx, rateLimit, loadRoom, requireNda, canWriteIn, isAdminRole, sameTeam, dra, audit, READ_ONLY_MSG, HttpError } from '../../../lib/dataroom/server';
 import { answer } from '../../../lib/dataroom/rag';
 import { enqueue } from '../../../lib/dataroom/notify';
 
@@ -47,6 +47,7 @@ export default route(async (req) => {
   if (!canAnswer) throw new HttpError(403, 'Responde el equipo al que va dirigida la pregunta');
 
   if (action === 'draft') {
+    await rateLimit(ctx, 'qa_draft');
     const out = await answer({ room, userId: ctx.user.id, question: q.question });
     await dra().from('questions').update({ ai_draft: out.answer, ai_citations: out.citations }).eq('id', q.id);
     return { ai_draft: out.answer, ai_citations: out.citations };

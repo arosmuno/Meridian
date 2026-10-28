@@ -3,7 +3,7 @@
 // llama a /api/dataroom/embed para seguir (y el cron lo remata si nadie lo hace).
 import { route, getCtx, loadDoc, canWriteIn, admin, dra, HttpError } from '../../../lib/dataroom/server';
 import { enqueue } from '../../../lib/dataroom/notify';
-import { extractPages, chunkPages, looksScanned, kindOf } from '../../../lib/dataroom/extract';
+import { extractPages, chunkPages, looksScanned, kindOf, contentMatches } from '../../../lib/dataroom/extract';
 import { processPending, refreshDocStatus } from '../../../lib/dataroom/embed';
 import { runReview } from '../../../lib/dataroom/reviewJob';
 
@@ -24,6 +24,11 @@ export default route(async (req) => {
     const { data: file, error: dlErr } = await admin.storage.from('datarooms').download(doc.storage_path);
     if (dlErr || !file) throw new Error('el archivo no llegó a subirse; vuelve a subirlo');
     const buffer = Buffer.from(await file.arrayBuffer());
+    if (!contentMatches(buffer, kindOf(doc.name, doc.mime))) {
+      // El contenido no es lo que dice la extension: se borra el fichero y queda el error.
+      await admin.storage.from('datarooms').remove([doc.storage_path]);
+      throw new Error('El contenido del archivo no corresponde a su extensión. Por seguridad no se ha guardado.');
+    }
 
     const pages = await extractPages(buffer, doc.name, doc.mime);
     if (kindOf(doc.name, doc.mime) === 'pdf' && looksScanned(pages)) {

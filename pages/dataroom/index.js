@@ -2,7 +2,10 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
+import { api } from '../../components/dataroom/api';
+import { useMfa, MfaChallenge, MfaRequired, SecurityCard } from '../../components/dataroom/Mfa';
 
 const dr = () => supabase.schema('dataroom');
 const PLAN_LIMITS = {
@@ -12,7 +15,10 @@ const PLAN_LIMITS = {
 };
 
 export default function DataroomHome() {
+  const router = useRouter();
   const [session, setSession] = useState(null);
+  const mfaState = useMfa(session);
+  const [myOrgs, setMyOrgs] = useState(null); // incluye las que exigen el codigo aunque aun no se vean
   const [email, setEmail] = useState('');
   const [orgs, setOrgs] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -58,9 +64,17 @@ export default function DataroomHome() {
   useEffect(() => {
     if (session) { supabase.rpc('dataroom_accept_invites').then(() => loadOrgs()); }
   }, [session]);
+  // Tras meter el codigo (aal2) se recargan las organizaciones y, si venia de una sala, se vuelve a ella.
+  useEffect(() => {
+    if (!session || mfaState.loading || mfaState.needsCode) return;
+    loadOrgs();
+    const next = router.query.next;
+    if (typeof next === 'string' && /^\/dataroom\/[0-9a-f-]{36}$/.test(next) && mfaState.current === 'aal2') router.replace(next);
+  }, [mfaState.current, mfaState.loading]); // eslint-disable-line
   useEffect(() => { if (activeOrg) { loadRooms(activeOrg); loadTeam(activeOrg); loadMe(activeOrg); } }, [activeOrg]);
 
   async function loadOrgs() {
+    supabase.rpc('dataroom_my_orgs').then(({ data: mo }) => setMyOrgs(mo || []));
     const { data } = await dr().from('orgs').select('*').order('created_at');
     setOrgs(data || []);
     setActiveOrg((cur) => cur || (data && data.length ? data[0].id : null));
@@ -111,6 +125,10 @@ export default function DataroomHome() {
     const { error } = await supabase.rpc('dataroom_set_member_role', { p_org: activeOrg, p_user: userId, p_role: role });
     if (error) setMsg(error.message); else loadTeam(activeOrg);
   }
+  async function resetMfa(m) {
+    if (!window.confirm(`¿Restablecer la verificación en dos pasos de ${m.email}? La tendrá que volver a configurar al entrar (útil si ha perdido el móvil).`)) return;
+    try { await api('/api/dataroom/mfa-reset', { org_id: activeOrg, user_id: m.user_id }); setMsg(`Verificación restablecida para ${m.email}.`); } catch (e) { setMsg(e.message); }
+  }
   async function invite(e) {
     e.preventDefault();
     const { error } = await supabase.rpc('dataroom_invite_member', { p_org_id: activeOrg, p_email: inviteEmail, p_role: inviteRole });
@@ -149,6 +167,13 @@ export default function DataroomHome() {
       </div>
     );
   }
+
+  // ---- VERIFICACION EN DOS PASOS ----
+  if (mfaState.loading) return <div style={S.page} />;
+  if (mfaState.needsCode) return <MfaChallenge factor={mfaState.factor} email={session.user.email} onDone={mfaState.refresh} />;
+  const mfaOrgs = (myOrgs || []).filter((o) => o.require_mfa);
+  if (mfaOrgs.length && !mfaState.factor) return <MfaRequired orgNames={mfaOrgs.map((o) => o.name)} email={session.user.email} onDone={mfaState.refresh} />;
+  const isOrgAdmin = !!me && (me.role === 'owner' || me.role === 'admin');
 
   // ---- APP ----
   return (
@@ -215,7 +240,8 @@ export default function DataroomHome() {
                 <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
                   {members.map((m) => (
                     <div key={m.user_id} style={S.memberRow}>
-                      <span>{m.email}</span>
+                      <span style={{ flex: 1 }}>{m.email}</span>
+                      {m.user_id !== session.user.id && <button style={{ ...S.btnGhost, padding: '3px 8px', fontSize: 11, marginRight: 8 }} title="Si ha perdido el móvil" onClick={() => resetMfa(m)}>Restablecer 2 pasos</button>}
                       {m.role === 'owner' || m.role === 'admin'
                         ? <span style={S.roleTag}>{m.role === 'owner' ? 'owner' : 'admin'}</span>
                         : (
@@ -268,6 +294,7 @@ export default function DataroomHome() {
                   {!rooms.length && <div style={S.empty}>Aún no hay salas. Crea la primera arriba.</div>}
                 </div>
               </section>
+              <SecurityCard mfaState={mfaState} org={org} isAdmin={isOrgAdmin} onOrgChanged={loadOrgs} styles={S} />
               {msg && <p style={S.err}>{msg}</p>}
             </>
           )}
