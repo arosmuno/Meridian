@@ -1,4 +1,5 @@
-// Pestana Q&A: cualquier miembro pregunta; el equipo responde (con borrador de IA citado).
+// Pestana Q&A: cualquier miembro pregunta; el equipo vendedor responde (con borrador de IA citado).
+// Con postores: cada uno ve solo sus preguntas y las que el vendedor publique para todos.
 import { useEffect, useState } from 'react';
 import { api, dr, fmtDate, downloadCsv } from './api';
 import { S, C } from './styles';
@@ -6,7 +7,7 @@ import { S, C } from './styles';
 const ST = { open: 'Abierta', answered: 'Respondida', closed: 'Cerrada' };
 const STC = { open: C.gold, answered: C.green, closed: C.lo };
 
-export default function QaTab({ room, canWrite, members, docs, openViewer }) {
+export default function QaTab({ room, canWrite, isSeller = true, members, docs, openViewer }) {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('all');
   const [text, setText] = useState('');
@@ -14,13 +15,16 @@ export default function QaTab({ room, canWrite, members, docs, openViewer }) {
   const [msg, setMsg] = useState('');
   const [drafts, setDrafts] = useState({});
   const [working, setWorking] = useState({});
-  const email = (id) => (members.find((m) => m.user_id === id) || {}).email || '—';
+  const [groups, setGroups] = useState([]);
+  const gname = (id) => ((groups.find((g) => g.id === id) || {}).name) || '';
+  // A un postor no se le muestra quien hizo una pregunta publicada de otro grupo.
+  const email = (id) => (members.find((m) => m.user_id === id) || {}).email || (isSeller ? '—' : 'Otro postor');
 
   async function load() {
     const { data, error } = await dr().from('questions').select('*').eq('room_id', room.id).order('created_at', { ascending: false });
     if (error) setMsg(error.message); else setItems(data || []);
   }
-  useEffect(() => { load(); }, [room.id]); // eslint-disable-line
+  useEffect(() => { load(); dr().from('room_groups').select('id, name').eq('room_id', room.id).then(({ data }) => setGroups(data || [])); }, [room.id]); // eslint-disable-line
 
   async function ask(e) {
     e.preventDefault();
@@ -48,6 +52,7 @@ export default function QaTab({ room, canWrite, members, docs, openViewer }) {
         <div style={S.cardHead}>Nueva pregunta</div>
         <form onSubmit={ask} style={{ display: 'grid', gap: 8 }}>
           <textarea style={{ ...S.input, minHeight: 70, resize: 'vertical' }} placeholder="Ej.: ¿Existen contratos con clientes que se puedan resolver por cambio de control?" value={text} onChange={(e) => setText(e.target.value)} />
+          {!isSeller && <div style={S.hint}>Tus preguntas solo las ve tu equipo y el vendedor.</div>}
           <div style={{ display: 'flex', gap: 8 }}>
             <select style={{ ...S.input, flex: 1 }} value={docId} onChange={(e) => setDocId(e.target.value)}>
               <option value="">Sobre la sala en general</option>
@@ -76,6 +81,8 @@ export default function QaTab({ room, canWrite, members, docs, openViewer }) {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 12, color: C.mid, marginBottom: 6, flexWrap: 'wrap' }}>
                   <span style={{ ...S.tag, color: STC[q.status], borderColor: STC[q.status] }}>{ST[q.status]}</span>
                   <span>{email(q.asked_by)} · {fmtDate(q.created_at)}</span>
+                  {isSeller && q.group_id && <span style={{ ...S.tag, color: C.gold, borderColor: C.gold }}>Postor: {gname(q.group_id) || 'grupo'}</span>}
+                  {q.visibility === 'all' && <span style={{ ...S.tag, color: C.green, borderColor: C.green }}>Publicada para todos</span>}
                   {d && <a style={{ color: C.gold, cursor: 'pointer' }} onClick={() => openViewer(d)}>📄 {d.name}</a>}
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.5 }}>{q.question}</div>
@@ -90,6 +97,7 @@ export default function QaTab({ room, canWrite, members, docs, openViewer }) {
                       <button style={S.btnGhost} disabled={!!working[q.id]} onClick={() => act(q, 'draft')}>{working[q.id] === 'draft' ? 'Redactando…' : '✦ Borrador con IA'}</button>
                       <button style={S.btn} disabled={!!working[q.id] || !draft.trim()} onClick={() => act(q, 'answer', { answer: draft })}>{q.answer ? 'Actualizar respuesta' : 'Publicar respuesta'}</button>
                       <button style={S.btnGhost} disabled={!!working[q.id]} onClick={() => act(q, 'close')}>Cerrar</button>
+                      {q.group_id && <button style={S.btnGhost} disabled={!!working[q.id]} title="Que la vean (con su respuesta) todos los postores, sin indicar quién preguntó" onClick={() => act(q, 'visibility', { visibility: q.visibility === 'all' ? 'group' : 'all' })}>{q.visibility === 'all' ? 'Solo para su grupo' : 'Publicar para todos los postores'}</button>}
                     </div>
                   </div>
                 )}

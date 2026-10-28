@@ -1,12 +1,16 @@
 // Borrado de documento: archivo, fila (chunks y revisiones caen en cascada) y auditoria.
-import { route, getCtx, loadDoc, canWriteRole, admin, dra, audit, HttpError } from '../../../lib/dataroom/server';
+import { route, getCtx, loadDoc, canWriteIn, admin, dra, audit, HttpError } from '../../../lib/dataroom/server';
 
 export default route(async (req) => {
   const ctx = await getCtx(req);
   const { document_id } = req.body || {};
   if (!document_id) throw new HttpError(400, 'document_id requerido');
-  const { doc, role } = await loadDoc(ctx, document_id);
-  if (!canWriteRole(role)) throw new HttpError(403, 'sin permiso de escritura');
+  const { doc, access } = await loadDoc(ctx, document_id);
+  if (!canWriteIn(access)) throw new HttpError(403, 'sin permiso de escritura');
+  // Versiones: se reenlaza la cadena para que borrar una version no resucite otra antigua.
+  // Si se borra la vigente, la anterior vuelve a ser la vigente.
+  await dra().from('documents').update({ superseded_by: doc.superseded_by || null }).eq('superseded_by', doc.id);
+  await dra().from('documents').update({ replaces_id: doc.replaces_id || null }).eq('replaces_id', doc.id);
   await admin.storage.from('datarooms').remove([doc.storage_path]);
   const { error } = await dra().from('documents').delete().eq('id', doc.id);
   if (error) throw error;

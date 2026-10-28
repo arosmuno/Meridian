@@ -2,6 +2,7 @@
 // y texto extraido para Word/Excel/texto. Marca de agua con el email del usuario encima.
 import { useEffect, useRef, useState } from 'react';
 import { api } from './api';
+import { supabase } from '../../lib/supabase';
 import { S, C, serif } from './styles';
 
 const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
@@ -42,6 +43,15 @@ export default function Viewer({ doc, startPage = 1, onClose, canDownload, onDow
   const [pdf, setPdf] = useState(null);
   const [limit, setLimit] = useState(PAGE_BATCH);
   const holder = useRef();
+
+  // Tiempo de lectura (para el informe por postor): una vista al abrir y 15 s por cada intervalo
+  // con la pestana visible. Si la sala o la carpeta no le dejan, la funcion no registra nada.
+  useEffect(() => {
+    const track = (sec) => supabase.rpc('dataroom_track_read', { p_document: doc.id, p_seconds: sec }).then(() => {}, () => {});
+    track(0);
+    const t = setInterval(() => { if (typeof document === 'undefined' || document.visibilityState === 'visible') track(15); }, 15000);
+    return () => clearInterval(t);
+  }, [doc.id]);
 
   useEffect(() => {
     let alive = true;

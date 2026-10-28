@@ -1,7 +1,8 @@
 // Indexado: descarga, extrae texto por pagina/hoja, trocea y embebe por lotes.
 // Si el documento es grande y no termina en esta llamada, devuelve el progreso y el cliente
 // llama a /api/dataroom/embed para seguir (y el cron lo remata si nadie lo hace).
-import { route, getCtx, loadDoc, canWriteRole, admin, dra, HttpError } from '../../../lib/dataroom/server';
+import { route, getCtx, loadDoc, canWriteIn, admin, dra, HttpError } from '../../../lib/dataroom/server';
+import { enqueue } from '../../../lib/dataroom/notify';
 import { extractPages, chunkPages, looksScanned, kindOf } from '../../../lib/dataroom/extract';
 import { processPending, refreshDocStatus } from '../../../lib/dataroom/embed';
 import { runReview } from '../../../lib/dataroom/reviewJob';
@@ -11,10 +12,12 @@ export const config = { api: { bodyParser: { sizeLimit: '1mb' } }, maxDuration: 
 export default route(async (req) => {
   const started = Date.now();
   const ctx = await getCtx(req);
-  const { document_id } = req.body || {};
+  // embed=false (subida masiva): solo extrae y trocea; el embebido sigue en segundo plano.
+  const { document_id, embed = true } = req.body || {};
   if (!document_id) throw new HttpError(400, 'document_id requerido');
-  const { doc, role } = await loadDoc(ctx, document_id);
-  if (!canWriteRole(role)) throw new HttpError(403, 'sin permiso de escritura');
+  const { doc, room, access } = await loadDoc(ctx, document_id);
+  if (!canWriteIn(access)) throw new HttpError(403, 'sin permiso de escritura');
+  const firstTime = !doc.chunk_count;
 
   try {
     await dra().from('documents').update({ status: 'processing', error: null }).eq('id', doc.id);
@@ -37,12 +40,21 @@ export default route(async (req) => {
     }
     await dra().from('documents').update({ status: 'indexing', pages: pages.length, chunk_count: rows.length, embedded_count: 0 }).eq('id', doc.id);
 
+    // Version nueva: la anterior pasa al historial (deja de salir en el indice, el chat y las busquedas).
+    if (doc.replaces_id) await dra().from('documents').update({ superseded_by: doc.id }).eq('id', doc.replaces_id).is('superseded_by', null);
+    if (firstTime) {
+      await enqueue({
+        room, kind: doc.replaces_id ? 'doc_version' : 'doc_new', folderId: doc.folder_id, exclude: ctx.user.id,
+        payload: { document_id: doc.id, name: doc.name, version: doc.version, note: doc.version_note || null },
+      });
+    }
+
     // Excel: la revision del modelo corre a la vez que el indexado.
     if (kindOf(doc.name, doc.mime) === 'xlsx') {
       try { await runReview({ doc, buffer, userId: ctx.user.id }); } catch (_) { /* la revision tiene su propio estado */ }
     }
 
-    const run = await processPending({ documentId: doc.id, deadline: started + 52000 });
+    const run = embed === false ? { wait_ms: 0 } : await processPending({ documentId: doc.id, deadline: started + 52000 });
     const progress = await refreshDocStatus(doc.id);
     return { ok: true, ...progress, wait_ms: run.wait_ms };
   } catch (e) {

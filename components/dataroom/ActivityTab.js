@@ -12,10 +12,10 @@ import { TierBadge } from './ChatTab';
 const LABEL = {
   document_view: 'Vio', document_download: 'Descargó', document_upload: 'Subió', document_delete: 'Eliminó',
   chat_question: 'Preguntó al chat', qa_ask: 'Hizo una pregunta (Q&A)', qa_answer: 'Respondió (Q&A)', qa_close: 'Cerró una pregunta',
-  qa_reopen: 'Reabrió una pregunta', nda_accept: 'Aceptó el NDA', model_review: 'Revisión de modelo',
+  qa_reopen: 'Reabrió una pregunta', qa_visibility: 'Cambió la visibilidad de una pregunta', nda_accept: 'Aceptó el NDA', model_review: 'Revisión de modelo', document_version: 'Subió una versión nueva',
 };
 
-export default function ActivityTab({ room, members, isAdmin, docs, openViewer }) {
+export default function ActivityTab({ room, members, isAdmin, isSeller = true, docs, openViewer }) {
   const [view, setView] = useState('questions');
   return (
     <div style={{ display: 'grid', gap: 12 }}>
@@ -26,13 +26,13 @@ export default function ActivityTab({ room, members, isAdmin, docs, openViewer }
         </div>
       )}
       {view === 'questions' || !isAdmin
-        ? <TeamQuestions room={room} members={members} docs={docs} openViewer={openViewer} />
+        ? <TeamQuestions room={room} members={members} docs={docs} openViewer={openViewer} isSeller={isSeller} />
         : <AuditLog room={room} members={members} />}
     </div>
   );
 }
 
-function TeamQuestions({ room, members, docs, openViewer }) {
+function TeamQuestions({ room, members, docs, openViewer, isSeller }) {
   const [rows, setRows] = useState(null);
   const [who, setWho] = useState('all');
   const [q, setQ] = useState('');
@@ -51,7 +51,7 @@ function TeamQuestions({ room, members, docs, openViewer }) {
   return (
     <section style={S.card}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
-        <div style={{ ...S.cardHead, margin: 0, flex: 1 }}>Preguntas del equipo al analista</div>
+        <div style={{ ...S.cardHead, margin: 0, flex: 1 }}>{isSeller ? 'Preguntas del equipo al analista' : 'Preguntas de tu equipo al analista'}</div>
         <input style={{ ...S.input, width: 220 }} placeholder="Buscar en las preguntas…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={S.input} value={who} onChange={(e) => setWho(e.target.value)}>
           <option value="all">Todo el equipo</option>

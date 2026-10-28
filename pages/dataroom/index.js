@@ -18,6 +18,7 @@ export default function DataroomHome() {
   const [rooms, setRooms] = useState([]);
   const [members, setMembers] = useState([]);
   const [invites, setInvites] = useState([]);
+  const [me, setMe] = useState(null);
   const [orgName, setOrgName] = useState('');
   const [roomName, setRoomName] = useState('');
   const [roomKind, setRoomKind] = useState('mna');
@@ -57,7 +58,7 @@ export default function DataroomHome() {
   useEffect(() => {
     if (session) { supabase.rpc('dataroom_accept_invites').then(() => loadOrgs()); }
   }, [session]);
-  useEffect(() => { if (activeOrg) { loadRooms(activeOrg); loadTeam(activeOrg); } }, [activeOrg]);
+  useEffect(() => { if (activeOrg) { loadRooms(activeOrg); loadTeam(activeOrg); loadMe(activeOrg); } }, [activeOrg]);
 
   async function loadOrgs() {
     const { data } = await dr().from('orgs').select('*').order('created_at');
@@ -67,6 +68,14 @@ export default function DataroomHome() {
   async function loadRooms(orgId) {
     const { data } = await dr().from('rooms').select('*').eq('org_id', orgId).order('created_at', { ascending: false });
     setRooms(data || []);
+  }
+  async function loadMe(orgId) {
+    const { data } = await dr().from('memberships').select('role, notify').eq('org_id', orgId).eq('user_id', session.user.id).maybeSingle();
+    setMe(data || null);
+  }
+  async function toggleNotify(on) {
+    setMe((m) => ({ ...(m || {}), notify: on }));
+    await supabase.rpc('dataroom_set_notify', { p_org: activeOrg, p_on: on });
   }
   async function loadTeam(orgId) {
     const { data: m } = await supabase.rpc('dataroom_list_members', { p_org_id: orgId });
@@ -187,7 +196,16 @@ export default function DataroomHome() {
                 </div>
               </div>
 
+              {/* Avisos */}
+              {me && (
+                <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, color: '#736c61', margin: '-6px 0 14px' }}>
+                  <input type="checkbox" checked={me.notify !== false} onChange={(e) => toggleNotify(e.target.checked)} />
+                  Recibir avisos por email de esta organización (documentos nuevos, versiones, preguntas y respuestas; como mucho un email cada 30 minutos por sala)
+                </label>
+              )}
+
               {/* Equipo */}
+              {(me && (me.role === 'owner' || me.role === 'admin')) ? (
               <section style={S.card}>
                 <div style={S.cardHead}>Equipo</div>
                 <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
@@ -213,26 +231,27 @@ export default function DataroomHome() {
                   </select>
                   <button style={S.btn}>Invitar</button>
                 </form>
-                <p style={S.hint}>Le enviamos un enlace de acceso por email; al entrar, ve las salas de la organización.</p>
+                <p style={S.hint}>Le enviamos un enlace de acceso por email; al entrar, ve las salas de la organización. Para compradores o postores externos, invítalos desde la pestaña Postores de cada sala: así solo ven esa sala y sus propias preguntas.</p>
               </section>
+              ) : null}
 
               {/* Salas */}
               <section style={S.card}>
                 <div style={S.cardHead}>Salas de datos</div>
-                <form onSubmit={createRoom} style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+                {me && me.role !== 'viewer' && <form onSubmit={createRoom} style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                   <input style={{ ...S.input, flex: 1, minWidth: 200 }} placeholder="Nombre de la sala (p. ej. Proyecto Atlas)" value={roomName} onChange={(e) => setRoomName(e.target.value)} required />
                   <select style={S.input} value={roomKind} onChange={(e) => setRoomKind(e.target.value)}>
                     <option value="mna">Proceso M&A</option>
                     <option value="archive">Archivo interno</option>
                   </select>
                   <button style={S.btn}>Crear sala</button>
-                </form>
+                </form>}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
                   {rooms.map((r) => (
                     <Link key={r.id} href={`/dataroom/${r.id}`} style={S.roomCard}>
                       <div style={S.roomKind}>{r.kind === 'mna' ? 'M&A' : 'ARCHIVO'}</div>
                       <div style={S.roomName}>{r.name}</div>
-                      <div style={S.roomMeta}>Abrir sala →</div>
+                      <div style={S.roomMeta}>{r.status === 'closed' ? 'Cerrada · ' : ''}{r.access_expires_at ? `Acceso hasta ${new Date(r.access_expires_at).toLocaleDateString('es-ES')} · ` : ''}Abrir sala →</div>
                     </Link>
                   ))}
                   {!rooms.length && <div style={S.empty}>Aún no hay salas. Crea la primera arriba.</div>}

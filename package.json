@@ -10,6 +10,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.43.4",
     "exceljs": "4.4.0",
+    "fflate": "^0.8.2",
     "mammoth": "1.7.2",
     "next": "14.2.3",
     "pdf-lib": "1.17.1",
