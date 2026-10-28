@@ -1,19 +1,11 @@
 // Pestana Ajustes (owner/admin): descripcion, descargas, marca de agua, NDA, caducidad del acceso,
 // cierre de la sala y archivo final (ZIP con documentos, indice, Q&A y actividad).
 import { useState } from 'react';
-import { zipSync, strToU8 } from 'fflate';
-import { supabase } from '../../lib/supabase';
-import { api, dr, toCsv, fmtDate, fmtSize, KIND } from './api';
-import { buildIndex, versionChain } from './DocsTab';
+import { dr, fmtDate } from './api';
+import { buildArchive } from './archive';
 import { S, C } from './styles';
 
 const DEFAULT_NDA = 'Al acceder a esta sala te comprometes a tratar toda la información como confidencial, a usarla solo para evaluar la operación y a no compartirla con terceros sin autorización. Todas las vistas y descargas quedan registradas.';
-const LABEL = {
-  document_view: 'Vio', document_download: 'Descargó', document_upload: 'Subió', document_version: 'Subió versión nueva', document_delete: 'Eliminó',
-  chat_question: 'Preguntó al chat', qa_ask: 'Pregunta Q&A', qa_answer: 'Respuesta Q&A', qa_close: 'Cerró pregunta', qa_reopen: 'Reabrió pregunta',
-  qa_visibility: 'Cambió visibilidad de pregunta', nda_accept: 'Aceptó el NDA', model_review: 'Revisión de modelo', room_export: 'Exportó el archivo',
-};
-const safe = (s) => String(s || '').replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || 'sin_nombre';
 
 export default function SettingsTab({ room, onSaved, folders = [], docs = [], allDocs = docs, members = [] }) {
   const [f, setF] = useState({ name: room.name, description: room.description || '', allow_download: room.allow_download, watermark: room.watermark, nda_required: room.nda_required, nda_text: room.nda_text || DEFAULT_NDA });
@@ -116,72 +108,11 @@ function Archive({ room, folders, docs, allDocs, members }) {
   const [stage, setStage] = useState('');
   const [err, setErr] = useState('');
   const [withVersions, setWithVersions] = useState(true);
-  const email = (id) => (members.find((m) => m.user_id === id) || {}).email || '';
-
   async function build() {
     setBusy(true); setErr('');
     try {
-      const idx = buildIndex(folders, docs);
-      const folderPath = (fid) => {
-        const parts = [];
-        for (let fo = folders.find((x) => x.id === fid); fo; fo = folders.find((x) => x.id === fo.parent_id)) parts.unshift(safe(`${idx.num.get(fo.id)} ${fo.name}`));
-        return parts.join('/');
-      };
-      const items = [];
-      for (const d of docs) {
-        const base = folderPath(d.folder_id);
-        items.push({ d, path: `Documentos/${base ? base + '/' : ''}${safe(`${idx.num.get(d.id)} ${d.name}`)}` });
-        if (withVersions) {
-          for (const old of versionChain(d, allDocs).slice(1)) {
-            items.push({ d: old, path: `Documentos/${base ? base + '/' : ''}_versiones anteriores/${safe(`${idx.num.get(d.id)} v${old.version || 1} ${old.name}`)}` });
-          }
-        }
-      }
-      const files = {};
-      let i = 0;
-      for (const it of items) {
-        i++;
-        setStage(`Descargando documentos ${i}/${items.length}…`);
-        const { url } = await api('/api/dataroom/download', { document_id: it.d.id, original: true });
-        const r = await fetch(url);
-        if (!r.ok) throw new Error(`No se pudo descargar «${it.d.name}»`);
-        files[it.path] = [new Uint8Array(await r.arrayBuffer()), { level: 0 }];
-      }
-      setStage('Preparando índice, Q&A y actividad…');
-      const indexRows = [['Nº', 'Tipo', 'Nombre', 'Carpeta', 'Versión', 'Tamaño', 'Páginas / hojas', 'Subido', 'Subido por']];
-      const walk = (fid) => {
-        for (const fo of idx.childrenOf(fid)) { indexRows.push([idx.num.get(fo.id), 'Carpeta', fo.name, folderPath(fo.parent_id), '', '', '', '', '']); walk(fo.id); }
-        for (const d of idx.docsOf(fid)) indexRows.push([idx.num.get(d.id), KIND(d.name), d.name, folderPath(d.folder_id), d.version || 1, fmtSize(d.size_bytes), d.pages || '', fmtDate(d.created_at), email(d.created_by)]);
-      };
-      walk(null);
-      const [{ data: qs }, { data: logs }, { data: groups }, { data: rep }] = await Promise.all([
-        dr().from('questions').select('*').eq('room_id', room.id).order('created_at'),
-        dr().from('audit_log').select('*').eq('room_id', room.id).order('created_at').limit(20000),
-        dr().from('room_groups').select('id, name').eq('room_id', room.id),
-        supabase.rpc('dataroom_bidder_report', { p_room: room.id }),
-      ]);
-      const gname = (id) => ((groups || []).find((g) => g.id === id) || {}).name || '';
-      const orgLabel = 'Organizador';
-      const qaRows = [['Fecha', 'De', 'Para', 'Preguntado por', 'Pregunta', 'Estado', 'Respuesta', 'Respondido por', 'Fecha respuesta']];
-      (qs || []).forEach((q) => qaRows.push([fmtDate(q.created_at), gname(q.group_id) || orgLabel, gname(q.to_group_id) || orgLabel, email(q.asked_by), q.question, q.status, q.answer || '', email(q.answered_by), q.answered_at ? fmtDate(q.answered_at) : '']));
-      const logRows = [['Fecha', 'Persona', 'Acción', 'Detalle']];
-      (logs || []).forEach((l) => logRows.push([fmtDate(l.created_at), email(l.actor), LABEL[l.action] || l.action, (l.meta && (l.meta.name || l.meta.question || l.meta.email)) || '']));
-      const repRows = [['Equipo', 'Personas', 'Documentos vistos', 'Tiempo de lectura (min)', 'Aperturas', 'Descargas', 'Preguntas Q&A', 'Última actividad']];
-      (rep || []).forEach((r) => repRows.push([r.group_name, r.members, r.docs_viewed, Math.round(r.total_seconds / 60), r.views, r.downloads, r.qa_questions, r.last_activity ? fmtDate(r.last_activity) : '']));
-      files['Indice.csv'] = strToU8(toCsv(indexRows));
-      files['Q&A.csv'] = strToU8(toCsv(qaRows));
-      files['Actividad.csv'] = strToU8(toCsv(logRows));
-      if ((rep || []).length) files['Equipos.csv'] = strToU8(toCsv(repRows));
-      files['LEEME.txt'] = strToU8(`Archivo de la sala "${room.name}" generado el ${new Date().toLocaleString('es-ES')}.\r\n\r\nDocumentos: versión vigente de cada documento, numerados como en el índice${withVersions ? ', con las versiones anteriores en "_versiones anteriores"' : ''}. Son los originales, sin marca de agua.\r\nIndice.csv: índice completo. Q&A.csv: preguntas y respuestas. Actividad.csv: registro de accesos, descargas y acciones. Equipos.csv: actividad de cada parte.\r\n`);
-      setStage('Comprimiendo…');
-      const zipped = zipSync(files);
-      const blob = new Blob([zipped], { type: 'application/zip' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `${safe(room.name)} - archivo ${new Date().toISOString().slice(0, 10)}.zip`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      setStage(`Listo: ${items.length} documentos.`);
+      const n = await buildArchive({ room, folders, docs, allDocs, members, isAdmin: true, withVersions, onStage: setStage });
+      setStage(`Listo: ${n} documentos.`);
     } catch (e) {
       setErr(e.message || String(e));
       setStage('');

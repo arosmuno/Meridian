@@ -23,7 +23,7 @@ export default function DataroomHome() {
   const [roomName, setRoomName] = useState('');
   const [roomKind, setRoomKind] = useState('mna');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
+  const [inviteRole, setInviteRole] = useState('viewer'); // por defecto, solo lectura
   const [activeOrg, setActiveOrg] = useState(null);
   const [msg, setMsg] = useState('');
   const [sent, setSent] = useState(false);
@@ -106,6 +106,10 @@ export default function DataroomHome() {
     const { error } = await dr().from('rooms').insert({ org_id: activeOrg, name: roomName, kind: roomKind, created_by: session.user.id });
     if (error) return setMsg(error.message);
     setRoomName(''); setMsg(''); loadRooms(activeOrg);
+  }
+  async function setRole(userId, role) {
+    const { error } = await supabase.rpc('dataroom_set_member_role', { p_org: activeOrg, p_user: userId, p_role: role });
+    if (error) setMsg(error.message); else loadTeam(activeOrg);
   }
   async function invite(e) {
     e.preventDefault();
@@ -212,7 +216,14 @@ export default function DataroomHome() {
                   {members.map((m) => (
                     <div key={m.user_id} style={S.memberRow}>
                       <span>{m.email}</span>
-                      <span style={S.roleTag}>{m.role}</span>
+                      {m.role === 'owner' || m.role === 'admin'
+                        ? <span style={S.roleTag}>{m.role === 'owner' ? 'owner' : 'admin'}</span>
+                        : (
+                          <select style={{ ...S.input, padding: '4px 8px', fontSize: 12 }} value={m.role} onChange={(e) => setRole(m.user_id, e.target.value)}>
+                            <option value="viewer">Solo lectura</option>
+                            <option value="member">Sube y pregunta</option>
+                          </select>
+                        )}
                     </div>
                   ))}
                   {invites.map((iv) => (
@@ -225,9 +236,9 @@ export default function DataroomHome() {
                 <form onSubmit={invite} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <input style={{ ...S.input, flex: 1, minWidth: 200 }} type="email" placeholder="Invitar por email…" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required />
                   <select style={S.input} value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
-                    <option value="admin">Admin</option>
-                    <option value="member">Miembro</option>
                     <option value="viewer">Solo lectura</option>
+                    <option value="member">Sube y pregunta</option>
+                    <option value="admin">Admin</option>
                   </select>
                   <button style={S.btn}>Invitar</button>
                 </form>

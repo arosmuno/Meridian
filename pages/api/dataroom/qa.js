@@ -26,6 +26,7 @@ export default route(async (req) => {
   };
 
   if (action === 'ask') {
+    if (!canWriteIn(access)) throw new HttpError(403, 'Tu acceso es de solo lectura: pide al organizador permiso para preguntar');
     if (!question || !String(question).trim()) throw new HttpError(400, 'pregunta vacía');
     let to = to_group_id || null;
     if (to) {

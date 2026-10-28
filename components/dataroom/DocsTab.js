@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, dr, uploadFile, finishIndexing, finishRoomIndexing, KIND, isXlsx, fmtSize, fmtDate, downloadCsv } from './api';
 import { filesFromDrop, filesFromInput, expandZips, classify } from './bulk';
+import { buildArchive } from './archive';
 import { S, C } from './styles';
 
 // Indice: dentro de cada carpeta van primero las subcarpetas y luego los documentos.
@@ -63,7 +64,7 @@ export function versionChain(doc, allDocs) {
   return chain;
 }
 
-export default function DocsTab({ room, canWrite, isAdmin, userId, canDownload, members, folders, docs, allDocs = docs, reload, openViewer, onDownload, goReview }) {
+export default function DocsTab({ room, canWrite, isAdmin, userId, orgName = '', canDownload, members, folders, docs, allDocs = docs, reload, openViewer, onDownload, goReview }) {
   // Cada equipo sube lo suyo; mover, renombrar o borrar: el admin o quien lo subio.
   const canEdit = (item) => canWrite && (isAdmin || (item && item.created_by === userId));
   const [current, setCurrent] = useState(null);
@@ -233,6 +234,16 @@ export default function DocsTab({ room, canWrite, isAdmin, userId, canDownload, 
     reload();
   }
 
+  // Todo lo que este usuario puede ver, en un ZIP (con el indice y su Q&A).
+  async function downloadAll() {
+    setBusy(true); setMsg('');
+    try {
+      await buildArchive({ room, folders, docs, allDocs, members, isAdmin, orgName, withVersions: false, onStage: (t) => setStage('_zip', t) });
+    } catch (e) { setMsg(e.message || String(e)); }
+    setStage('_zip', null);
+    setBusy(false);
+  }
+
   // Indice completo (lo que este usuario puede ver) en CSV.
   function exportIndex() {
     const rows = [['Nº', 'Tipo', 'Nombre', 'Carpeta', 'Versión', 'Tamaño', 'Páginas / hojas', 'Subido']];
@@ -277,6 +288,7 @@ export default function DocsTab({ room, canWrite, isAdmin, userId, canDownload, 
             {path.map((f) => <span key={f.id}> / <a style={crumb} onClick={() => setCurrent(f.id)}>{idx.num.get(f.id)} {f.name}</a></span>)}
           </div>
           <input style={{ ...S.input, width: 220 }} placeholder="Buscar por nombre…" value={q} onChange={(e) => setQ(e.target.value)} />
+          {canDownload && docs.length > 0 && <button style={S.btnGhost} disabled={busy} onClick={downloadAll} title="Descargar todos los documentos que puedes ver, con el índice y el Q&A">Descargar todo (ZIP)</button>}
           {cur && canEdit(cur) && <button style={S.btnGhost} onClick={() => renameFolder(cur)}>Renombrar</button>}
           {cur && isAdmin && canWrite && <button style={S.btnGhost} onClick={() => setAccessFor(cur)}>{cur.restricted ? 'Acceso 🔒' : 'Restringir'}</button>}
           {cur && canEdit(cur) && <button style={S.btnGhost} onClick={() => removeFolder(cur)}>Eliminar carpeta</button>}

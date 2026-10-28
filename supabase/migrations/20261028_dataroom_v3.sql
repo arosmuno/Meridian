@@ -487,3 +487,6 @@ grant all on dataroom.room_groups, dataroom.group_members, dataroom.group_invite
 --   * rooms.retention_days / purge_at / purge_warned: operacion terminada = solo lectura hasta purge_at;
 --     el cron avisa 7 y 1 dia antes y borra Storage + sala al llegar la fecha.
 --   * room_groups visibles (solo el nombre) para cualquiera de la sala.
+
+-- v5: quien entra (salvo admins) es de solo lectura; el admin da "sube y pregunta" con
+-- dataroom_set_member_role(org, user, 'member'|'viewer'). Preguntar en el Q&A exige can_write.

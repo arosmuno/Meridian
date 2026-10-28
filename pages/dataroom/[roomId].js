@@ -17,7 +17,7 @@ import SettingsTab from '../../components/dataroom/SettingsTab';
 import TeamsTab from '../../components/dataroom/TeamsTab';
 import Viewer from '../../components/dataroom/Viewer';
 
-const ROLE = { owner: 'Owner', admin: 'Admin', member: 'Miembro', viewer: 'Solo lectura' };
+const ROLE = { owner: 'Owner', admin: 'Admin', member: 'Sube y pregunta', viewer: 'Solo lectura' };
 
 export default function Room() {
   const router = useRouter();
@@ -179,7 +179,7 @@ export default function Room() {
         </nav>
         {flash && <div style={S.err} onClick={() => setFlash('')}>{flash}</div>}
 
-        {tab === 'docs' && <DocsTab room={room} canWrite={canWrite} isAdmin={isAdmin} userId={session && session.user.id} canDownload={canDownload} members={members} folders={folders} docs={docs} allDocs={allDocs} reload={refresh} openViewer={openViewer} onDownload={download} goReview={(d) => { setSelectedModel(d.id); setTab('models'); }} />}
+        {tab === 'docs' && <DocsTab room={room} canWrite={canWrite} isAdmin={isAdmin} userId={session && session.user.id} orgName={orgName} canDownload={canDownload} members={members} folders={folders} docs={docs} allDocs={allDocs} reload={refresh} openViewer={openViewer} onDownload={download} goReview={(d) => { setSelectedModel(d.id); setTab('models'); }} />}
         {tab === 'chat' && <ChatTab room={room} docs={docs} openViewer={openViewer} userId={session.user.id} chat={chat} setChat={setChat} />}
         {tab === 'qa' && <QaTab room={room} canWrite={canWrite} isAdmin={isAdmin} myTeam={myTeam} orgName={orgName} members={members} docs={docs} openViewer={openViewer} />}
         {tab === 'models' && <ModelsTab room={room} canWrite={canWrite} docs={docs} selected={selectedModel} setSelected={setSelectedModel} reload={refresh} />}

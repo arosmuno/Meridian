@@ -23,6 +23,7 @@ export default function TeamsTab({ room, orgName = '', members, docs, reloadMemb
   const [name, setName] = useState('');
   const [msg, setMsg] = useState('');
   const email = (id) => (members.find((m) => m.user_id === id) || {}).email || '(pendiente de entrar)';
+  const roleOf = (id) => (members.find((m) => m.user_id === id) || {}).role || 'viewer';
 
   async function load() {
     const [g, m, p, r, h] = await Promise.all([
@@ -60,7 +61,7 @@ export default function TeamsTab({ room, orgName = '', members, docs, reloadMemb
         </form>
         {msg && <div style={S.err}>{msg}</div>}
         <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
-          {groups.map((g) => <GroupCard key={g.id} group={g} members={gm.filter((x) => x.group_id === g.id)} pending={pending.filter((x) => x.group_id === g.id)} email={email} reload={() => { load(); reloadMembers && reloadMembers(); }} />)}
+          {groups.map((g) => <GroupCard key={g.id} group={g} members={gm.filter((x) => x.group_id === g.id)} pending={pending.filter((x) => x.group_id === g.id)} email={email} roleOf={roleOf} reload={() => { load(); reloadMembers && reloadMembers(); }} />)}
           {!groups.length && <div style={S.empty}>Solo está tu equipo. Si la sala es interna, no hace falta añadir ninguno.</div>}
         </div>
       </section>
@@ -70,7 +71,11 @@ export default function TeamsTab({ room, orgName = '', members, docs, reloadMemb
   );
 }
 
-function GroupCard({ group, members, pending, email, reload }) {
+function GroupCard({ group, members, pending, email, roleOf, reload }) {
+  async function setWrite(userId, on) {
+    const { error } = await supabase.rpc('dataroom_set_member_role', { p_org: group.org_id, p_user: userId, p_role: on ? 'member' : 'viewer' });
+    if (error) setNote(error.message); else reload();
+  }
   const [add, setAdd] = useState('');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
@@ -121,6 +126,9 @@ function GroupCard({ group, members, pending, email, reload }) {
         {members.map((m) => (
           <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{email(m.user_id)}</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: C.mid, cursor: 'pointer' }} title="Si no lo marcas, solo puede consultar y descargar">
+              <input type="checkbox" checked={roleOf(m.user_id) === 'member'} onChange={(e) => setWrite(m.user_id, e.target.checked)} /> sube y pregunta
+            </label>
             <a style={{ color: C.mid, cursor: 'pointer', fontSize: 12 }} onClick={() => remove(m.user_id)}>quitar</a>
           </div>
         ))}
@@ -131,6 +139,7 @@ function GroupCard({ group, members, pending, email, reload }) {
           </div>
         ))}
         {!members.length && !pending.length && <div style={S.empty}>Nadie todavía.</div>}
+        {(members.length > 0 || pending.length > 0) && <div style={{ fontSize: 11, color: C.lo }}>Entran con acceso de lectura. Marca «sube y pregunta» para quien deba subir documentos y preguntar o responder en el Q&A.</div>}
       </div>
       <form onSubmit={addMember} style={{ display: 'flex', gap: 6 }}>
         <input style={{ ...S.input, flex: 1 }} type="email" placeholder="nombre@empresa.com" value={add} onChange={(e) => setAdd(e.target.value)} />

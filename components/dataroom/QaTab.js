@@ -83,6 +83,7 @@ export default function QaTab({ room, canWrite, isAdmin, myTeam = null, orgName 
           {msg && <div style={S.err}>{msg}</div>}
         </section>
       )}
+      {!canWrite && room.status !== 'closed' && <section style={{ ...S.card, color: C.mid, fontSize: 14 }}>Tu acceso es de lectura: puedes ver las preguntas y respuestas de tu equipo. Si necesitas preguntar o responder, pídeselo al organizador de la sala.</section>}
       {canWrite && !targets.length && <section style={{ ...S.card, color: C.mid, fontSize: 14 }}>Todavía no hay otra parte en la sala. Cuando el organizador añada un equipo (comprador, banco…), podréis cruzaros preguntas aquí.</section>}
 
       <section style={S.card}>
