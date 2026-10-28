@@ -34,8 +34,8 @@ export default route(async (req) => {
   } catch (e) {
     out = { answer: 'No he podido completar el análisis ahora mismo (' + String((e && e.message) || e).slice(0, 120) + '). Vuelve a intentarlo en un momento.', citations: [] };
   }
-  const { data: botMsg } = await dra().from('messages').insert({ session_id, room_id: room.id, role: 'assistant', content: out.answer, citations: out.citations }).select('id, created_at').single();
+  const { data: botMsg } = await dra().from('messages').insert({ session_id, room_id: room.id, role: 'assistant', content: out.answer, citations: out.citations, model: out.model || null, tier: out.tier || null }).select('id, created_at, tier').single();
   await dra().from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', session_id);
   await audit({ org_id: room.org_id, room_id: room.id, actor: ctx.user.id, action: 'chat_question', meta: { question: message.slice(0, 300), session_id } });
-  return { session_id, user_message: userMsg, message: botMsg, answer: out.answer, citations: out.citations };
+  return { session_id, user_message: userMsg, message: botMsg, answer: out.answer, citations: out.citations, tier: out.tier || null };
 });

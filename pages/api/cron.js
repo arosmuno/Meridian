@@ -1,6 +1,7 @@
 import { fetchDealsFromWeb, isIberianText, translateRows } from '../../lib/fetchDeals';
 import { processPending } from '../../lib/dataroom/embed';
 import { sweepWatermarks } from '../../lib/dataroom/delivery';
+import { upgradePending } from '../../lib/dataroom/upgrade';
 import { looksSpanish } from '../../lib/eligibility';
 import { writeAnalysis } from '../../lib/analysisWriter';
 import { supabaseAdmin } from '../../lib/supabase';
@@ -112,7 +113,7 @@ export default async function handler(req, res) {
       // Un ciclo sin noticias es un resultado valido. No se rellena con nada.
       const backfilled = await runBackfill();
     // Dataroom: rematar documentos a medio indexar y borrar copias con marca de agua caducadas.
-    try { await processPending({ deadline: Date.now() + 15000 }); await sweepWatermarks(); } catch (e) { console.error('[CRON] dataroom:', e.message); }
+    try { await processPending({ deadline: Date.now() + 15000 }); await sweepWatermarks(); await upgradePending({ deadline: Date.now() + 45000 }); } catch (e) { console.error('[CRON] dataroom:', e.message); }
       await logRun({ fetched: 0, saved: 0, backfilled, message: 'sin titulares anclables' });
       return res.status(200).json({ ok: true, saved: 0, message: 'No deals found' });
     }
@@ -175,7 +176,7 @@ export default async function handler(req, res) {
     if (rejected) console.warn(`[CRON] ${rejected} registros rechazados por falta de fuente`);
 
     if (rows.length === 0) {
-      try { await processPending({ deadline: Date.now() + 15000 }); await sweepWatermarks(); } catch (e) { console.error('[CRON] dataroom:', e.message); }
+      try { await processPending({ deadline: Date.now() + 15000 }); await sweepWatermarks(); await upgradePending({ deadline: Date.now() + 45000 }); } catch (e) { console.error('[CRON] dataroom:', e.message); }
       await logRun({ fetched: deals.length, saved: 0, rejected, message: 'todos rechazados por falta de fuente' });
       return res.status(200).json({ ok: true, saved: 0, rejected });
     }

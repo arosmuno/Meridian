@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { dr, fmtDate, downloadCsv } from './api';
 import { S, C } from './styles';
 import Markdown from './Markdown';
+import { TierBadge } from './ChatTab';
 
 const LABEL = {
   document_view: 'Vio', document_download: 'Descargó', document_upload: 'Subió', document_delete: 'Eliminó',
@@ -43,7 +44,7 @@ function TeamQuestions({ room, members, docs, openViewer }) {
   const shown = (rows || []).filter((r) => (who === 'all' || r.user_id === who) && (!q || r.content.toLowerCase().includes(q.toLowerCase())));
 
   async function openThread(r) {
-    const { data } = await dr().from('messages').select('id, role, content, citations, created_at').eq('session_id', r.session_id).order('created_at');
+    const { data } = await dr().from('messages').select('id, role, content, citations, created_at, tier, draft_content, upgraded_at').eq('session_id', r.session_id).order('created_at');
     setThread({ email: r.email, messages: data || [], focus: r.message_id });
   }
 
@@ -99,6 +100,7 @@ function Thread({ thread, docs, openViewer, onClose }) {
                 ? <div style={{ background: C.ink, color: '#fff', padding: '9px 13px', borderRadius: 12, fontSize: 14, whiteSpace: 'pre-wrap' }}>{m.content}</div>
                 : (
                   <div style={{ background: '#fffdf9', padding: '12px 16px', borderRadius: 12, fontSize: 14, lineHeight: 1.6, border: `1px solid ${C.line}` }}>
+                    <TierBadge m={m} />
                     <Markdown text={m.content} onCite={(n) => openCite(m, n)} />
                     {m.citations && m.citations.length ? (
                       <div style={{ fontSize: 12, marginTop: 10, paddingTop: 8, borderTop: `1px solid ${C.line}`, display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>

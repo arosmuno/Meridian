@@ -8,6 +8,28 @@ import Markdown from './Markdown';
 
 export const emptyChat = { sessionId: null, messages: [], busy: false, loaded: false };
 
+// Regeneracion con el modelo principal de las respuestas que salieron del respaldo. Vive fuera
+// del componente para no duplicarse ni cortarse al cambiar de pestana; si se cierra la pagina,
+// lo termina el cron.
+const upgrading = new Set();
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+export async function scheduleUpgrade(messageId, setChat) {
+  if (!messageId || upgrading.has(messageId)) return;
+  upgrading.add(messageId);
+  try {
+    for (const wait of [15000, 45000, 90000, 180000]) {
+      await pause(wait);
+      let out;
+      try { out = await api('/api/dataroom/upgrade', { message_id: messageId }); } catch (_) { continue; }
+      if (out && out.upgraded && out.message) {
+        setChat((c) => ({ ...c, messages: c.messages.map((m) => (m.id === messageId ? { ...m, ...out.message } : m)) }));
+        return;
+      }
+      if (out && (out.reason === 'agotado' || out.reason === 'no existe')) return;
+    }
+  } finally { upgrading.delete(messageId); }
+}
+
 const SUGGESTIONS = [
   'Resume la operación: partes, perímetro, precio y estructura.',
   '¿Cuál es la evolución de ingresos, EBITDA y márgenes en el modelo?',
@@ -34,8 +56,10 @@ export default function ChatTab({ room, docs, openViewer, userId, chat, setChat 
 
   async function openSession(id) {
     if (chat.busy) return;
-    const { data } = await dr().from('messages').select('id, role, content, citations, created_at').eq('session_id', id).order('created_at');
+    const { data } = await dr().from('messages').select('id, role, content, citations, created_at, tier, model, draft_content, upgraded_at').eq('session_id', id).order('created_at');
     setChat({ sessionId: id, messages: data || [], busy: false, loaded: true });
+    // Respuestas rapidas de las ultimas 48 h que aun no ha revisado el modelo principal.
+    (data || []).filter((m) => m.tier === 'fallback' && Date.now() - new Date(m.created_at) < 48 * 3600e3).forEach((m) => scheduleUpgrade(m.id, setChat));
   }
 
   function newChat() {
@@ -53,8 +77,9 @@ export default function ChatTab({ room, docs, openViewer, userId, chat, setChat 
       const out = await api('/api/dataroom/chat', { room_id: room.id, session_id: sid, message: q });
       setChat((c) => ({
         ...c, sessionId: out.session_id, busy: false,
-        messages: [...c.messages, { role: 'assistant', content: out.answer, citations: out.citations, created_at: new Date().toISOString() }],
+        messages: [...c.messages, { id: out.message && out.message.id, role: 'assistant', content: out.answer, citations: out.citations, tier: out.tier, created_at: new Date().toISOString() }],
       }));
+      if (out.tier === 'fallback' && out.message) scheduleUpgrade(out.message.id, setChat);
       loadSessions(false);
     } catch (err) {
       setChat((c) => ({ ...c, busy: false, messages: [...c.messages, { role: 'assistant', content: 'Error: ' + err.message }] }));
@@ -105,6 +130,7 @@ export default function ChatTab({ room, docs, openViewer, userId, chat, setChat 
                 ? <div style={bubbleU}>{m.content}</div>
                 : (
                   <div style={bubbleA}>
+                    <TierBadge m={m} />
                     <Markdown text={m.content} onCite={(n) => openCite(m, n)} />
                     {m.citations && m.citations.length ? (
                       <div style={{ fontSize: 12, marginTop: 10, paddingTop: 8, borderTop: `1px solid ${C.line}`, display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
@@ -134,3 +160,24 @@ export default function ChatTab({ room, docs, openViewer, userId, chat, setChat 
 }
 const bubbleU = { background: C.ink, color: '#fff', padding: '9px 13px', borderRadius: 12, fontSize: 14, lineHeight: 1.5, whiteSpace: 'pre-wrap' };
 const bubbleA = { background: '#fffdf9', color: C.ink, padding: '12px 16px', borderRadius: 12, fontSize: 14, lineHeight: 1.6, border: `1px solid ${C.line}` };
+
+// Aviso de calidad: respuesta rapida del modelo de respaldo, o ya revisada por el principal.
+export function TierBadge({ m }) {
+  const [showDraft, setShowDraft] = useState(false);
+  if (m.tier === 'fallback') {
+    return (
+      <div style={{ fontSize: 12, color: C.amber, background: '#fbf3e2', border: '1px solid #efdcb4', borderRadius: 8, padding: '5px 9px', marginBottom: 10 }}>
+        Respuesta rápida (el modelo principal estaba saturado). Se está revisando con el modelo principal y se actualizará aquí sola.
+      </div>
+    );
+  }
+  if (m.upgraded_at && m.draft_content) {
+    return (
+      <div style={{ fontSize: 12, color: C.green, marginBottom: 8 }}>
+        Revisada por el modelo principal · <a style={{ color: C.mid, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setShowDraft(!showDraft)}>{showDraft ? 'ocultar' : 'ver'} la respuesta rápida original</a>
+        {showDraft && <div style={{ color: C.mid, background: C.soft, borderRadius: 8, padding: 10, marginTop: 6, whiteSpace: 'pre-wrap', fontSize: 12 }}>{m.draft_content}</div>}
+      </div>
+    );
+  }
+  return null;
+}
