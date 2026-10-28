@@ -16,14 +16,15 @@ async function dataroomMaintenance() {
   try {
     const r1 = await processPending({ deadline: Date.now() + 15000 });
     await sweepWatermarks();
-    const r2 = await upgradePending({ deadline: Date.now() + 50000 });
+    const r2 = await upgradePending({ deadline: Date.now() + 120000 });
     console.log(`[CRON] dataroom: ${r1.processed} trozos indexados, ${r2.done} respuestas mejoradas`);
   } catch (e) { console.error('[CRON] dataroom:', e.message); }
 }
 
 // Rellena el analisis de filas recientes que se quedaron sin el (p. ej. si el LLM cayo).
 // Pocas por ciclo para no comerse la cuota gratuita.
-async function runBackfill() {
+// maxMs: tiempo que le queda a la funcion (limite de 300 s) despues del resto del cron.
+async function runBackfill(maxMs = 200000) {
   // 1) Titulares que el modelo dejo en espanol: se traducen (el diario es en ingles y la
   //    portada los ocultaba, asi que se perdian justo las noticias ibericas).
   try {
@@ -60,7 +61,7 @@ async function runBackfill() {
     const t0 = Date.now();
     let n = 0;
     for (const r of rows) {
-      if (Date.now() - t0 > 200000) break;
+      if (Date.now() - t0 > Math.min(200000, maxMs)) break;
       const res = await writeAnalysis(supabaseAdmin, r);
       if (res === null) break;                       // modelos sin cuota: se reintenta en el siguiente ciclo
       // Rechazado por el control de calidad: hasta 3 intentos (cada borrador sale distinto);
@@ -83,6 +84,8 @@ async function runBackfill() {
 }
 
 export default async function handler(req, res) {
+  const reqStart = Date.now();
+  const backfillBudget = () => Math.max(20000, 270000 - (Date.now() - reqStart));
   const authHeader = req.headers.authorization;
   const isVercelCron = req.headers['x-vercel-cron'] === '1';
   const isAuthed = authHeader === `Bearer ${process.env.CRON_SECRET}`;
@@ -123,7 +126,7 @@ export default async function handler(req, res) {
 
     if (!deals || deals.length === 0) {
       // Un ciclo sin noticias es un resultado valido. No se rellena con nada.
-      const backfilled = await runBackfill();
+      const backfilled = await runBackfill(backfillBudget());
     // Dataroom: rematar documentos a medio indexar y borrar copias con marca de agua caducadas.
     await dataroomMaintenance();
       await logRun({ fetched: 0, saved: 0, backfilled, message: 'sin titulares anclables' });
@@ -205,7 +208,7 @@ export default async function handler(req, res) {
 
     console.log(`[CRON] Guardados ${rows.length} deals (${rejected} rechazados)`);
     await dataroomMaintenance();   // antes del backfill: tiene usuarios esperando
-    const backfilled = await runBackfill();
+    const backfilled = await runBackfill(backfillBudget());
     await logRun({ fetched: deals.length, saved: rows.length, rejected, backfilled });
     return res.status(200).json({ ok: true, saved: rows.length, rejected, backfilled });
 
