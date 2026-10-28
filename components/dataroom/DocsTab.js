@@ -1,6 +1,6 @@
 // Pestana Documentos: arbol de carpetas con indice numerado (1, 1.1, 1.1.2...), subida de
 // archivos, carpetas enteras o ZIP (respetando la estructura), versiones con historial,
-// mover/reordenar, carpetas restringidas por persona o por grupo de postores y exportacion del indice.
+// mover/reordenar, carpetas restringidas por persona o por equipo y exportacion del indice.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, dr, uploadFile, finishIndexing, finishRoomIndexing, KIND, isXlsx, fmtSize, fmtDate, downloadCsv } from './api';
 import { filesFromDrop, filesFromInput, expandZips, classify } from './bulk';
@@ -63,7 +63,9 @@ export function versionChain(doc, allDocs) {
   return chain;
 }
 
-export default function DocsTab({ room, canWrite, isAdmin, canDownload, members, folders, docs, allDocs = docs, reload, openViewer, onDownload, goReview }) {
+export default function DocsTab({ room, canWrite, isAdmin, userId, canDownload, members, folders, docs, allDocs = docs, reload, openViewer, onDownload, goReview }) {
+  // Cada equipo sube lo suyo; mover, renombrar o borrar: el admin o quien lo subio.
+  const canEdit = (item) => canWrite && (isAdmin || (item && item.created_by === userId));
   const [current, setCurrent] = useState(null);
   const [progress, setProgress] = useState({});
   const [busy, setBusy] = useState(false);
@@ -275,9 +277,9 @@ export default function DocsTab({ room, canWrite, isAdmin, canDownload, members,
             {path.map((f) => <span key={f.id}> / <a style={crumb} onClick={() => setCurrent(f.id)}>{idx.num.get(f.id)} {f.name}</a></span>)}
           </div>
           <input style={{ ...S.input, width: 220 }} placeholder="Buscar por nombre…" value={q} onChange={(e) => setQ(e.target.value)} />
-          {cur && canWrite && <button style={S.btnGhost} onClick={() => renameFolder(cur)}>Renombrar</button>}
-          {cur && isAdmin && <button style={S.btnGhost} onClick={() => setAccessFor(cur)}>{cur.restricted ? 'Acceso 🔒' : 'Restringir'}</button>}
-          {cur && canWrite && <button style={S.btnGhost} onClick={() => removeFolder(cur)}>Eliminar carpeta</button>}
+          {cur && canEdit(cur) && <button style={S.btnGhost} onClick={() => renameFolder(cur)}>Renombrar</button>}
+          {cur && isAdmin && canWrite && <button style={S.btnGhost} onClick={() => setAccessFor(cur)}>{cur.restricted ? 'Acceso 🔒' : 'Restringir'}</button>}
+          {cur && canEdit(cur) && <button style={S.btnGhost} onClick={() => removeFolder(cur)}>Eliminar carpeta</button>}
         </div>
 
         {canWrite ? (
@@ -289,7 +291,7 @@ export default function DocsTab({ room, canWrite, isAdmin, canDownload, members,
             </div>
             <div style={{ fontSize: 11, color: C.lo, marginTop: 6 }}>PDF, DOCX, XLSX, CSV, TXT o ZIP · máx. 50 MB por archivo</div>
           </div>
-        ) : <div style={S.empty}>Acceso de solo lectura: puedes consultar{canDownload ? ' y descargar' : ''}.</div>}
+        ) : <div style={S.empty}>{room.status === 'closed' ? 'Operación terminada: la sala es de solo lectura.' : 'Acceso de solo lectura'}{canDownload ? ' Puedes consultar y descargar.' : ' Puedes consultar los documentos.'}</div>}
         <input ref={versionRef} type="file" style={{ display: 'none' }} accept=".pdf,.docx,.xlsx,.xlsm,.csv,.txt,.md" onChange={onVersionFile} />
         {Object.values(progress).map((t, i) => <div key={i} style={{ ...S.hint, color: C.gold }}>{t}</div>)}
         {msg && <div style={S.err}>{msg}</div>}
@@ -299,7 +301,7 @@ export default function DocsTab({ room, canWrite, isAdmin, canDownload, members,
             <div key={f.id} style={{ ...S.row, cursor: 'pointer' }} onClick={() => setCurrent(f.id)}>
               <span style={numTag}>{idx.num.get(f.id)}</span>
               <span style={{ flex: 1, fontWeight: 600 }}>📁 {f.name}{f.restricted ? ' 🔒' : ''}</span>
-              {canWrite && <span onClick={(e) => e.stopPropagation()} style={{ display: 'flex', gap: 4 }}>
+              {canEdit(f) && <span onClick={(e) => e.stopPropagation()} style={{ display: 'flex', gap: 4 }}>
                 <button style={S.icon} title="Subir" onClick={() => move(f, 'folders', -1)}>↑</button>
                 <button style={S.icon} title="Bajar" onClick={() => move(f, 'folders', 1)}>↓</button>
               </span>}
@@ -322,17 +324,17 @@ export default function DocsTab({ room, canWrite, isAdmin, canDownload, members,
                 {isXlsx(d.name) && <button style={S.icon} onClick={() => goReview(d)} title="Revisión del modelo">Revisión</button>}
                 {canDownload && <button style={S.icon} onClick={() => onDownload(d)} title="Descargar">↓</button>}
                 {d.version > 1 && <button style={S.icon} onClick={() => setHistoryFor(d)} title="Historial de versiones">Historial</button>}
-                {canWrite && <button style={S.icon} disabled={busy} onClick={() => { versionTarget.current = d; versionRef.current && versionRef.current.click(); }} title="Subir una versión nueva de este documento">Nueva versión</button>}
-                {canWrite && (d.status === 'error' || d.status === 'indexing') && <button style={S.icon} onClick={() => reindex(d)} title="Reintentar indexado">↻</button>}
-                {canWrite && !q.trim() && <><button style={S.icon} onClick={() => move(d, 'documents', -1)}>↑</button><button style={S.icon} onClick={() => move(d, 'documents', 1)}>↓</button></>}
-                {canWrite && (
+                {canEdit(d) && <button style={S.icon} disabled={busy} onClick={() => { versionTarget.current = d; versionRef.current && versionRef.current.click(); }} title="Subir una versión nueva de este documento">Nueva versión</button>}
+                {canEdit(d) && (d.status === 'error' || d.status === 'indexing') && <button style={S.icon} onClick={() => reindex(d)} title="Reintentar indexado">↻</button>}
+                {canEdit(d) && !q.trim() && <><button style={S.icon} onClick={() => move(d, 'documents', -1)}>↑</button><button style={S.icon} onClick={() => move(d, 'documents', 1)}>↓</button></>}
+                {canEdit(d) && (
                   <select style={{ ...S.icon, maxWidth: 110 }} value="" onChange={(e) => moveDoc(d, e.target.value === '__root' ? null : e.target.value)} title="Mover a carpeta">
                     <option value="">Mover…</option>
                     <option value="__root">Raíz</option>
                     {idx.flat.map((f) => <option key={f.id} value={f.id}>{f.num} {f.name}</option>)}
                   </select>
                 )}
-                {canWrite && <button style={S.icon} onClick={() => removeDoc(d)} title="Eliminar">✕</button>}
+                {canEdit(d) && <button style={S.icon} onClick={() => removeDoc(d)} title="Eliminar">✕</button>}
               </div>
             </div>
           ))}
@@ -341,7 +343,7 @@ export default function DocsTab({ room, canWrite, isAdmin, canDownload, members,
       </section>
 
       {accessFor && <AccessModal folder={accessFor} room={room} members={members} onClose={() => { setAccessFor(null); reload(); }} />}
-      {historyFor && <HistoryModal doc={historyFor} allDocs={allDocs} email={email} canDownload={canDownload} canWrite={canWrite} openViewer={(d) => { setHistoryFor(null); openViewer(d); }} onDownload={onDownload} onRemove={(d) => { setHistoryFor(null); removeDoc(d); }} onClose={() => setHistoryFor(null)} />}
+      {historyFor && <HistoryModal doc={historyFor} allDocs={allDocs} email={email} canDownload={canDownload} canWrite={canEdit(historyFor)} openViewer={(d) => { setHistoryFor(null); openViewer(d); }} onDownload={onDownload} onRemove={(d) => { setHistoryFor(null); removeDoc(d); }} onClose={() => setHistoryFor(null)} />}
     </div>
   );
 }
@@ -389,7 +391,7 @@ function AccessModal({ folder, room, members, onClose }) {
     dr().from('folder_group_access').select('group_id').eq('folder_id', folder.id).then(({ data }) => setAllowedGroups(new Set((data || []).map((r) => r.group_id))));
     dr().from('group_members').select('user_id').eq('room_id', room.id).then(({ data }) => setBidderIds(new Set((data || []).map((r) => r.user_id))));
   }, [folder.id, room.id]);
-  // Personas individuales: solo el equipo vendedor; a los postores se les da acceso por grupo.
+  // Personas sueltas: solo las del equipo organizador; a las otras partes se les da acceso por equipo.
   const regular = members.filter((m) => m.role !== 'owner' && m.role !== 'admin' && !bidderIds.has(m.user_id));
   async function save() {
     setErr('');
@@ -417,10 +419,10 @@ function AccessModal({ folder, room, members, onClose }) {
         <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}>
           <input type="checkbox" checked={restricted} onChange={(e) => setRestricted(e.target.checked)} /> Carpeta restringida
         </label>
-        <p style={S.hint}>Si no está restringida, la ve todo el equipo y todos los postores. Si lo está, solo los owners/admins y los grupos o personas marcados. Se aplica también a sus subcarpetas, al chat y a las búsquedas.</p>
+        <p style={S.hint}>Si no está restringida, la ven todos los equipos de la sala. Si lo está, solo los admins y los equipos o personas marcados. Se aplica también a sus subcarpetas, al chat y a las búsquedas.</p>
         {restricted && (
           <>
-            {groups.length > 0 && <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', color: C.lo, margin: '12px 0 6px' }}>GRUPOS DE POSTORES</div>}
+            {groups.length > 0 && <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', color: C.lo, margin: '12px 0 6px' }}>EQUIPOS</div>}
             <div style={{ display: 'grid', gap: 6 }}>
               {groups.map((g) => (
                 <label key={g.id} style={{ ...S.row, cursor: 'pointer' }}>
@@ -429,7 +431,7 @@ function AccessModal({ folder, room, members, onClose }) {
                 </label>
               ))}
             </div>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', color: C.lo, margin: '12px 0 6px' }}>EQUIPO VENDEDOR</div>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', color: C.lo, margin: '12px 0 6px' }}>PERSONAS DE TU EQUIPO</div>
             <div style={{ display: 'grid', gap: 6 }}>
               {regular.map((m) => (
                 <label key={m.user_id} style={{ ...S.row, cursor: 'pointer' }}>
@@ -437,7 +439,7 @@ function AccessModal({ folder, room, members, onClose }) {
                   <span style={{ flex: 1 }}>{m.email}</span><span style={S.tag}>{m.role}</span>
                 </label>
               ))}
-              {!regular.length && <div style={S.empty}>No hay miembros del equipo sin rol de admin.</div>}
+              {!regular.length && <div style={S.empty}>No hay más personas en tu equipo (los admins ya lo ven todo).</div>}
             </div>
           </>
         )}

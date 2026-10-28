@@ -3,6 +3,7 @@ import { processPending } from '../../lib/dataroom/embed';
 import { sweepWatermarks } from '../../lib/dataroom/delivery';
 import { upgradePending } from '../../lib/dataroom/upgrade';
 import { sendPending } from '../../lib/dataroom/notify';
+import { runLifecycle } from '../../lib/dataroom/lifecycle';
 import { looksSpanish } from '../../lib/eligibility';
 import { writeAnalysis } from '../../lib/analysisWriter';
 import { supabaseAdmin } from '../../lib/supabase';
@@ -18,9 +19,10 @@ async function dataroomMaintenance() {
   try {
     const r1 = await processPending({ deadline: Date.now() + 15000 });
     await sweepWatermarks();
+    const r4 = await runLifecycle({ deadline: Date.now() + 40000 });   // avisos de borrado antes de enviar
     const r3 = await sendPending({ deadline: Date.now() + 25000 });
     const r2 = await upgradePending({ deadline: Date.now() + 120000 });
-    console.log(`[CRON] dataroom: ${r1.processed} trozos indexados, ${r2.done} respuestas mejoradas, ${r3.sent || 0} avisos enviados${r3.skipped ? ' (' + r3.skipped + ')' : ''}`);
+    console.log(`[CRON] dataroom: ${r1.processed} trozos indexados, ${r2.done} respuestas mejoradas, ${r3.sent || 0} avisos enviados${r3.skipped ? ' (' + r3.skipped + ')' : ''}, ${r4.purged} salas borradas`);
   } catch (e) { console.error('[CRON] dataroom:', e.message); }
 }
 

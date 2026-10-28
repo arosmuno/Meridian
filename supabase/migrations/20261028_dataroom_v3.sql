@@ -477,3 +477,13 @@ grant select, insert, update, delete on dataroom.room_groups, dataroom.group_mem
   dataroom.folder_group_access, dataroom.doc_reads to authenticated;
 grant all on dataroom.room_groups, dataroom.group_members, dataroom.group_invites, dataroom.folder_group_access,
   dataroom.notifications, dataroom.doc_reads to service_role;
+
+-- ===================== v4 (2026-10-28 tarde): equipos, Q&A dirigido, chat privado, fin de operacion =====================
+-- Aplicado en produccion como dataroom_v4_columns_helpers, dataroom_v4_policies, dataroom_v4_rpcs y
+-- dataroom_v4_add_to_team_member_role (ver historial de migraciones de Supabase). Resumen:
+--   * questions.to_group_id (null = equipo organizador); el Q&A lo ven el equipo que pregunta, el destinatario y los admins.
+--   * chat_sessions: visibles solo dentro del mismo equipo (tambien para admins).
+--   * Todos los equipos (rol member) suben documentos y crean carpetas; editar/borrar: admin o autor.
+--   * rooms.retention_days / purge_at / purge_warned: operacion terminada = solo lectura hasta purge_at;
+--     el cron avisa 7 y 1 dia antes y borra Storage + sala al llegar la fecha.
+--   * room_groups visibles (solo el nombre) para cualquiera de la sala.

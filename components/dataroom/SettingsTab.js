@@ -13,7 +13,6 @@ const LABEL = {
   chat_question: 'Preguntó al chat', qa_ask: 'Pregunta Q&A', qa_answer: 'Respuesta Q&A', qa_close: 'Cerró pregunta', qa_reopen: 'Reabrió pregunta',
   qa_visibility: 'Cambió visibilidad de pregunta', nda_accept: 'Aceptó el NDA', model_review: 'Revisión de modelo', room_export: 'Exportó el archivo',
 };
-const toInputDate = (iso) => (iso ? new Date(iso).toISOString().slice(0, 10) : '');
 const safe = (s) => String(s || '').replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 120) || 'sin_nombre';
 
 export default function SettingsTab({ room, onSaved, folders = [], docs = [], allDocs = docs, members = [] }) {
@@ -55,35 +54,58 @@ export default function SettingsTab({ room, onSaved, folders = [], docs = [], al
   );
 }
 
+// Fin de la operacion: la sala pasa a solo lectura y se borra sola al cabo de X dias, para no
+// ocupar espacio indefinidamente. Todos ven la fecha de borrado y reciben un aviso 7 dias y 1 dia antes.
+const RETENTION = [30, 60, 90];
 function Lifecycle({ room, onSaved }) {
-  const [expires, setExpires] = useState(toInputDate(room.access_expires_at));
+  const [days, setDays] = useState(room.retention_days || 30);
   const [msg, setMsg] = useState('');
   const closed = room.status === 'closed';
-  async function saveExpiry(v) {
-    setExpires(v); setMsg('');
-    const { error } = await dr().from('rooms').update({ access_expires_at: v ? new Date(v + 'T23:59:59').toISOString() : null }).eq('id', room.id);
-    if (error) setMsg(error.message); else { setMsg(v ? 'Caducidad guardada.' : 'Sin caducidad.'); onSaved(); }
-  }
-  async function toggleClosed() {
-    const txt = closed ? '¿Reabrir la sala? El equipo y los postores vuelven a tener acceso.' : '¿Cerrar la sala? A partir de ahora solo owners y admins pueden entrar. Puedes reabrirla cuando quieras.';
-    if (!window.confirm(txt)) return;
-    const { error } = await dr().from('rooms').update(closed ? { status: 'active', closed_at: null } : { status: 'closed', closed_at: new Date().toISOString() }).eq('id', room.id);
+  const purgeDate = (d) => new Date(Date.now() + d * 86400e3).toLocaleDateString('es-ES');
+  async function finish() {
+    if (!window.confirm(`¿Dar por terminada la operación? La sala pasa a solo lectura para todos y se eliminará el ${purgeDate(days)}, con todos sus documentos. Antes de esa fecha podéis descargar lo que necesitéis.`)) return;
+    const now = new Date();
+    const { error } = await dr().from('rooms').update({ status: 'closed', closed_at: now.toISOString(), retention_days: days, purge_at: new Date(now.getTime() + days * 86400e3).toISOString(), purge_warned: 0 }).eq('id', room.id);
     if (error) setMsg(error.message); else onSaved();
   }
+  async function extend() {
+    const { error } = await dr().from('rooms').update({ retention_days: days, purge_at: new Date(Date.now() + days * 86400e3).toISOString(), purge_warned: 0 }).eq('id', room.id);
+    if (error) setMsg(error.message); else { setMsg(`Se eliminará el ${purgeDate(days)}.`); onSaved(); }
+  }
+  async function reopen() {
+    if (!window.confirm('¿Reabrir la operación? La sala vuelve a funcionar con normalidad y se cancela el borrado.')) return;
+    const { error } = await dr().from('rooms').update({ status: 'active', closed_at: null, purge_at: null, purge_warned: 0 }).eq('id', room.id);
+    if (error) setMsg(error.message); else onSaved();
+  }
+  const daysSelect = (
+    <select style={S.input} value={days} onChange={(e) => setDays(Number(e.target.value))}>
+      {RETENTION.map((d) => <option key={d} value={d}>{d} días</option>)}
+    </select>
+  );
   return (
     <section style={S.card}>
-      <div style={S.cardHead}>Acceso y cierre</div>
-      <label style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 14 }}>
-        Acceso para todos hasta
-        <input type="date" style={S.input} value={expires} onChange={(e) => saveExpiry(e.target.value)} />
-        {expires && <a style={{ fontSize: 13, color: C.mid, cursor: 'pointer' }} onClick={() => saveExpiry('')}>quitar</a>}
-      </label>
-      <p style={S.hint}>Pasada esa fecha solo entran owners y admins. Para dar un plazo distinto a un postor concreto, usa la caducidad de su grupo en la pestaña Postores.</p>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 12 }}>
-        <button style={closed ? S.btn : { ...S.btnGhost, color: C.red, borderColor: C.red }} onClick={toggleClosed}>{closed ? 'Reabrir la sala' : 'Cerrar la sala'}</button>
-        <span style={{ fontSize: 13, color: C.mid }}>{closed ? `Cerrada el ${fmtDate(room.closed_at)}. Solo owners y admins pueden entrar.` : 'Al cerrar la operación, descarga primero el archivo final y después cierra la sala.'}</span>
-      </div>
-      {msg && <div style={{ ...S.hint, color: /guardad|caducidad/i.test(msg) ? C.green : C.red }}>{msg}</div>}
+      <div style={S.cardHead}>Fin de la operación</div>
+      {!closed ? (
+        <>
+          <p style={{ ...S.hint, marginTop: -6 }}>Cuando la operación termine, la sala pasa a solo lectura y se elimina sola pasado el plazo que elijas. Todos los equipos ven la fecha y reciben un aviso por email 7 días y 1 día antes, para que descarguen lo que quieran conservar.</p>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+            <span style={{ fontSize: 14 }}>Mantener la sala</span>{daysSelect}<span style={{ fontSize: 14 }}>después de terminar</span>
+            <button style={{ ...S.btnGhost, color: C.red, borderColor: C.red }} onClick={finish}>Dar por terminada la operación</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+            Terminada el <b>{fmtDate(room.closed_at)}</b>. Solo lectura. Se eliminará el <b>{room.purge_at ? new Date(room.purge_at).toLocaleDateString('es-ES') : '—'}</b>.
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+            <span style={{ fontSize: 14 }}>Ampliar a</span>{daysSelect}<span style={{ fontSize: 14 }}>desde hoy</span>
+            <button style={S.btnGhost} onClick={extend}>Ampliar plazo</button>
+            <button style={S.btn} onClick={reopen}>Reabrir la operación</button>
+          </div>
+        </>
+      )}
+      {msg && <div style={{ ...S.hint, color: /eliminar/i.test(msg) ? C.green : C.red }}>{msg}</div>}
     </section>
   );
 }
@@ -139,17 +161,18 @@ function Archive({ room, folders, docs, allDocs, members }) {
         supabase.rpc('dataroom_bidder_report', { p_room: room.id }),
       ]);
       const gname = (id) => ((groups || []).find((g) => g.id === id) || {}).name || '';
-      const qaRows = [['Fecha', 'Postor', 'Preguntado por', 'Pregunta', 'Estado', 'Respuesta', 'Respondido por', 'Fecha respuesta', 'Visible para']];
-      (qs || []).forEach((q) => qaRows.push([fmtDate(q.created_at), gname(q.group_id) || 'Equipo vendedor', email(q.asked_by), q.question, q.status, q.answer || '', email(q.answered_by), q.answered_at ? fmtDate(q.answered_at) : '', q.visibility === 'all' ? 'Todos' : 'Su grupo']));
+      const orgLabel = 'Organizador';
+      const qaRows = [['Fecha', 'De', 'Para', 'Preguntado por', 'Pregunta', 'Estado', 'Respuesta', 'Respondido por', 'Fecha respuesta']];
+      (qs || []).forEach((q) => qaRows.push([fmtDate(q.created_at), gname(q.group_id) || orgLabel, gname(q.to_group_id) || orgLabel, email(q.asked_by), q.question, q.status, q.answer || '', email(q.answered_by), q.answered_at ? fmtDate(q.answered_at) : '']));
       const logRows = [['Fecha', 'Persona', 'Acción', 'Detalle']];
       (logs || []).forEach((l) => logRows.push([fmtDate(l.created_at), email(l.actor), LABEL[l.action] || l.action, (l.meta && (l.meta.name || l.meta.question || l.meta.email)) || '']));
-      const repRows = [['Postor', 'Personas', 'Documentos vistos', 'Tiempo de lectura (min)', 'Aperturas', 'Descargas', 'Preguntas Q&A', 'Preguntas chat', 'Última actividad']];
-      (rep || []).forEach((r) => repRows.push([r.group_name, r.members, r.docs_viewed, Math.round(r.total_seconds / 60), r.views, r.downloads, r.qa_questions, r.chat_questions, r.last_activity ? fmtDate(r.last_activity) : '']));
+      const repRows = [['Equipo', 'Personas', 'Documentos vistos', 'Tiempo de lectura (min)', 'Aperturas', 'Descargas', 'Preguntas Q&A', 'Última actividad']];
+      (rep || []).forEach((r) => repRows.push([r.group_name, r.members, r.docs_viewed, Math.round(r.total_seconds / 60), r.views, r.downloads, r.qa_questions, r.last_activity ? fmtDate(r.last_activity) : '']));
       files['Indice.csv'] = strToU8(toCsv(indexRows));
       files['Q&A.csv'] = strToU8(toCsv(qaRows));
       files['Actividad.csv'] = strToU8(toCsv(logRows));
-      if ((rep || []).length) files['Postores.csv'] = strToU8(toCsv(repRows));
-      files['LEEME.txt'] = strToU8(`Archivo de la sala "${room.name}" generado el ${new Date().toLocaleString('es-ES')}.\r\n\r\nDocumentos: versión vigente de cada documento, numerados como en el índice${withVersions ? ', con las versiones anteriores en "_versiones anteriores"' : ''}. Son los originales, sin marca de agua.\r\nIndice.csv: índice completo. Q&A.csv: preguntas y respuestas. Actividad.csv: registro de accesos, descargas y acciones. Postores.csv: actividad por postor.\r\n`);
+      if ((rep || []).length) files['Equipos.csv'] = strToU8(toCsv(repRows));
+      files['LEEME.txt'] = strToU8(`Archivo de la sala "${room.name}" generado el ${new Date().toLocaleString('es-ES')}.\r\n\r\nDocumentos: versión vigente de cada documento, numerados como en el índice${withVersions ? ', con las versiones anteriores en "_versiones anteriores"' : ''}. Son los originales, sin marca de agua.\r\nIndice.csv: índice completo. Q&A.csv: preguntas y respuestas. Actividad.csv: registro de accesos, descargas y acciones. Equipos.csv: actividad de cada parte.\r\n`);
       setStage('Comprimiendo…');
       const zipped = zipSync(files);
       const blob = new Blob([zipped], { type: 'application/zip' });
@@ -169,7 +192,7 @@ function Archive({ room, folders, docs, allDocs, members }) {
   return (
     <section style={S.card}>
       <div style={S.cardHead}>Archivo final de la sala</div>
-      <p style={{ ...S.hint, marginTop: -6 }}>Un ZIP con todos los documentos (originales, sin marca de agua) ordenados y numerados como en el índice, más el índice, el Q&A completo, el registro de actividad y el informe por postor. Es lo que se guarda al cierre de la operación.</p>
+      <p style={{ ...S.hint, marginTop: -6 }}>Un ZIP con todos los documentos (originales, sin marca de agua) ordenados y numerados como en el índice, más el índice, el Q&A completo, el registro de actividad y la actividad por equipo. Descárgalo antes de que la sala se elimine.</p>
       <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, margin: '8px 0 12px' }}>
         <input type="checkbox" checked={withVersions} onChange={(e) => setWithVersions(e.target.checked)} /> Incluir versiones anteriores
       </label>

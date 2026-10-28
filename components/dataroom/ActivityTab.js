@@ -1,6 +1,6 @@
 // Pestana Actividad.
-// - Preguntas del equipo (todos los miembros): que ha preguntado cada persona al analista, con
-//   acceso a la conversacion completa en solo lectura.
+// - Chat de tu equipo (todos): lo que tu equipo ha preguntado al analista, con la conversacion en
+//   solo lectura. Es privado de cada equipo: nadie de otro equipo lo ve, tampoco los admins.
 // - Registro completo (owner/admin): quien vio, descargo, subio, pregunto o acepto el NDA.
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -11,28 +11,28 @@ import { TierBadge } from './ChatTab';
 
 const LABEL = {
   document_view: 'Vio', document_download: 'Descargó', document_upload: 'Subió', document_delete: 'Eliminó',
-  chat_question: 'Preguntó al chat', qa_ask: 'Hizo una pregunta (Q&A)', qa_answer: 'Respondió (Q&A)', qa_close: 'Cerró una pregunta',
+  chat_question: 'Usó el chat', qa_ask: 'Hizo una pregunta (Q&A)', qa_answer: 'Respondió (Q&A)', qa_close: 'Cerró una pregunta',
   qa_reopen: 'Reabrió una pregunta', qa_visibility: 'Cambió la visibilidad de una pregunta', nda_accept: 'Aceptó el NDA', model_review: 'Revisión de modelo', document_version: 'Subió una versión nueva',
 };
 
-export default function ActivityTab({ room, members, isAdmin, isSeller = true, docs, openViewer }) {
+export default function ActivityTab({ room, members, isAdmin, docs, openViewer }) {
   const [view, setView] = useState('questions');
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       {isAdmin && (
         <div style={{ display: 'flex', gap: 6 }}>
-          <button style={view === 'questions' ? S.btn : S.btnGhost} onClick={() => setView('questions')}>Preguntas del equipo</button>
+          <button style={view === 'questions' ? S.btn : S.btnGhost} onClick={() => setView('questions')}>Chat de tu equipo</button>
           <button style={view === 'log' ? S.btn : S.btnGhost} onClick={() => setView('log')}>Registro completo</button>
         </div>
       )}
       {view === 'questions' || !isAdmin
-        ? <TeamQuestions room={room} members={members} docs={docs} openViewer={openViewer} isSeller={isSeller} />
+        ? <TeamQuestions room={room} members={members} docs={docs} openViewer={openViewer} />
         : <AuditLog room={room} members={members} />}
     </div>
   );
 }
 
-function TeamQuestions({ room, members, docs, openViewer, isSeller }) {
+function TeamQuestions({ room, members, docs, openViewer }) {
   const [rows, setRows] = useState(null);
   const [who, setWho] = useState('all');
   const [q, setQ] = useState('');
@@ -51,7 +51,7 @@ function TeamQuestions({ room, members, docs, openViewer, isSeller }) {
   return (
     <section style={S.card}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
-        <div style={{ ...S.cardHead, margin: 0, flex: 1 }}>{isSeller ? 'Preguntas del equipo al analista' : 'Preguntas de tu equipo al analista'}</div>
+        <div style={{ ...S.cardHead, margin: 0, flex: 1 }}>Preguntas de tu equipo al analista</div>
         <input style={{ ...S.input, width: 220 }} placeholder="Buscar en las preguntas…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select style={S.input} value={who} onChange={(e) => setWho(e.target.value)}>
           <option value="all">Todo el equipo</option>
@@ -60,7 +60,7 @@ function TeamQuestions({ room, members, docs, openViewer, isSeller }) {
         <button style={S.btnGhost} onClick={() => downloadCsv(`Preguntas-${room.name}.csv`, [['Fecha', 'Persona', 'Pregunta'], ...shown.map((r) => [fmtDate(r.created_at), r.email, r.content])])}>Exportar CSV</button>
       </div>
       {rows === null && <div style={S.empty}>Cargando…</div>}
-      {rows && !shown.length && <div style={S.empty}>Todavía nadie ha preguntado al analista en esta sala.</div>}
+      {rows && !shown.length && <div style={S.empty}>Nadie de tu equipo ha preguntado todavía al analista. Las conversaciones de cada equipo son privadas.</div>}
       <div style={{ display: 'grid', gap: 2 }}>
         {shown.map((r) => (
           <div key={r.message_id} onClick={() => openThread(r)} style={{ display: 'grid', gridTemplateColumns: '140px 200px 1fr 90px', gap: 10, fontSize: 13, padding: '8px 10px', borderBottom: `1px solid ${C.line}`, cursor: 'pointer', alignItems: 'baseline' }}>
@@ -133,6 +133,7 @@ function AuditLog({ room, members }) {
     <section style={S.card}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
         <div style={{ ...S.cardHead, margin: 0, flex: 1 }}>Registro completo de la sala</div>
+        <span style={{ fontSize: 12, color: C.lo }}>El contenido del chat de cada equipo es privado y no aparece aquí.</span>
         <select style={S.input} value={who} onChange={(e) => setWho(e.target.value)}>
           <option value="all">Todas las personas</option>
           {members.map((m) => <option key={m.user_id} value={m.user_id}>{m.email}</option>)}

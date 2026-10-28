@@ -36,6 +36,6 @@ export default route(async (req) => {
   }
   const { data: botMsg } = await dra().from('messages').insert({ session_id, room_id: room.id, role: 'assistant', content: out.answer, citations: out.citations, model: out.model || null, tier: out.tier || null }).select('id, created_at, tier').single();
   await dra().from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', session_id);
-  await audit({ org_id: room.org_id, room_id: room.id, actor: ctx.user.id, action: 'chat_question', meta: { question: message.slice(0, 300), session_id } });
+  await audit({ org_id: room.org_id, room_id: room.id, actor: ctx.user.id, action: 'chat_question', meta: { session_id } }); // sin el texto: el chat es privado de cada equipo
   return { session_id, user_message: userMsg, message: botMsg, answer: out.answer, citations: out.citations, tier: out.tier || null };
 });

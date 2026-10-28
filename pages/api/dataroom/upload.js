@@ -1,7 +1,7 @@
 // Alta de documento + URL firmada de subida. El navegador nunca escribe en Storage con su
 // propia sesion: sube con un token de un solo uso que solo emite esta ruta, despues de
 // comprobar rol, carpeta y limite del plan (el insert pasa por RLS y por el trigger de limite).
-import { route, getCtx, loadRoom, canWriteIn, admin, dra, audit, safeStorageName, HttpError } from '../../../lib/dataroom/server';
+import { route, getCtx, loadRoom, canWriteIn, isAdminRole, admin, dra, audit, safeStorageName, READ_ONLY_MSG, HttpError } from '../../../lib/dataroom/server';
 import { kindOf } from '../../../lib/dataroom/extract';
 
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -14,7 +14,7 @@ export default route(async (req) => {
   if (Number(size) > MAX_BYTES) throw new HttpError(413, 'El archivo supera 50 MB');
   if (kindOf(name, mime) === 'other') throw new HttpError(415, 'Formato no soportado. Sube PDF, DOCX, XLSX, CSV o TXT.');
   const { room, access } = await loadRoom(ctx, room_id);
-  if (!canWriteIn(access)) throw new HttpError(403, 'Tu acceso es de solo lectura');
+  if (!canWriteIn(access)) throw new HttpError(403, access.reason === 'closed' ? READ_ONLY_MSG : 'Tu acceso es de solo lectura');
 
   // Nueva version de un documento: hereda carpeta y posicion; la anterior queda en el historial
   // cuando la nueva termina de procesarse (ingest).
@@ -25,6 +25,7 @@ export default route(async (req) => {
     const { data: p } = await dra().from('documents').select('*').eq('id', replaces_document_id).single();
     if (p.room_id !== room.id) throw new HttpError(400, 'el documento es de otra sala');
     if (p.superseded_by) throw new HttpError(409, 'Ese documento ya tiene una versión más reciente');
+    if (!isAdminRole(access.role) && p.created_by !== ctx.user.id) throw new HttpError(403, 'Solo quien subió el documento (o un admin) puede subir una versión nueva');
     prev = p;
     folder_id = p.folder_id;
   }

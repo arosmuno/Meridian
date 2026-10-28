@@ -44,7 +44,7 @@ export default function Viewer({ doc, startPage = 1, onClose, canDownload, onDow
   const [limit, setLimit] = useState(PAGE_BATCH);
   const holder = useRef();
 
-  // Tiempo de lectura (para el informe por postor): una vista al abrir y 15 s por cada intervalo
+  // Tiempo de lectura (para la actividad por equipo): una vista al abrir y 15 s por cada intervalo
   // con la pestana visible. Si la sala o la carpeta no le dejan, la funcion no registra nada.
   useEffect(() => {
     const track = (sec) => supabase.rpc('dataroom_track_read', { p_document: doc.id, p_seconds: sec }).then(() => {}, () => {});

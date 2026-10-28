@@ -14,7 +14,7 @@ import QaTab from '../../components/dataroom/QaTab';
 import ModelsTab from '../../components/dataroom/ModelsTab';
 import ActivityTab from '../../components/dataroom/ActivityTab';
 import SettingsTab from '../../components/dataroom/SettingsTab';
-import BiddersTab from '../../components/dataroom/BiddersTab';
+import TeamsTab from '../../components/dataroom/TeamsTab';
 import Viewer from '../../components/dataroom/Viewer';
 
 const ROLE = { owner: 'Owner', admin: 'Admin', member: 'Miembro', viewer: 'Solo lectura' };
@@ -26,6 +26,7 @@ export default function Room() {
   const [room, setRoom] = useState(null);
   const [role, setRole] = useState(null);
   const [access, setAccess] = useState(null);
+  const [orgName, setOrgName] = useState('');
   const [members, setMembers] = useState([]);
   const [folders, setFolders] = useState([]);
   const [allDocs, setAllDocs] = useState([]);
@@ -40,9 +41,10 @@ export default function Room() {
   const [chat, setChat] = useState(emptyChat); // vive aqui para que cambiar de pestana no lo borre
 
   const isAdmin = role === 'owner' || role === 'admin';
-  // Los postores nunca escriben (subir, mover, responder Q&A): solo el equipo vendedor.
-  const isSeller = !!access && access.is_seller;
-  const canWrite = !!role && role !== 'viewer' && isSeller;
+  // Todos los equipos pueden subir y preguntar; una operacion terminada es de solo lectura.
+  const closed = !!room && room.status === 'closed';
+  const canWrite = !!role && role !== 'viewer' && !closed;
+  const myTeam = (access && access.group_id) || null;
   const canDownload = !!room && (room.allow_download || isAdmin);
 
   useEffect(() => { if (roomId) load(); /* eslint-disable-next-line */ }, [roomId]);
@@ -54,6 +56,7 @@ export default function Room() {
     const { data: r } = await dr().from('rooms').select('*').eq('id', roomId).maybeSingle();
     if (!r) { setLoadErr('Esta sala no existe o no tienes acceso.'); return; }
     setRoom(r);
+    dr().from('orgs').select('name').eq('id', r.org_id).maybeSingle().then(({ data: o }) => setOrgName((o && o.name) || ''));
     const { data: acc } = await supabase.rpc('dataroom_my_room_access', { p_room: r.id });
     const a = (acc && acc[0]) || null;
     setAccess(a);
@@ -112,9 +115,9 @@ export default function Room() {
         <Head><title>{room.name} — Meridian Dataroom</title></Head>
         {header}
         <div style={{ maxWidth: 560, margin: '60px auto', ...S.card }}>
-          <div style={S.kind}>{access.reason === 'closed' ? 'SALA CERRADA' : 'ACCESO CADUCADO'}</div>
+          <div style={S.kind}>SIN ACCESO</div>
           <h1 style={{ ...S.title, fontSize: 26, margin: '6px 0 12px' }}>{room.name}</h1>
-          <p style={{ fontSize: 14, color: C.mid, lineHeight: 1.6 }}>{access.reason === 'closed' ? 'El vendedor ha cerrado esta sala de datos. Si necesitas acceso, contacta con el equipo de la operación.' : 'Tu periodo de acceso a esta sala ha terminado. Si necesitas ampliarlo, contacta con el equipo de la operación.'}</p>
+          <p style={{ fontSize: 14, color: C.mid, lineHeight: 1.6 }}>Tu acceso a esta sala ha terminado. Si lo necesitas, habla con quien organiza la operación.</p>
           <Link href="/dataroom" style={S.ghost}>← Volver a tus salas</Link>
         </div>
       </div>
@@ -142,7 +145,7 @@ export default function Room() {
   }
 
   const tabs = [['docs', 'Documentos'], ['chat', 'Chat'], ['qa', 'Q&A'], ['models', 'Modelos'], ['activity', 'Actividad']];
-  if (isAdmin) tabs.push(['bidders', 'Postores'], ['settings', 'Ajustes']);
+  if (isAdmin) tabs.push(['teams', 'Equipos'], ['settings', 'Ajustes']);
   const openViewer = (d, page) => setViewer({ doc: d, page: page || 1 });
 
   return (
@@ -158,25 +161,30 @@ export default function Room() {
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <span style={S.tag}>{ROLE[role] || role}</span>
-            {access && access.group_name && <span style={{ ...S.tag, color: C.gold, borderColor: C.gold }}>Postor: {access.group_name}</span>}
-            {room.status === 'closed' && <span style={{ ...S.tag, color: C.red, borderColor: C.red }}>Cerrada</span>}
-            {room.access_expires_at && <span style={S.tag}>Acceso hasta {new Date(room.access_expires_at).toLocaleDateString('es-ES')}</span>}
+            <span style={{ ...S.tag, color: C.gold, borderColor: C.gold }}>{access && access.group_name ? access.group_name : orgName || 'Organizador'}</span>
+            {closed && <span style={{ ...S.tag, color: C.red, borderColor: C.red }}>Solo lectura</span>}
             {room.watermark && <span style={S.tag}>Marca de agua</span>}
             {!room.allow_download && <span style={S.tag}>Solo consulta</span>}
             {room.nda_required && <span style={S.tag}>NDA</span>}
           </div>
         </div>
+        {closed && (
+          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: '#fbf3e2', border: '1px solid #efdcb4', fontSize: 13, color: C.ink }}>
+            <b>Operación terminada{room.closed_at ? ` el ${new Date(room.closed_at).toLocaleDateString('es-ES')}` : ''}.</b> La sala es de solo lectura
+            {room.purge_at ? <> y <b>se eliminará el {new Date(room.purge_at).toLocaleDateString('es-ES')}</b>, con todos sus documentos. Descarga antes lo que necesites conservar.</> : '.'}
+          </div>
+        )}
         <nav style={S.tabs}>
           {tabs.map(([k, l]) => <button key={k} style={tab === k ? S.tabOn : S.tab} onClick={() => setTab(k)}>{l}</button>)}
         </nav>
         {flash && <div style={S.err} onClick={() => setFlash('')}>{flash}</div>}
 
-        {tab === 'docs' && <DocsTab room={room} canWrite={canWrite} isAdmin={isAdmin} canDownload={canDownload} members={members} folders={folders} docs={docs} allDocs={allDocs} reload={refresh} openViewer={openViewer} onDownload={download} goReview={(d) => { setSelectedModel(d.id); setTab('models'); }} />}
+        {tab === 'docs' && <DocsTab room={room} canWrite={canWrite} isAdmin={isAdmin} userId={session && session.user.id} canDownload={canDownload} members={members} folders={folders} docs={docs} allDocs={allDocs} reload={refresh} openViewer={openViewer} onDownload={download} goReview={(d) => { setSelectedModel(d.id); setTab('models'); }} />}
         {tab === 'chat' && <ChatTab room={room} docs={docs} openViewer={openViewer} userId={session.user.id} chat={chat} setChat={setChat} />}
-        {tab === 'qa' && <QaTab room={room} canWrite={canWrite} isSeller={isSeller} members={members} docs={docs} openViewer={openViewer} />}
+        {tab === 'qa' && <QaTab room={room} canWrite={canWrite} isAdmin={isAdmin} myTeam={myTeam} orgName={orgName} members={members} docs={docs} openViewer={openViewer} />}
         {tab === 'models' && <ModelsTab room={room} canWrite={canWrite} docs={docs} selected={selectedModel} setSelected={setSelectedModel} reload={refresh} />}
-        {tab === 'activity' && <ActivityTab room={room} members={members} isAdmin={isAdmin} isSeller={isSeller} docs={docs} openViewer={openViewer} />}
-        {tab === 'bidders' && isAdmin && <BiddersTab room={room} members={members} folders={folders} docs={docs} reloadMembers={load} />}
+        {tab === 'activity' && <ActivityTab room={room} members={members} isAdmin={isAdmin} docs={docs} openViewer={openViewer} />}
+        {tab === 'teams' && isAdmin && <TeamsTab room={room} orgName={orgName} members={members} docs={docs} reloadMembers={load} />}
         {tab === 'settings' && isAdmin && <SettingsTab room={room} onSaved={reloadRoom} folders={folders} docs={docs} allDocs={allDocs} members={members} />}
       </div>
       {viewer && <Viewer doc={viewer.doc} startPage={viewer.page} canDownload={canDownload} onDownload={download} onClose={() => setViewer(null)} />}

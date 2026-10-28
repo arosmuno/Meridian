@@ -1,6 +1,6 @@
-// Pestana Postores (owner/admin): grupos de postores aislados entre si, quien esta en cada uno,
-// caducidad del acceso por grupo e informe de actividad por postor (lectura, descargas, preguntas)
-// con el mapa de calor documento x postor.
+// Pestana Equipos (owner/admin): las otras partes de la operacion (normalmente 1 o 2: comprador,
+// banco...), quien esta en cada una y su actividad (lectura, descargas, preguntas) con el mapa de
+// calor documento x equipo. El equipo organizador es la propia organizacion.
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { dr, fmtDate, downloadCsv } from './api';
@@ -13,9 +13,8 @@ const dur = (s) => {
   const m = Math.round((s % 3600) / 60);
   return h ? `${h} h ${m} min` : `${m} min`;
 };
-const toInputDate = (iso) => (iso ? new Date(iso).toISOString().slice(0, 10) : '');
 
-export default function BiddersTab({ room, members, docs, reloadMembers }) {
+export default function TeamsTab({ room, orgName = '', members, docs, reloadMembers }) {
   const [groups, setGroups] = useState([]);
   const [gm, setGm] = useState([]);
   const [pending, setPending] = useState([]);
@@ -42,27 +41,27 @@ export default function BiddersTab({ room, members, docs, reloadMembers }) {
     e.preventDefault();
     if (!name.trim()) return;
     const { error } = await dr().from('room_groups').insert({ room_id: room.id, org_id: room.org_id, name: name.trim() });
-    if (error) return setMsg(/duplicate/i.test(error.message) ? 'Ya hay un grupo con ese nombre.' : error.message);
+    if (error) return setMsg(/duplicate/i.test(error.message) ? 'Ya hay un equipo con ese nombre.' : error.message);
     setName(''); setMsg(''); load();
   }
 
   return (
     <div style={{ display: 'grid', gap: 18 }}>
       <section style={S.card}>
-        <div style={S.cardHead}>Grupos de postores</div>
+        <div style={S.cardHead}>Equipos de la operación</div>
         <p style={{ ...S.hint, marginTop: -6, marginBottom: 12, maxWidth: 820 }}>
-          Cada grupo es un postor (un fondo, un comprador industrial, un banco…). Sus miembros solo ven esta sala, sus propias preguntas de Q&A y del chat,
-          las carpetas abiertas y las restringidas a las que des acceso a su grupo. No ven a los demás postores. Quien no está en ningún grupo es equipo vendedor y lo ve todo.
-          Invita a los postores desde aquí, no desde el equipo de la organización.
+          Tu equipo es <b>{orgName || 'el organizador'}</b>. Añade aquí a las otras partes (normalmente una o dos: comprador, banco, asesor…) e invita a su gente por email.
+          Cada equipo ve las carpetas abiertas y las restringidas a las que le des acceso, sube sus propios documentos, se cruza preguntas con los demás en el Q&A
+          y tiene su chat privado con el analista. Solo ven esta sala.
         </p>
         <form onSubmit={createGroup} style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          <input style={{ ...S.input, flex: 1, maxWidth: 360 }} placeholder="Nombre del postor, p. ej. «Fondo A»" value={name} onChange={(e) => setName(e.target.value)} />
-          <button style={S.btn}>+ Crear grupo</button>
+          <input style={{ ...S.input, flex: 1, maxWidth: 360 }} placeholder="Nombre, p. ej. «Comprador» o «Banco»" value={name} onChange={(e) => setName(e.target.value)} />
+          <button style={S.btn}>+ Añadir equipo</button>
         </form>
         {msg && <div style={S.err}>{msg}</div>}
         <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
           {groups.map((g) => <GroupCard key={g.id} group={g} members={gm.filter((x) => x.group_id === g.id)} pending={pending.filter((x) => x.group_id === g.id)} email={email} reload={() => { load(); reloadMembers && reloadMembers(); }} />)}
-          {!groups.length && <div style={S.empty}>Sin grupos todavía. Si la sala es solo para tu equipo, no hace falta crear ninguno.</div>}
+          {!groups.length && <div style={S.empty}>Solo está tu equipo. Si la sala es interna, no hace falta añadir ninguno.</div>}
         </div>
       </section>
 
@@ -75,7 +74,6 @@ function GroupCard({ group, members, pending, email, reload }) {
   const [add, setAdd] = useState('');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
-  const [expires, setExpires] = useState(toInputDate(group.expires_at));
 
   async function addMember(e) {
     e.preventDefault();
@@ -85,14 +83,14 @@ function GroupCard({ group, members, pending, email, reload }) {
     const { data, error } = await supabase.rpc('dataroom_add_to_group', { p_group: group.id, p_email: em });
     if (error) { setBusy(false); return setNote(error.message); }
     if (data === 'invited') {
-      // Enlace de acceso: al entrar por primera vez queda directamente dentro de este grupo.
+      // Enlace de acceso: al entrar por primera vez queda directamente dentro de este equipo.
       const { error: mailErr } = await supabase.auth.signInWithOtp({ email: em, options: { emailRedirectTo: window.location.origin + '/dataroom' } });
       setNote(mailErr ? `Invitado, pero no se pudo enviar el email (${mailErr.message}). Dile que entre en /dataroom con ese email.` : 'Invitación enviada: le llega un enlace de acceso por email.');
-    } else setNote('Añadido al grupo.');
+    } else setNote('Añadido al equipo.');
     setAdd(''); setBusy(false); reload();
   }
   async function remove(userId) {
-    if (!window.confirm('¿Quitar a esta persona del grupo? Dejará de ver la sala.')) return;
+    if (!window.confirm('¿Quitar a esta persona del equipo? Dejará de ver la sala.')) return;
     await dr().from('group_members').delete().eq('room_id', group.room_id).eq('user_id', userId);
     reload();
   }
@@ -100,31 +98,24 @@ function GroupCard({ group, members, pending, email, reload }) {
     await dr().from('group_invites').delete().eq('id', id);
     reload();
   }
-  async function saveExpiry(v) {
-    setExpires(v);
-    const { error } = await dr().from('room_groups').update({ expires_at: v ? new Date(v + 'T23:59:59').toISOString() : null }).eq('id', group.id);
-    if (error) setNote(error.message); else setNote(v ? 'Caducidad guardada.' : 'Sin caducidad.');
-  }
   async function rename() {
-    const n = window.prompt('Nuevo nombre del grupo', group.name);
+    const n = window.prompt('Nuevo nombre del equipo', group.name);
     if (!n || !n.trim()) return;
     const { error } = await dr().from('room_groups').update({ name: n.trim() }).eq('id', group.id);
     if (error) setNote(error.message); else reload();
   }
   async function removeGroup() {
-    if (!window.confirm(`¿Eliminar el grupo «${group.name}»? Sus miembros dejarán de ver la sala. Sus preguntas se conservan.`)) return;
+    if (!window.confirm(`¿Eliminar el equipo «${group.name}»? Sus miembros dejarán de ver la sala. Sus preguntas se conservan.`)) return;
     await dr().from('room_groups').delete().eq('id', group.id);
     reload();
   }
-  const expired = group.expires_at && new Date(group.expires_at) < new Date();
 
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, padding: 14, background: C.soft }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <div style={{ fontWeight: 700, fontSize: 15, flex: 1 }}>{group.name}</div>
-        {expired && <span style={{ ...S.tag, color: C.red, borderColor: C.red }}>Caducado</span>}
         <button style={S.icon} onClick={rename} title="Renombrar">✎</button>
-        <button style={S.icon} onClick={removeGroup} title="Eliminar grupo">✕</button>
+        <button style={S.icon} onClick={removeGroup} title="Eliminar equipo">✕</button>
       </div>
       <div style={{ display: 'grid', gap: 4, marginBottom: 8 }}>
         {members.map((m) => (
@@ -142,13 +133,9 @@ function GroupCard({ group, members, pending, email, reload }) {
         {!members.length && !pending.length && <div style={S.empty}>Nadie todavía.</div>}
       </div>
       <form onSubmit={addMember} style={{ display: 'flex', gap: 6 }}>
-        <input style={{ ...S.input, flex: 1 }} type="email" placeholder="email@postor.com" value={add} onChange={(e) => setAdd(e.target.value)} />
+        <input style={{ ...S.input, flex: 1 }} type="email" placeholder="nombre@empresa.com" value={add} onChange={(e) => setAdd(e.target.value)} />
         <button style={S.btnGhost} disabled={busy}>{busy ? '…' : 'Añadir'}</button>
       </form>
-      <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: C.mid, marginTop: 8 }}>
-        Acceso hasta <input type="date" style={{ ...S.input, padding: '4px 8px', fontSize: 12 }} value={expires} onChange={(e) => saveExpiry(e.target.value)} />
-        {expires && <a style={{ cursor: 'pointer' }} onClick={() => saveExpiry('')}>quitar</a>}
-      </label>
       {note && <div style={{ ...S.hint, color: /no se pudo|error|solo|válido|no puede/i.test(note) ? C.red : C.green }}>{note}</div>}
     </div>
   );
@@ -171,9 +158,9 @@ function Report({ room, report, heat, groups, docs }) {
   const shade = (s) => (s ? `rgba(154,125,30,${0.12 + 0.6 * (s / max)})` : 'transparent');
 
   function exportCsv() {
-    downloadCsv(`Postores-${room.name}.csv`, [
-      ['Postor', 'Personas', 'Documentos vistos', 'Tiempo de lectura (min)', 'Aperturas', 'Descargas', 'Preguntas Q&A', 'Preguntas chat', 'Última actividad', 'Acceso hasta'],
-      ...rows.map((r) => [r.group_name, r.members, `${r.docs_viewed}/${totalDocs}`, Math.round(r.total_seconds / 60), r.views, r.downloads, r.qa_questions, r.chat_questions, fmtDate(r.last_activity), r.expires_at ? fmtDate(r.expires_at) : '']),
+    downloadCsv(`Equipos-${room.name}.csv`, [
+      ['Equipo', 'Personas', 'Documentos vistos', 'Tiempo de lectura (min)', 'Aperturas', 'Descargas', 'Preguntas Q&A', 'Última actividad'],
+      ...rows.map((r) => [r.group_name, r.members, `${r.docs_viewed}/${totalDocs}`, Math.round(r.total_seconds / 60), r.views, r.downloads, r.qa_questions, fmtDate(r.last_activity)]),
       [],
       ['Documento', ...groups.map((g) => `${g.name} (min)`)],
       ...byDoc.map((x) => [x.doc.name, ...groups.map((g) => (x.cells[g.id] ? Math.round(x.cells[g.id].seconds / 60) : 0))]),
@@ -183,13 +170,13 @@ function Report({ room, report, heat, groups, docs }) {
   return (
     <section style={S.card}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <div style={{ ...S.cardHead, margin: 0, flex: 1 }}>Informe por postor</div>
+        <div style={{ ...S.cardHead, margin: 0, flex: 1 }}>Actividad por equipo</div>
         {rows.length > 0 && <button style={S.btnGhost} onClick={exportCsv}>Exportar CSV</button>}
       </div>
-      {!rows.length ? <div style={S.empty}>Cuando haya grupos con actividad, aquí verás quién lee qué, cuánto tiempo y cuántas preguntas hace.</div> : (
+      {!rows.length ? <div style={S.empty}>Cuando las otras partes empiecen a trabajar, aquí verás qué leen, cuánto tiempo y cuántas preguntas hacen.</div> : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'collapse', fontSize: 13, width: '100%' }}>
-            <thead><tr>{['Postor', 'Personas', 'Docs vistos', 'Tiempo de lectura', 'Aperturas', 'Descargas', 'Q&A', 'Chat', 'Última actividad'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Equipo', 'Personas', 'Docs vistos', 'Tiempo de lectura', 'Aperturas', 'Descargas', 'Preguntas Q&A', 'Última actividad'].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.group_id}>
@@ -200,7 +187,6 @@ function Report({ room, report, heat, groups, docs }) {
                   <td style={tdn}>{r.views}</td>
                   <td style={tdn}>{r.downloads}</td>
                   <td style={tdn}>{r.qa_questions}</td>
-                  <td style={tdn}>{r.chat_questions}</td>
                   <td style={td}>{r.last_activity ? fmtDate(r.last_activity) : '—'}</td>
                 </tr>
               ))}
@@ -210,7 +196,7 @@ function Report({ room, report, heat, groups, docs }) {
       )}
       {byDoc.length > 0 && groups.length > 0 && (
         <>
-          <div style={{ ...S.cardHead, fontSize: 15, margin: '22px 0 8px' }}>Qué lee cada postor</div>
+          <div style={{ ...S.cardHead, fontSize: 15, margin: '22px 0 8px' }}>Qué lee cada equipo</div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ borderCollapse: 'collapse', fontSize: 12, width: '100%' }}>
               <thead><tr><th style={th}>Documento</th>{groups.map((g) => <th key={g.id} style={{ ...th, textAlign: 'center' }}>{g.name}</th>)}</tr></thead>
@@ -224,7 +210,7 @@ function Report({ room, report, heat, groups, docs }) {
               </tbody>
             </table>
           </div>
-          <p style={S.hint}>Tiempo con el documento abierto en pantalla. Útil para ver qué postores están haciendo due diligence en serio y en qué se están fijando.</p>
+          <p style={S.hint}>Tiempo con el documento abierto en pantalla: en qué se está fijando cada parte.</p>
         </>
       )}
     </section>

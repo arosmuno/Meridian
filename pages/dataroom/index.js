@@ -231,7 +231,7 @@ export default function DataroomHome() {
                   </select>
                   <button style={S.btn}>Invitar</button>
                 </form>
-                <p style={S.hint}>Le enviamos un enlace de acceso por email; al entrar, ve las salas de la organización. Para compradores o postores externos, invítalos desde la pestaña Postores de cada sala: así solo ven esa sala y sus propias preguntas.</p>
+                <p style={S.hint}>Le enviamos un enlace de acceso por email; al entrar, ve las salas de la organización. A la otra parte de una operación (comprador, banco…) invítala desde la pestaña Equipos de su sala: así solo ve esa sala.</p>
               </section>
               ) : null}
 
@@ -251,7 +251,7 @@ export default function DataroomHome() {
                     <Link key={r.id} href={`/dataroom/${r.id}`} style={S.roomCard}>
                       <div style={S.roomKind}>{r.kind === 'mna' ? 'M&A' : 'ARCHIVO'}</div>
                       <div style={S.roomName}>{r.name}</div>
-                      <div style={S.roomMeta}>{r.status === 'closed' ? 'Cerrada · ' : ''}{r.access_expires_at ? `Acceso hasta ${new Date(r.access_expires_at).toLocaleDateString('es-ES')} · ` : ''}Abrir sala →</div>
+                      <div style={S.roomMeta}>{r.status === 'closed' ? `Terminada · se elimina el ${r.purge_at ? new Date(r.purge_at).toLocaleDateString('es-ES') : '—'} · ` : ''}Abrir sala →</div>
                     </Link>
                   ))}
                   {!rooms.length && <div style={S.empty}>Aún no hay salas. Crea la primera arriba.</div>}
