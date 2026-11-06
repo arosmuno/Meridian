@@ -548,6 +548,23 @@ export default function Home({ initialDeals = [] }) {
           </div>
         </div>
 
+        {/* FUNDADOR: visible nada mas entrar, para quien llega desde Upwork/Fiverr/Malt/LinkedIn */}
+        <div style={{background:C.bgCard,borderBottom:`1px solid ${C.border}`}}>
+          <div style={{maxWidth:1200,margin:'0 auto',padding:'16px 20px',display:'flex',alignItems:'center',gap:18,flexWrap:'wrap'}}>
+            <a href="/alberto" style={{flexShrink:0}}>
+              <img src="/founder.jpg" alt="Alberto Rosado" width={76} height={76} style={{width:76,height:76,borderRadius:'50%',objectFit:'cover',border:`2px solid ${C.gold}`,display:'block'}}/>
+            </a>
+            <div style={{flex:'1 1 320px',minWidth:0}}>
+              <div style={{fontFamily:"var(--d)",fontSize:20,fontWeight:800,color:C.textHi,lineHeight:1.2}}>Alberto Rosado <span style={{fontFamily:"var(--s)",fontSize:11,fontWeight:600,color:C.textMid,letterSpacing:'.06em'}}>&middot; FOUNDER</span></div>
+              <div style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.55,marginTop:3}}>Five years in corporate &amp; investment banking (BBVA, BNP Paribas) across Project Finance, M&amp;A and Leveraged Finance. I build, fix and review financial models that hold up in front of investors and banks.</div>
+            </div>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              <a href="/alberto" style={{background:C.textHi,color:C.bg,fontFamily:"var(--s)",fontSize:11,fontWeight:800,letterSpacing:'.1em',padding:'10px 16px',textDecoration:'none',whiteSpace:'nowrap'}}>WORK WITH ME &rarr;</a>
+              <a href="https://www.linkedin.com/in/arosado6/" target="_blank" rel="noopener noreferrer" style={{border:`1px solid ${C.border}`,color:C.textMid,fontFamily:"var(--s)",fontSize:11,fontWeight:700,letterSpacing:'.1em',padding:'10px 14px',textDecoration:'none',whiteSpace:'nowrap'}}>LINKEDIN</a>
+            </div>
+          </div>
+        </div>
+
         {/* CONTENT */}
         <div className="content-area" style={{maxWidth:1200,margin:'0 auto',padding:'0 20px'}}>
           {!q && dealItems.length > 0 && (

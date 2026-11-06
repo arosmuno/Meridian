@@ -49,9 +49,14 @@ export default function Alberto() {
         </div>
 
         <article style={{ maxWidth: 820, margin: '0 auto', padding: '48px 22px 64px' }}>
-          <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-mid)', textTransform: 'uppercase', marginBottom: 10 }}>Meridian Modelling</div>
-          <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(34px,6vw,56px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.08, margin: '0 0 8px' }}>Alberto Rosado</h1>
-          <div style={{ fontFamily: 'var(--s)', fontSize: 13, color: 'var(--text-mid)', letterSpacing: '.04em', margin: '0 0 26px' }}>Financial modelling and transaction support &middot; Madrid &middot; Spanish and English</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', margin: '0 0 26px' }}>
+            <img src="/founder.jpg" alt="Alberto Rosado" width={150} height={150} style={{ width: 150, height: 150, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--gold)', flexShrink: 0 }} />
+            <div style={{ flex: '1 1 300px' }}>
+              <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-mid)', textTransform: 'uppercase', marginBottom: 10 }}>Meridian Modelling</div>
+              <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(34px,6vw,56px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.08, margin: '0 0 8px' }}>Alberto Rosado</h1>
+              <div style={{ fontFamily: 'var(--s)', fontSize: 13, color: 'var(--text-mid)', letterSpacing: '.04em' }}>Financial modelling and transaction support &middot; Madrid &middot; Spanish and English</div>
+            </div>
+          </div>
 
           <p style={{ fontFamily: 'var(--r)', fontSize: 21, color: 'var(--text-hi)', lineHeight: 1.6, margin: '0 0 18px' }}>
             I build, fix and review financial models: the kind that hold up when an investor or a bank actually opens them.
