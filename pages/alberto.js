@@ -119,7 +119,11 @@ export default function Alberto() {
               <div style={{ fontFamily: 'var(--r)', fontSize: 15, color: 'var(--text-body)', lineHeight: 1.6 }}>A 12-month SME budget as received, the findings log and the rebuilt version. Seven issues, including rent never deducted from EBITDA: full-year EBITDA was overstated by €72k and December cash by €97k.</div>
             </div>
           </div>
-          <P><span style={{ fontSize: 15, color: 'var(--text-mid)' }}>Both files are available on request, in Excel.</span></P>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '14px 0 16px' }}>
+            {[['/samples/Meridian_SaaS_Model_Sample.xlsx', 'SaaS model (Excel)'], ['/samples/Meridian_Model_Review_Sample.xlsx', 'Review and fix (Excel)'], ['/samples/Meridian_Portfolio.pdf', 'One-page portfolio (PDF)']].map(([href, label]) => (
+              <a key={href} href={href} download style={{ border: '1px solid var(--border-hi)', color: 'var(--text-hi)', fontFamily: 'var(--s)', fontSize: 12, fontWeight: 700, letterSpacing: '.06em', padding: '10px 14px', textDecoration: 'none' }}>&darr; {label}</a>
+            ))}
+          </div>
 
           <H2>Background</H2>
           <P>BSc (Hons) Business Economics &middot; Master’s in M&amp;A and Corporate Finance (ISBIF). Five years in corporate and investment banking (BBVA, BNP Paribas) across Project Finance, M&amp;A, Leveraged Finance and Debt Advisory. Now in value creation at an infrastructure investor. More about Meridian on the <a href="/about" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>about page</a>.</P>
