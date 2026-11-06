@@ -44,7 +44,7 @@ export default async function handler(req, res) {
   try {
     // Vercel kills background work once you respond, so everything must finish
     // BEFORE res.json(). Learned the hard way on the deals cron.
-    const { jobs, healthyFirms } = await fetchAllJobs();
+    const { jobs, healthyFirms, failedFirms, perFirm } = await fetchAllJobs();
     const { upserted } = await upsertJobs(supabase, jobs, healthyFirms);
 
     // Expiry sweep. Pure SQL, no tokens. Without it nothing ever expires.
@@ -62,6 +62,8 @@ export default async function handler(req, res) {
       upserted,
       healthyFirms: healthyFirms.length,
       expired: (expired && expired[0] && expired[0].expired_count) || 0,
+      failedFirms,
+      perFirm,
     };
 
     await supabase.from('cron_runs')

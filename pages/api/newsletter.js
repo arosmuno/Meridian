@@ -90,6 +90,8 @@ export default async function handler(req, res) {
 
   const { data: subs } = await supabaseAdmin.from('subscribers')
     .select('email, unsubscribe_token').is('unsubscribed_at', null).limit(3000);
+  // Sin suscriptores no es un fallo de envio: no se registra el numero.
+  if (!subs || !subs.length) return res.status(200).json({ skipped: 'no subscribers', deals: issue.count });
 
   const subject = `Meridian Weekly · ${issue.count} deals · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
   let sent = 0;

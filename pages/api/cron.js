@@ -8,8 +8,24 @@ import { looksSpanish } from '../../lib/eligibility';
 import { writeAnalysis } from '../../lib/analysisWriter';
 import { supabaseAdmin } from '../../lib/supabase';
 import { ineligibleReason } from '../../lib/eligibility';
+import { normLink } from '../../lib/sources';
 
 export const config = { maxDuration: 300 };
+
+// URLs ya procesadas (publicadas, duplicadas o en cuarentena) en los ultimos 7 dias.
+// Se quitan antes de elegir los titulares que ve el modelo, asi cada pasada mira noticias nuevas.
+async function recentSeenLinks() {
+  const since = new Date(Date.now() - 7 * 86400000).toISOString();
+  const set = new Set();
+  try {
+    const [a, b] = await Promise.all([
+      supabaseAdmin.from('deals').select('source_url').gte('created_at', since).not('source_url', 'is', null).limit(5000),
+      supabaseAdmin.from('deals_quarantine').select('source_url').gte('created_at', since).not('source_url', 'is', null).limit(2000),
+    ]);
+    for (const r of [...(a.data || []), ...(b.data || [])]) set.add(normLink(r.source_url));
+  } catch (e) { console.error('[CRON] seen links:', e.message); }
+  return set;
+}
 
 // Dataroom: rematar documentos a medio indexar, borrar copias con marca de agua caducadas y
 // regenerar con el modelo principal las respuestas del chat que salieron del respaldo, y mandar
@@ -121,7 +137,9 @@ export default async function handler(req, res) {
   try {
     let deals;
     try {
-      deals = await fetchDealsFromWeb();
+      const seenLinks = await recentSeenLinks();
+      deals = await fetchDealsFromWeb({ seenLinks });
+      console.log(`[CRON] ${seenLinks.size} URLs ya vistas excluidas del corte`);
       console.log(`[CRON] Feeds devolvieron ${deals?.length || 0} deals anclados`);
     } catch (e) {
       console.error('[CRON] fetchDealsFromWeb fallo:', e.message);

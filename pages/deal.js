@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { supabaseAdmin } from '../lib/supabase';
 import { cleanAnalysis } from '../lib/analysisQuality';
+import NewsletterSignup from '../components/NewsletterSignup';
 
 const SITE = 'https://www.meridiancapmarkets.com';
 const ACCENT = {
@@ -187,6 +188,12 @@ export default function DealPage({ deal, id }) {
               : <span>Source: {deal.source}</span>) : null}
             {date ? <span>{date}</span> : null}
             {deal.geography ? <span>{deal.geography}</span> : null}
+          </div>
+
+          <div style={{ border: '1px solid var(--border)', padding: '20px 22px', marginBottom: 30 }}>
+            <div style={{ fontFamily: 'var(--s)', fontSize: 11, fontWeight: 700, letterSpacing: '.14em', color: accent, textTransform: 'uppercase', marginBottom: 6 }}>The Meridian Weekly</div>
+            <p style={{ fontFamily: 'var(--r)', fontSize: 15, color: 'var(--text-body)', lineHeight: 1.6, margin: '0 0 14px' }}>The week's largest deals and the Iberian ones, every Monday. Free.</p>
+            <NewsletterSignup compact source="deal-page" />
           </div>
 
           <a href="/" style={{ display: 'inline-block', background: accent, color: '#fff', fontFamily: 'var(--s)', fontSize: 13, fontWeight: 700, letterSpacing: '.06em', padding: '12px 22px', textDecoration: 'none' }}>MORE DEALS ON MERIDIAN -&gt;</a>
