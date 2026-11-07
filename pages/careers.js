@@ -83,7 +83,8 @@ function Footer() {
         <a href="/rankings" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Rankings</a>
         <a href="/careers" style={{ color: 'var(--gold)', textDecoration: 'none', marginRight: 16 }}>Careers</a>
         <a href="/learn" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Learn</a>
-        <a href="/about" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>About</a>
+        <a href="/about" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>About</a>
+        <a href="https://www.linkedin.com/company/meridiancapmarkets/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>LinkedIn</a>
       </div>
     </div>
   );

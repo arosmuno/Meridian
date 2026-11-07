@@ -25,7 +25,8 @@ function Shell({ title, desc, children }) {
             <a href="/methodology" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Methodology</a>
             <a href="/contact" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Contact</a>
             <a href="/learn" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Learn</a>
-            <a href="/privacy" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>Privacy</a>
+            <a href="/privacy" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Privacy</a>
+            <a href="https://www.linkedin.com/company/meridiancapmarkets/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>LinkedIn</a>
           </div>
         </div>
       </div>
