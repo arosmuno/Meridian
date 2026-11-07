@@ -3,6 +3,7 @@
 // quien es, que hace, con que experiencia y como contratarle.
 // Sin nombres de clientes ni de bancos en las operaciones: descripcion generica.
 import Head from 'next/head';
+import SocialLinks from '../components/SocialLinks';
 import SiteNav from '../components/SiteNav';
 
 const H2 = (p) => <h2 style={{ fontFamily: 'var(--s)', fontSize: 12, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--gold)', margin: '40px 0 14px' }}>{p.children}</h2>;
@@ -147,7 +148,7 @@ export default function Alberto() {
             <a href="/academy" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Academy</a>
             <a href="/contact" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Contact</a>
             <a href="/privacy" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Privacy</a>
-            <a href="https://www.linkedin.com/company/meridiancapmarkets/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>LinkedIn</a>
+            <SocialLinks />
           </div>
         </div>
       </div>

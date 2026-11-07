@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, createContext, useContext, Fragment }
 import Head from 'next/head';
 import { ineligibleReason } from '../lib/eligibility';
 import NewsletterSignup from '../components/NewsletterSignup';
+import { SOCIAL_LIVE } from '../lib/social';
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const TYPE_STYLE = {
@@ -475,6 +476,7 @@ export default function Home({ initialDeals = [] }) {
       <>
       <Head>
         <title>MERIDIAN — M&A & Capital Markets Intelligence</title>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({'@context':'https://schema.org','@type':'Organization',name:'Meridian Capital Markets',url:'https://www.meridiancapmarkets.com',logo:'https://www.meridiancapmarkets.com/api/logo?size=400',sameAs:SOCIAL_LIVE.map(x=>x.url)})}} />
       </Head>
 
       <div style={{background:C.page,minHeight:'100vh'}}>
@@ -707,7 +709,7 @@ export default function Home({ initialDeals = [] }) {
             M&A · LEVFIN · PROJECT FINANCE · RESTRUCTURING · ECM
           </div>
           <div style={{marginTop:10}}>
-            <a href="/weekly" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>The Weekly</a><a href="/analysis" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Analysis</a><a href="/rankings" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Rankings</a><a href="/careers" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Careers</a><a href="/learn" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Learn</a><a href="/academy" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Academy</a><a href="https://www.linkedin.com/company/meridiancapmarkets/" target="_blank" rel="noopener noreferrer" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginLeft:16}}>LinkedIn</a>
+            <a href="/weekly" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>The Weekly</a><a href="/analysis" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Analysis</a><a href="/rankings" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Rankings</a><a href="/careers" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Careers</a><a href="/learn" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginRight:16}}>Learn</a><a href="/academy" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em'}}>Academy</a>{SOCIAL_LIVE.map(x=>(<a key={x.key} href={x.url} target="_blank" rel="noopener noreferrer" style={{fontFamily:"var(--s)",fontSize:9,color:C.textMid,textDecoration:'none',letterSpacing:'.06em',marginLeft:16}}>{x.label}</a>))}
           </div>
           <div style={{marginTop:6,fontFamily:"var(--s)",fontSize:9,letterSpacing:'.06em',lineHeight:1.9}}>
             <a href="/sector/tmt" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>TMT</a><a href="/sector/healthcare" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Healthcare</a><a href="/sector/energy-renewables" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Energy</a><a href="/sector/financial-services" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Financial Services</a><a href="/sector/industrials" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Industrials</a><a href="/sector/consumer" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Consumer</a><a href="/sector/real-estate" style={{color:C.textLo,textDecoration:'none',marginRight:12}}>Real Estate</a><a href="/sector/infrastructure" style={{color:C.textLo,textDecoration:'none'}}>Infrastructure</a>

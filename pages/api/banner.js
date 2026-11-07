@@ -11,7 +11,10 @@ async function font(family, weight) {
   } catch (e) { return null; }
 }
 
-export default async function handler() {
+export default async function handler(req) {
+  const q = new URL(req.url).searchParams;
+  const W = Math.min(3000, Number(q.get('w')) || 1128), H = Math.min(1500, Number(q.get('h')) || 191);
+  const k = Math.min(W / 1128, H / 191 * 1.6);
   const [display, sans] = await Promise.all([font('Playfair+Display', 800), font('Libre+Franklin', 600)]);
   const fonts = [];
   if (display) fonts.push({ name: 'Display', data: display, weight: 800, style: 'normal' });
@@ -20,19 +23,19 @@ export default async function handler() {
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: paper, fontFamily: 'Sans' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 34 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 34 * k }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <div style={{ fontFamily: 'Display', fontSize: 58, color: ink, letterSpacing: -1, lineHeight: 1 }}>MERIDIAN</div>
-            <div style={{ fontSize: 13, color: mid, letterSpacing: 4, marginTop: 8 }}>DEALS · CAPITAL · STRATEGY</div>
+            <div style={{ fontFamily: 'Display', fontSize: 58 * k, color: ink, letterSpacing: -1, lineHeight: 1 }}>MERIDIAN</div>
+            <div style={{ fontSize: 13 * k, color: mid, letterSpacing: 4 * k, marginTop: 8 * k }}>DEALS · CAPITAL · STRATEGY</div>
           </div>
-          <div style={{ width: 2, height: 74, background: gold }} />
-          <div style={{ display: 'flex', flexDirection: 'column', fontSize: 16, color: ink, lineHeight: 1.6 }}>
+          <div style={{ width: Math.max(2, 2 * k), height: 74 * k, background: gold }} />
+          <div style={{ display: 'flex', flexDirection: 'column', fontSize: 16 * k, color: ink, lineHeight: 1.6 }}>
             <span>M&amp;A · Leveraged Finance · Project Finance</span>
             <span style={{ color: mid }}>Iberia &amp; Europe · meridiancapmarkets.com</span>
           </div>
         </div>
       </div>
     ),
-    { width: 1128, height: 191, fonts, headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=604800' } }
+    { width: W, height: H, fonts, headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=604800' } }
   );
 }

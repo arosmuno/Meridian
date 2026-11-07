@@ -3,6 +3,7 @@
 // counts) and a filterable list underneath. Filters live in the URL
 // (?firm=&city=&division=&level=&q=) so any view can be shared or linked.
 import Head from 'next/head';
+import SocialLinks from '../components/SocialLinks';
 import SiteNav from '../components/SiteNav';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -84,7 +85,7 @@ function Footer() {
         <a href="/careers" style={{ color: 'var(--gold)', textDecoration: 'none', marginRight: 16 }}>Careers</a>
         <a href="/learn" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Learn</a>
         <a href="/about" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>About</a>
-        <a href="https://www.linkedin.com/company/meridiancapmarkets/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>LinkedIn</a>
+        <SocialLinks />
       </div>
     </div>
   );

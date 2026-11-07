@@ -1,5 +1,6 @@
 // pages/contact.js -- Contact Meridian (content page; reader trust).
 import Head from 'next/head';
+import SocialLinks from '../components/SocialLinks';
 import SiteNav from '../components/SiteNav';
 
 export default function Contact() {
@@ -41,7 +42,7 @@ export default function Contact() {
             <a href="/contact" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Contact</a>
             <a href="/learn" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Learn</a>
             <a href="/privacy" style={{ color: 'var(--text-mid)', textDecoration: 'none', marginRight: 16 }}>Privacy</a>
-            <a href="https://www.linkedin.com/company/meridiancapmarkets/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-mid)', textDecoration: 'none' }}>LinkedIn</a>
+            <SocialLinks />
           </div>
         </div>
       </div>
