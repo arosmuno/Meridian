@@ -7,6 +7,7 @@
 // Ahora: lee de Supabase, solo filas con excluded_reason IS NULL (ver /methodology),
 // y usa value_eur -- convertido con el tipo del BCE de la FECHA DE CADA OPERACION.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import { supabaseAdmin } from '../lib/supabase';
 import { ineligibleReason, collapseSameDeal } from '../lib/eligibility';
 import { dedupeDeals } from '../lib/dedupe';
@@ -134,13 +135,14 @@ export default function Rankings(p) {
     <>
       <Head>
         <title>League Tables -- Meridian</title>
-        <meta name="description" content="Meridian league tables: the largest European and Iberian transactions, most active acquirers and sectors, ranked from sourced deals and converted at deal-date ECB rates." />
+        <meta key="description" name="description" content="Meridian league tables: the largest European and Iberian transactions, most active acquirers and sectors, ranked from sourced deals and converted at deal-date ECB rates." />
         <link rel="canonical" href={SITE + '/rankings'} />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <div style={{ maxWidth: 940, margin: '0 auto', padding: '40px 22px 56px' }}>
           <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 8 }}>&#10022; League tables</div>

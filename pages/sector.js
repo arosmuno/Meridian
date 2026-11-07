@@ -1,5 +1,6 @@
 // pages/sector.js -- per-sector deal feed. Clean URL /sector/<slug> (rewrite) or ?name=<sector>.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import { editorialReject } from '../lib/eligibility';
 
 const fmtDay = (s) => { const t = new Date(s); return s && !isNaN(t) ? t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''; };
@@ -76,15 +77,16 @@ export default function SectorPage({ sector, deals }) {
     <>
       <Head>
         <title>{sector + ' deals -- Meridian'}</title>
-        <meta name="description" content={desc} />
+        <meta key="description" name="description" content={desc} />
         <link rel="canonical" href={SITE + '/sector/' + slugify(sector)} />
-        <meta property="og:title" content={sector + ' deals -- Meridian'} />
-        <meta property="og:description" content={desc} />
+        <meta key="og:title" property="og:title" content={sector + ' deals -- Meridian'} />
+        <meta key="og:description" property="og:description" content={desc} />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 22px 56px' }}>
           <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 8 }}>Sector</div>

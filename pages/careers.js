@@ -3,6 +3,7 @@
 // counts) and a filterable list underneath. Filters live in the URL
 // (?firm=&city=&division=&level=&q=) so any view can be shared or linked.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
@@ -249,8 +250,12 @@ export default function Careers({ jobs }) {
     <>
       <Head>
         <title>Careers -- Investment banking roles in Europe | Meridian</title>
-        <meta name="description" content="Open front-office investment banking roles across London, Paris, Madrid, Milan and Frankfurt. Browse by firm, city or division: M&A, LBO, ECM, LevFin, Debt Advisory, Project Finance and Restructuring." />
+        <meta key="description" name="description" content="Open front-office investment banking roles across London, Paris, Madrid, Milan and Frankfurt. Browse by firm, city or division: M&A, LBO, ECM, LevFin, Debt Advisory, Project Finance and Restructuring." />
         <link rel="canonical" href={SITE + '/careers'} />
+        <meta key="og:title" property="og:title" content="Who is hiring: front-office roles across Europe | Meridian" />
+        <meta key="og:image" property="og:image" content="https://www.meridiancapmarkets.com/api/og?title=Who%20is%20hiring%3A%20front-office%20roles%20across%20Europe&kicker=Careers" />
+        <meta key="twitter:image" name="twitter:image" content="https://www.meridiancapmarkets.com/api/og?title=Who%20is%20hiring%3A%20front-office%20roles%20across%20Europe&kicker=Careers" />
+        <meta key="twitter:title" name="twitter:title" content="Who is hiring: front-office roles across Europe | Meridian" />
       </Head>
       <style>{`
         .cr-wrap { max-width: 1080px; margin: 0 auto; padding: 36px 22px 64px; }
@@ -306,6 +311,7 @@ export default function Careers({ jobs }) {
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <div className="cr-wrap">
           <div className="cr-hero">

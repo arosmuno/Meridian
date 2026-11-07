@@ -5,6 +5,7 @@
 // loads and shows INLINE automatically -- no click needed.
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import { supabaseAdmin } from '../lib/supabase';
 import { cleanAnalysis } from '../lib/analysisQuality';
 import NewsletterSignup from '../components/NewsletterSignup';
@@ -70,7 +71,7 @@ export default function DealPage({ deal, id }) {
       <>
         <Head>
           <title>Meridian -- Capital Markets Intelligence</title>
-          <meta name="description" content="Live M&A and capital-markets deal intelligence." />
+          <meta key="description" name="description" content="Live M&A and capital-markets deal intelligence." />
         </Head>
         <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, fontFamily: 'var(--s)', textAlign: 'center', padding: 24 }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 40, fontWeight: 800, color: 'var(--text-hi)', textDecoration: 'none' }}>MERIDIAN</a>
@@ -102,24 +103,25 @@ export default function DealPage({ deal, id }) {
     <>
       <Head>
         <title>{headline + ' -- Meridian'}</title>
-        <meta name="description" content={desc} />
+        <meta key="description" name="description" content={desc} />
         <link rel="canonical" href={url} />
-        <meta property="og:type" content="article" />
-        <meta property="og:site_name" content="Meridian" />
-        <meta property="og:title" content={headline} />
-        <meta property="og:description" content={desc} />
-        <meta property="og:image" content={img} />
-        <meta property="og:url" content={url} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={headline} />
-        <meta name="twitter:description" content={desc} />
-        <meta name="twitter:image" content={img} />
+        <meta key="og:type" property="og:type" content="article" />
+        <meta key="og:site_name" property="og:site_name" content="Meridian" />
+        <meta key="og:title" property="og:title" content={headline} />
+        <meta key="og:description" property="og:description" content={desc} />
+        <meta key="og:image" property="og:image" content={img} />
+        <meta key="og:url" property="og:url" content={url} />
+        <meta key="twitter:card" name="twitter:card" content="summary_large_image" />
+        <meta key="twitter:title" name="twitter:title" content={headline} />
+        <meta key="twitter:description" name="twitter:description" content={desc} />
+        <meta key="twitter:image" name="twitter:image" content={img} />
       </Head>
 
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '10px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 24, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <article style={{ maxWidth: 760, margin: '0 auto', padding: '40px 22px 60px' }}>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 18 }}>

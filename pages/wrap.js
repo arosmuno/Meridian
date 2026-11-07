@@ -7,6 +7,7 @@
 // Ahora se lee de la tabla `wraps` en Supabase. Para publicar: insertar una fila con
 // slug, title, dek, body y published_at. Si published_at es NULL, es un borrador y no sale.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import { supabaseAdmin } from '../lib/supabase';
 
 const SITE = 'https://www.meridiancapmarkets.com';
@@ -67,13 +68,14 @@ export default function Wrap({ current, archive }) {
     <>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={desc} />
+        <meta key="description" name="description" content={desc} />
         <link rel="canonical" href={SITE + '/wrap'} />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <article style={{ maxWidth: 720, margin: '0 auto', padding: '44px 22px 60px' }}>
           <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 8 }}>&#10022; The Wrap</div>

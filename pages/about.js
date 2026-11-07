@@ -1,17 +1,23 @@
 // pages/about.js -- About Meridian. Proyecto independiente, sin afiliacion.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 
 function Shell({ title, desc, children }) {
   return (
     <>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={desc} />
+        <meta key="description" name="description" content={desc} />
+        <meta key="og:title" property="og:title" content="About Meridian | Meridian" />
+        <meta key="og:image" property="og:image" content="https://www.meridiancapmarkets.com/api/og?title=About%20Meridian&kicker=About" />
+        <meta key="twitter:image" name="twitter:image" content="https://www.meridiancapmarkets.com/api/og?title=About%20Meridian&kicker=About" />
+        <meta key="twitter:title" name="twitter:title" content="About Meridian | Meridian" />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
         <article style={{ maxWidth: 760, margin: '0 auto', padding: '44px 22px 64px' }}>{children}</article>
         <div style={{ borderTop: '3px double var(--border)', background: 'var(--bg-card)', padding: '16px 24px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--s)', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.06em' }}>

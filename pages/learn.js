@@ -1,6 +1,7 @@
 // pages/learn.js -- MERIDIAN LEARN: a curated library (Books / Resources / Podcasts / Miscellaneous).
 import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import NewsletterSignup from '../components/NewsletterSignup';
 import { RESOURCES, GROUPS } from '../lib/learnResources';
 
@@ -197,11 +198,12 @@ export default function Learn() {
     <>
       <Head>
         <title>Meridian Learn -- The best books, resources &amp; podcasts to master M&amp;A, capital markets &amp; investing</title>
-        <meta name="description" content="A hand-picked library to learn capital markets, M&A, private equity, valuation and investing: the best books, free resources, podcasts and tools -- curated, no paid-course noise." />
+        <meta key="description" name="description" content="A hand-picked library to learn capital markets, M&A, private equity, valuation and investing: the best books, free resources, podcasts and tools -- curated, no paid-course noise." />
         <link rel="canonical" href="https://www.meridiancapmarkets.com/learn" />
       </Head>
 
       <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
+        <SiteNav />
         {/* MASTHEAD */}
         <div style={{ background: 'var(--bg-card)', borderBottom: '3px double var(--border)' }}>
           <div className="masthead-top" style={{ borderBottom: '1px solid var(--border)', padding: '6px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>

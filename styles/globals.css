@@ -244,3 +244,7 @@ body {
     font-size: 10px !important;
   }
 }
+
+/* Barra de secciones de las subpaginas (components/SiteNav.js) */
+.site-nav-link { transition: color .15s; }
+.site-nav-link:hover { color: var(--text-hi) !important; }

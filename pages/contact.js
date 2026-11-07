@@ -1,17 +1,19 @@
 // pages/contact.js -- Contact Meridian (content page; reader trust).
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 
 export default function Contact() {
   return (
     <>
       <Head>
         <title>Contact Meridian</title>
-        <meta name="description" content="Get in touch with Meridian -- tips, corrections, feedback and enquiries. Reach us by email or on X." />
+        <meta key="description" name="description" content="Get in touch with Meridian -- tips, corrections, feedback and enquiries. Reach us by email or on X." />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <article style={{ maxWidth: 640, margin: '0 auto', padding: '44px 22px 64px' }}>
           <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-mid)', textTransform: 'uppercase', marginBottom: 10 }}>Contact</div>

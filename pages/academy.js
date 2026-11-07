@@ -1,6 +1,7 @@
 // pages/academy.js -- MERIDIAN ACADEMY: modelos Excel, guia y coaching.
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import NewsletterSignup from '../components/NewsletterSignup';
 import { PRODUCTS, GROUPS, GROUP_META } from '../lib/academy';
 
@@ -54,11 +55,12 @@ export default function Academy() {
     <>
       <Head>
         <title>Meridian Academy -- Financial models, the guide to breaking in, and 1:1 coaching</title>
-        <meta name="description" content="Project finance, LBO and DCF Excel models, a practical guide to breaking into M&A, LevFin and project finance in Spain, and CV reviews and mock interviews." />
+        <meta key="description" name="description" content="Project finance, LBO and DCF Excel models, a practical guide to breaking into M&A, LevFin and project finance in Spain, and CV reviews and mock interviews." />
         <link rel="canonical" href="https://www.meridiancapmarkets.com/academy" />
       </Head>
 
       <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
+        <SiteNav />
         <div style={{ background: 'var(--bg-card)', borderBottom: '3px double var(--border)' }}>
           <div className="masthead-top" style={{ borderBottom: '1px solid var(--border)', padding: '6px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
             <a href="/" style={{ fontFamily: 'var(--s)', fontSize: 10, color: 'var(--text-mid)', letterSpacing: '.08em', textDecoration: 'none' }}>&larr; BACK TO MERIDIAN</a>

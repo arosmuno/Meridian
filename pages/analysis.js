@@ -3,6 +3,7 @@
 // La generacion automatica esta desactivada (ver pages/api/analysis.js): el modelo
 // no tenia los datos que se le pedia comentar y se los inventaba.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import { editorialReject } from '../lib/eligibility';
 
 const fmtDay = (s) => { const t = new Date(s); return s && !isNaN(t) ? t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''; };
@@ -62,13 +63,14 @@ export default function AnalysisHub({ items }) {
     <>
       <Head>
         <title>Analysis -- Meridian</title>
-        <meta name="description" content="Meridian Analysis: short, source-grounded notes on M&A, LBO, ECM and financing deals." />
+        <meta key="description" name="description" content="Meridian Analysis: short, source-grounded notes on M&A, LBO, ECM and financing deals." />
         <link rel="canonical" href={SITE + '/analysis'} />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 22px 56px' }}>
           <h1 style={{ fontFamily: 'var(--d)', fontSize: 'clamp(34px,6vw,54px)', fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.1, margin: '0 0 8px' }}>Meridian Analysis</h1>

@@ -2,6 +2,7 @@
 // Esta pagina es el ancla de credibilidad del sitio: una base de datos de deals sin
 // metodologia publicada no es un producto, es una lista.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import { supabaseAdmin } from '../lib/supabase';
 import { ineligibleReason, collapseSameDeal } from '../lib/eligibility';
 import { dedupeDeals } from '../lib/dedupe';
@@ -83,13 +84,14 @@ export default function Methodology({ stats, fx, reasons }) {
     <>
       <Head>
         <title>Methodology -- Meridian</title>
-        <meta name="description" content="How Meridian's deal database is built: what counts as a deal, what is excluded and why, how currencies are converted, and how to report an error." />
+        <meta key="description" name="description" content="How Meridian's deal database is built: what counts as a deal, what is excluded and why, how currencies are converted, and how to report an error." />
         <link rel="canonical" href={SITE + '/methodology'} />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <article style={{ maxWidth: 760, margin: '0 auto', padding: '44px 22px 64px' }}>
           <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.2em', color: 'var(--text-mid)', textTransform: 'uppercase', marginBottom: 10 }}>Methodology</div>

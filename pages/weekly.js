@@ -3,6 +3,7 @@
 // /weekly?w=2026-10-12 -> semana que empieza ese lunes (archivo)
 // Mismos datos que el email (lib/weekly.js). Sirve aunque todavia no se envie por correo.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 import NewsletterSignup from '../components/NewsletterSignup';
 import { loadWeek, weekStart } from '../lib/weekly';
 
@@ -55,13 +56,14 @@ export default function Weekly({ issue, archive, w }) {
     <>
       <Head>
         <title>{title}</title>
-        <meta name="description" content="The week's largest M&A, leveraged finance and infrastructure deals, with an Iberia section. Sourced, no noise." />
+        <meta key="description" name="description" content="The week's largest M&A, leveraged finance and infrastructure deals, with an Iberia section. Sourced, no noise." />
         <link rel="canonical" href={SITE + '/weekly' + (w ? '?w=' + w : '')} />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '36px 20px 56px' }}>
           <div style={{ textAlign: 'center', borderBottom: '3px double var(--border)', paddingBottom: 18 }}>
             <div style={{ fontFamily: 'var(--s)', fontSize: 10, letterSpacing: '.3em', color: 'var(--text-mid)' }}>THE CAPITAL MARKETS INTELLIGENCE REVIEW</div>

@@ -3,6 +3,7 @@
 // quien es, que hace, con que experiencia y como contratarle.
 // Sin nombres de clientes ni de bancos en las operaciones: descripcion generica.
 import Head from 'next/head';
+import SiteNav from '../components/SiteNav';
 
 const H2 = (p) => <h2 style={{ fontFamily: 'var(--s)', fontSize: 12, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--gold)', margin: '40px 0 14px' }}>{p.children}</h2>;
 const P = (p) => <p style={{ fontFamily: 'var(--r)', fontSize: 17, color: 'var(--text-body)', lineHeight: 1.8, margin: '0 0 16px' }}>{p.children}</p>;
@@ -41,12 +42,17 @@ export default function Alberto() {
     <>
       <Head>
         <title>Alberto Rosado -- Financial modelling and transaction support | Meridian</title>
-        <meta name="description" content="Financial models that hold up when an investor or a bank opens them. Build, fix and review, from a former corporate and investment banker (Project Finance, M&A, LevFin). Madrid, Spanish and English." />
+        <meta key="description" name="description" content="Financial models that hold up when an investor or a bank opens them. Build, fix and review, from a former corporate and investment banker (Project Finance, M&A, LevFin). Madrid, Spanish and English." />
+        <meta key="og:title" property="og:title" content="Financial models that hold up in front of investors and banks | Meridian" />
+        <meta key="og:image" property="og:image" content="https://www.meridiancapmarkets.com/api/og?title=Financial%20models%20that%20hold%20up%20in%20front%20of%20investors%20and%20banks&kicker=Alberto%20Rosado%20%C2%B7%20Meridian%20Modelling" />
+        <meta key="twitter:image" name="twitter:image" content="https://www.meridiancapmarkets.com/api/og?title=Financial%20models%20that%20hold%20up%20in%20front%20of%20investors%20and%20banks&kicker=Alberto%20Rosado%20%C2%B7%20Meridian%20Modelling" />
+        <meta key="twitter:title" name="twitter:title" content="Financial models that hold up in front of investors and banks | Meridian" />
       </Head>
       <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 24px', textAlign: 'center' }}>
           <a href="/" style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', letterSpacing: '.04em', textDecoration: 'none' }}>MERIDIAN</a>
         </div>
+        <SiteNav />
 
         <article style={{ maxWidth: 820, margin: '0 auto', padding: '48px 22px 64px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', margin: '0 0 26px' }}>
