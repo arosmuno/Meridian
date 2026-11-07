@@ -38,6 +38,9 @@ export default async function handler(req, res) {
 
     // Lo que no pasa el filtro editorial se conserva en la base pero no se sirve.
     query = query.or('category.is.null,category.neq.excluded');
+    // Rumores y filas fuera de cobertura (excluded_reason) tampoco salen en el feed.
+    // Excepcion: "Not a transaction", que se sigue mostrando como mercado (ver abajo).
+    query = query.or('excluded_reason.is.null,excluded_reason.eq."Not a transaction"');
 
     if (type && type !== 'All') query = query.eq('type', type);
 
