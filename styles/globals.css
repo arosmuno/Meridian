@@ -212,10 +212,15 @@ body {
    ANALYSIS quedaba cortado y RANKINGS y LEARN caían fuera de pantalla — y como
    body tiene overflow-x:hidden, no había forma de llegar a ellos.
    Ahora: fila 1 = DEALS | MARKETS (50/50), fila 2 = los 4 enlaces. Todo visible. */
+@media (max-width: 1100px) {
+  .section-tabs .nav-item { padding: 14px 13px 11px !important; letter-spacing: .12em !important; }
+  .section-tabs .nav-sep { margin: 13px 4px !important; }
+}
 @media (max-width: 700px) {
   .section-tabs {
     flex-wrap: wrap !important;
   }
+  .section-tabs .nav-sep { display: none !important; }
   .section-tabs > * {
     margin-left: 0 !important;
   }

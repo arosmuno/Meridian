@@ -42,14 +42,18 @@ export default function About() {
 
       <P>It is a tracker, not a newsroom. Meridian does not break stories and does not claim to. What it does is find deals as they are reported, structure them so they can be compared, and send you to the source.</P>
 
-      <H2>How it works, plainly</H2>
-      <P>Meridian is an automated pipeline, and we would rather say so than pretend there is a newsroom behind it. Headlines are ingested in near real time from regulators, exchanges, newswires and the financial press -- including Spanish outlets the anglophone press does not read. A language model translates them into English and sorts them into fields. It structures. It does not report, it does not add facts, and it does not write commentary.</P>
-      <P><strong>Every deal is tied to a source article, and every deal links to it.</strong> If a record cannot be traced back to something published, it does not go up. If a transaction value is not stated in the source, it is recorded as unknown rather than estimated. The full rules -- what counts, what is thrown out, how currencies are converted -- are set out on the <a href="/methodology" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>methodology page</a>.</P>
-
       <H2>Who is behind it</H2>
-      <div style={{ borderLeft: '3px solid var(--gold)', padding: '4px 0 4px 20px', margin: '0 0 26px' }}>
-        <div style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', margin: '0 0 4px' }}>Alberto Rosado</div>
-        <div style={{ fontFamily: 'var(--s)', fontSize: 11, letterSpacing: '.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Founder &middot; Madrid</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 22, flexWrap: 'wrap', border: '1px solid var(--border)', background: 'var(--bg-card)', padding: '22px 24px', margin: '0 0 26px' }}>
+        <img src="/founder.jpg" alt="Alberto Rosado" width={96} height={96} style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--gold)', flexShrink: 0 }} />
+        <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--d)', fontSize: 26, fontWeight: 800, color: 'var(--text-hi)', lineHeight: 1.15 }}>Alberto Rosado</div>
+          <div style={{ fontFamily: 'var(--s)', fontSize: 11, letterSpacing: '.1em', color: 'var(--text-mid)', textTransform: 'uppercase', margin: '4px 0 0' }}>Founder &middot; Madrid</div>
+          <div style={{ fontFamily: 'var(--s)', fontSize: 12, color: 'var(--text-mid)', margin: '8px 0 0', lineHeight: 1.6 }}>Ex-BBVA &amp; BNP Paribas CIB &middot; Project Finance, M&amp;A, LevFin</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a href="/alberto" style={{ background: 'var(--text-hi)', color: 'var(--bg)', fontFamily: 'var(--s)', fontSize: 11, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', padding: '10px 16px', textDecoration: 'none', whiteSpace: 'nowrap' }}>Work with me &rarr;</a>
+          <a href="https://www.linkedin.com/in/arosado6/" target="_blank" rel="noopener noreferrer" style={{ border: '1px solid var(--border)', color: 'var(--text-mid)', fontFamily: 'var(--s)', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', padding: '10px 14px', textDecoration: 'none', whiteSpace: 'nowrap' }}>LinkedIn</a>
+        </div>
       </div>
       <P>I&rsquo;ve spent the last five years on the financing side of deals, in corporate &amp; investment banking at BBVA and BNP Paribas, working across Project Finance, M&amp;A, Leveraged Finance and Debt Advisory, mostly for energy and infrastructure sponsors.</P>
       <P>That meant sitting between clients and execution teams: screening opportunities, building the first numbers, preparing credit papers and pitch books, and seeing which deals made it through committee and which didn&rsquo;t. Today I work on the corporate side, in value creation at an infrastructure investor.</P>
@@ -57,6 +61,10 @@ export default function About() {
       <P>I also build, fix and review financial models for founders and small companies: models that hold up when an investor or a bank opens them. If you&rsquo;re working on a deal, a financing or a career move into M&amp;A, LevFin or Project Finance, I&rsquo;m happy to hear from you through the <a href="/contact" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>contact page</a>. More on the modelling work and my experience on <a href="/alberto" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>my profile</a>.</P>
       <div style={{ fontFamily: 'var(--s)', fontSize: 12, color: 'var(--text-mid)', lineHeight: 1.8, margin: '0 0 26px' }}>BSc (Hons) Business Economics &middot; Master&rsquo;s in M&amp;A and Corporate Finance (ISBIF)</div>
       <P>Meridian is an independent project. It is not affiliated with, endorsed by or connected to any bank, advisory firm, fund or employer, and nothing on this site represents the views of any institution. The deal feed reports what public sources report and links to them. Nothing here is investment advice, and nothing here draws on information that is not already public.</P>
+
+      <H2>How it works, plainly</H2>
+      <P>Meridian is an automated pipeline, and we would rather say so than pretend there is a newsroom behind it. Headlines are ingested in near real time from regulators, exchanges, newswires and the financial press -- including Spanish outlets the anglophone press does not read. A language model translates them into English and sorts them into fields. It structures. It does not report, it does not add facts, and it does not write commentary.</P>
+      <P><strong>Every deal is tied to a source article, and every deal links to it.</strong> If a record cannot be traced back to something published, it does not go up. If a transaction value is not stated in the source, it is recorded as unknown rather than estimated. The full rules -- what counts, what is thrown out, how currencies are converted -- are set out on the <a href="/methodology" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>methodology page</a>.</P>
 
       <H2>Corrections</H2>
       <P>Automated pipelines make mistakes: a mis-tagged sector, a value read from the wrong line, a rumour recorded as signed. If you spot one, tell us and it will be corrected or removed. Reach us through the <a href="/contact" style={{ color: 'var(--gold)', textDecoration: 'none', fontWeight: 700 }}>contact page</a>. Corrections are the cheapest credibility there is.</P>

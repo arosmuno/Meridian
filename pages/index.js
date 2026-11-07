@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, Fragment } from 'react';
 import Head from 'next/head';
 import { ineligibleReason } from '../lib/eligibility';
 import NewsletterSignup from '../components/NewsletterSignup';
@@ -506,27 +506,36 @@ export default function Home({ initialDeals = [] }) {
             <p style={{fontFamily:"var(--r)",fontSize:12,color:C.textMid,fontStyle:'italic'}}>Deals. Capital. Strategy.</p>
           </div>
 
-          {/* Section nav tabs */}
-          <div className="section-tabs" style={{display:'flex',borderBottom:`1px solid ${C.border}`,background:C.bg}}>
+          {/* Section nav tabs: feed | publication | tools | about */}
+          <nav className="section-tabs" style={{display:'flex',justifyContent:'center',alignItems:'stretch',borderBottom:`1px solid ${C.border}`,background:C.bg,padding:'0 12px'}}>
             {[
-              {id:'deals', label:'DEALS'},
-              {id:'markets', label:'MARKETS'},
+              {id:'deals', label:'Deals'},
+              {id:'markets', label:'Markets'},
             ].map(tab=>(
-              <button key={tab.id} onClick={()=>{setSection(tab.id);setFilter('All');setGeoFilter('All');setSectorFilter('All');}}
-                style={{padding:'12px 28px',background:'none',border:'none',borderBottom:section===tab.id?`3px solid ${C.gold}`:'3px solid transparent',
-                  color:section===tab.id?C.gold:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,
-                  letterSpacing:'.12em',cursor:'pointer',transition:'all .15s'}}>
+              <button key={tab.id} className="nav-item" onClick={()=>{setSection(tab.id);setFilter('All');setGeoFilter('All');setSectorFilter('All');}}
+                style={{padding:'15px 22px 12px',background:'none',border:'none',borderBottom:section===tab.id?`2px solid ${C.gold}`:'2px solid transparent',
+                  color:section===tab.id?C.textHi:C.textMid,fontFamily:"var(--s)",fontSize:11.5,fontWeight:700,
+                  letterSpacing:'.16em',textTransform:'uppercase',cursor:'pointer',transition:'color .15s'}}>
                 {tab.label}
               </button>
             ))}
-            
-            <a href="/weekly" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>WEEKLY</a><a href="/analysis" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>ANALYSIS</a>
-            <a href="/rankings" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>RANKINGS</a>
-            <a href="/careers" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>CAREERS</a>
-            <a href="/learn" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>LEARN &#8250;</a>
-            <a href="/academy" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>ACADEMY &#8250;</a>
-<a href="/dataroom" style={{padding:'12px 18px',borderBottom:'3px solid transparent',color:C.gold,fontFamily:"var(--s)",fontSize:12,fontWeight:700,letterSpacing:'.12em',cursor:'pointer',textDecoration:'none',display:'flex',alignItems:'center'}}>DATAROOM &#8250;</a>
-          </div>
+            {[
+              [['/weekly','Weekly'],['/analysis','Analysis'],['/rankings','Rankings'],['/careers','Careers']],
+              [['/learn','Learn'],['/academy','Academy'],['/dataroom','Dataroom']],
+              [['/about','About']],
+            ].map((group,gi)=>(
+              <Fragment key={gi}>
+                <span className="nav-sep" aria-hidden="true" style={{width:1,background:C.border,margin:'13px 10px'}}/>
+                {group.map(([href,label])=>(
+                  <a key={href} href={href} className="nav-item"
+                    style={{padding:'15px 22px 12px',borderBottom:'2px solid transparent',color:C.textMid,fontFamily:"var(--s)",fontSize:11.5,fontWeight:700,letterSpacing:'.16em',textTransform:'uppercase',textDecoration:'none',display:'flex',alignItems:'center',transition:'color .15s'}}
+                    onMouseEnter={e=>{e.currentTarget.style.color=C.textHi}} onMouseLeave={e=>{e.currentTarget.style.color=C.textMid}}>
+                    {label}
+                  </a>
+                ))}
+              </Fragment>
+            ))}
+          </nav>
 
           {/* Ticker */}
           <div style={{display:'flex',borderTop:`1px solid ${C.border}`}}>
@@ -544,23 +553,6 @@ export default function Home({ initialDeals = [] }) {
                   </span>
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FUNDADOR: visible nada mas entrar, para quien llega desde Upwork/Fiverr/Malt/LinkedIn */}
-        <div style={{background:C.bgCard,borderBottom:`1px solid ${C.border}`}}>
-          <div style={{maxWidth:1200,margin:'0 auto',padding:'16px 20px',display:'flex',alignItems:'center',gap:18,flexWrap:'wrap'}}>
-            <a href="/alberto" style={{flexShrink:0}}>
-              <img src="/founder.jpg" alt="Alberto Rosado" width={76} height={76} style={{width:76,height:76,borderRadius:'50%',objectFit:'cover',border:`2px solid ${C.gold}`,display:'block'}}/>
-            </a>
-            <div style={{flex:'1 1 320px',minWidth:0}}>
-              <div style={{fontFamily:"var(--d)",fontSize:20,fontWeight:800,color:C.textHi,lineHeight:1.2}}>Alberto Rosado <span style={{fontFamily:"var(--s)",fontSize:11,fontWeight:600,color:C.textMid,letterSpacing:'.06em'}}>&middot; FOUNDER</span></div>
-              <div style={{fontFamily:"var(--r)",fontSize:14,color:C.textBody,lineHeight:1.55,marginTop:3}}>Five years in corporate &amp; investment banking (BBVA, BNP Paribas) across Project Finance, M&amp;A and Leveraged Finance. I build, fix and review financial models that hold up in front of investors and banks.</div>
-            </div>
-            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-              <a href="/alberto" style={{background:C.textHi,color:C.bg,fontFamily:"var(--s)",fontSize:11,fontWeight:800,letterSpacing:'.1em',padding:'10px 16px',textDecoration:'none',whiteSpace:'nowrap'}}>WORK WITH ME &rarr;</a>
-              <a href="https://www.linkedin.com/in/arosado6/" target="_blank" rel="noopener noreferrer" style={{border:`1px solid ${C.border}`,color:C.textMid,fontFamily:"var(--s)",fontSize:11,fontWeight:700,letterSpacing:'.1em',padding:'10px 14px',textDecoration:'none',whiteSpace:'nowrap'}}>LINKEDIN</a>
             </div>
           </div>
         </div>
