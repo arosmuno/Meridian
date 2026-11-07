@@ -34,15 +34,15 @@ export default async function handler(req) {
         </div>
         <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: title ? 'flex-start' : 'center' }}>
           {title ? (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
               <div style={{ fontFamily: 'Display', fontSize: 34, color: ink, letterSpacing: 2, marginBottom: 22 }}>MERIDIAN</div>
-              <div style={{ fontFamily: 'Display', fontSize: title.length > 70 ? 54 : 66, color: ink, lineHeight: 1.12 }}>{title}</div>
-            </>
+              <div style={{ fontFamily: 'Display', fontSize: title.length > 70 ? 54 : 66, color: ink, lineHeight: 1.12, display: 'flex', flexWrap: 'wrap' }}>{title}</div>
+            </div>
           ) : (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ fontFamily: 'Display', fontSize: 150, color: ink, letterSpacing: -2, lineHeight: 1 }}>MERIDIAN</div>
               <div style={{ fontSize: 26, color: mid, marginTop: 18 }}>Deals. Capital. Strategy.</div>
-            </>
+            </div>
           )}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: `1px solid ${ink}`, paddingTop: 14, fontSize: 20, color: mid }}>
