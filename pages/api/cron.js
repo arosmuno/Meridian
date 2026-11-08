@@ -117,15 +117,28 @@ export default async function handler(req, res) {
   const startedAt = new Date();
   console.log('[CRON] Starting at', startedAt.toISOString());
 
+  // Una fila por dia y job: cada pasada suma a los totales del dia en vez de sobrescribirlos
+  // (el cron corre varias veces por hora y antes solo se veia la ultima pasada).
   const logRun = async (result) => {
     try {
+      const run_date = startedAt.toISOString().split('T')[0];
+      const { data: prev } = await supabaseAdmin.from('cron_runs')
+        .select('result').eq('job_name', 'deals').eq('run_date', run_date).maybeSingle();
+      const t = (prev && prev.result && prev.result.totals) || {};
+      const totals = {
+        runs: (t.runs || 0) + 1,
+        fetched: (t.fetched || 0) + (result.fetched || 0),
+        saved: (t.saved || 0) + (result.saved || 0),
+        errors: (t.errors || 0) + (result.error ? 1 : 0),
+        empty: (t.empty || 0) + (!result.error && !result.saved ? 1 : 0),
+      };
       await supabaseAdmin.from('cron_runs').upsert(
         {
           job_name: 'deals',
-          run_date: startedAt.toISOString().split('T')[0],
+          run_date,
           started_at: startedAt.toISOString(),
           finished_at: new Date().toISOString(),
-          result,
+          result: { ...result, totals },
         },
         { onConflict: 'job_name,run_date' }
       );
@@ -134,11 +147,12 @@ export default async function handler(req, res) {
     }
   };
 
+  const fetchStats = {};
   try {
     let deals;
     try {
       const seenLinks = await recentSeenLinks();
-      deals = await fetchDealsFromWeb({ seenLinks });
+      deals = await fetchDealsFromWeb({ seenLinks, stats: fetchStats });
       console.log(`[CRON] ${seenLinks.size} URLs ya vistas excluidas del corte`);
       console.log(`[CRON] Feeds devolvieron ${deals?.length || 0} deals anclados`);
     } catch (e) {
@@ -152,7 +166,7 @@ export default async function handler(req, res) {
       const backfilled = await runBackfill(backfillBudget());
     // Dataroom: rematar documentos a medio indexar y borrar copias con marca de agua caducadas.
     await dataroomMaintenance();
-      await logRun({ fetched: 0, saved: 0, backfilled, message: 'sin titulares anclables' });
+      await logRun({ fetched: 0, saved: 0, backfilled, headlines: fetchStats.headlines, message: fetchStats.reason || 'sin titulares anclables' });
       return res.status(200).json({ ok: true, saved: 0, message: 'No deals found' });
     }
 
@@ -219,9 +233,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, saved: 0, rejected });
     }
 
-    const { error } = await supabaseAdmin
+    // .select() devuelve solo las filas insertadas de verdad (los duplicados se ignoran).
+    const { data: inserted, error } = await supabaseAdmin
       .from('deals')
-      .upsert(rows, { onConflict: 'headline', ignoreDuplicates: true });
+      .upsert(rows, { onConflict: 'headline', ignoreDuplicates: true })
+      .select('id');
+    const saved = inserted ? inserted.length : rows.length;
 
     if (error) {
       console.error('[CRON] Supabase error:', error.message);
@@ -229,11 +246,12 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: error.message });
     }
 
-    console.log(`[CRON] Guardados ${rows.length} deals (${rejected} rechazados)`);
+    console.log(`[CRON] Guardados ${saved} de ${rows.length} deals (${rejected} rechazados)`);
     await dataroomMaintenance();   // antes del backfill: tiene usuarios esperando
     const backfilled = await runBackfill(backfillBudget());
-    await logRun({ fetched: deals.length, saved: rows.length, rejected, backfilled });
-    return res.status(200).json({ ok: true, saved: rows.length, rejected, backfilled });
+    const dupMsg = saved === 0 ? { message: `los ${rows.length} titulares ya estaban guardados` } : {};
+    await logRun({ fetched: deals.length, saved, rejected, backfilled, ...dupMsg });
+    return res.status(200).json({ ok: true, saved, rejected, backfilled });
 
   } catch (err) {
     console.error('[CRON] Fatal error:', err.message);
