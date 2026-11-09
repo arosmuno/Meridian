@@ -18,13 +18,29 @@ async function recentSeenLinks() {
   const since = new Date(Date.now() - 7 * 86400000).toISOString();
   const set = new Set();
   try {
-    const [a, b] = await Promise.all([
+    const [a, b, c] = await Promise.all([
       supabaseAdmin.from('deals').select('source_url').gte('created_at', since).not('source_url', 'is', null).limit(5000),
       supabaseAdmin.from('deals_quarantine').select('source_url').gte('created_at', since).not('source_url', 'is', null).limit(2000),
+      // Titulares que el modelo ya evaluo, elegidos o no (si la tabla no existe, c.error y se sigue).
+      supabaseAdmin.from('headlines_seen').select('link').gte('seen_at', since).limit(20000),
     ]);
     for (const r of [...(a.data || []), ...(b.data || [])]) set.add(normLink(r.source_url));
+    for (const r of c.data || []) set.add(r.link);
   } catch (e) { console.error('[CRON] seen links:', e.message); }
   return set;
+}
+
+// Guarda los titulares que el modelo ya ha visto para no reenviarselos durante 7 dias.
+async function markSeen(links) {
+  if (!links || !links.length) return;
+  try {
+    const now = new Date().toISOString();
+    const rows = [...new Set(links.map(normLink))].map((link) => ({ link, seen_at: now }));
+    const { error } = await supabaseAdmin.from('headlines_seen').upsert(rows, { onConflict: 'link' });
+    if (error) console.error('[CRON] headlines_seen:', error.message);
+    // Limpieza: lo de mas de 14 dias ya no se consulta.
+    await supabaseAdmin.from('headlines_seen').delete().lt('seen_at', new Date(Date.now() - 14 * 86400000).toISOString());
+  } catch (e) { console.error('[CRON] headlines_seen:', e.message); }
 }
 
 // Dataroom: rematar documentos a medio indexar, borrar copias con marca de agua caducadas y
@@ -153,6 +169,7 @@ export default async function handler(req, res) {
     try {
       const seenLinks = await recentSeenLinks();
       deals = await fetchDealsFromWeb({ seenLinks, stats: fetchStats });
+      await markSeen(fetchStats.evaluated);
       console.log(`[CRON] ${seenLinks.size} URLs ya vistas excluidas del corte`);
       console.log(`[CRON] Feeds devolvieron ${deals?.length || 0} deals anclados`);
     } catch (e) {
@@ -164,7 +181,20 @@ export default async function handler(req, res) {
     if (!deals || deals.length === 0) {
       // Un ciclo sin noticias es un resultado valido. No se rellena con nada.
       const backfilled = await runBackfill(backfillBudget());
-    // Dataroom: rematar documentos a medio indexar y borrar copias con marca de agua caducadas.
+    // Guarda los titulares que el modelo ya ha visto para no reenviarselos durante 7 dias.
+async function markSeen(links) {
+  if (!links || !links.length) return;
+  try {
+    const now = new Date().toISOString();
+    const rows = [...new Set(links.map(normLink))].map((link) => ({ link, seen_at: now }));
+    const { error } = await supabaseAdmin.from('headlines_seen').upsert(rows, { onConflict: 'link' });
+    if (error) console.error('[CRON] headlines_seen:', error.message);
+    // Limpieza: lo de mas de 14 dias ya no se consulta.
+    await supabaseAdmin.from('headlines_seen').delete().lt('seen_at', new Date(Date.now() - 14 * 86400000).toISOString());
+  } catch (e) { console.error('[CRON] headlines_seen:', e.message); }
+}
+
+// Dataroom: rematar documentos a medio indexar y borrar copias con marca de agua caducadas.
     await dataroomMaintenance();
       await logRun({ fetched: 0, saved: 0, backfilled, headlines: fetchStats.headlines, message: fetchStats.reason || 'sin titulares anclables' });
       return res.status(200).json({ ok: true, saved: 0, message: 'No deals found' });
