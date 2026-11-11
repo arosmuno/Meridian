@@ -31,9 +31,11 @@ export default async function handler(req, res) {
 
     const oldest = bounds && bounds[0] ? bounds[0].deal_date : null;
     if (!oldest) return res.status(200).json({ ok: true, message: 'no hay deals con fecha' });
-    // Pasada diaria: solo los ultimos 45 dias (lo anterior ya esta guardado). ?full=1 rehace toda la serie.
-    const recent = new Date(Date.now() - 45 * 86400000).toISOString().split('T')[0];
-    const from = req.query && req.query.full === '1' ? oldest : (oldest > recent ? oldest : recent);
+    // Pasada diaria: desde una semana antes del ultimo tipo guardado, asi un hueco (cron parado)
+    // se rellena solo en la siguiente pasada. ?full=1 rehace toda la serie.
+    const { data: last } = await supabaseAdmin.from('fx_daily').select('rate_date').order('rate_date', { ascending: false }).limit(1);
+    const resume = last && last[0] ? new Date(new Date(last[0].rate_date).getTime() - 7 * 86400000).toISOString().split('T')[0] : oldest;
+    const from = req.query && req.query.full === '1' ? oldest : (oldest > resume ? oldest : resume);
 
     const to = new Date().toISOString().split('T')[0];
 
