@@ -29,8 +29,11 @@ export default async function handler(req, res) {
       .order('deal_date', { ascending: true })
       .limit(1);
 
-    const from = bounds && bounds[0] ? bounds[0].deal_date : null;
-    if (!from) return res.status(200).json({ ok: true, message: 'no hay deals con fecha' });
+    const oldest = bounds && bounds[0] ? bounds[0].deal_date : null;
+    if (!oldest) return res.status(200).json({ ok: true, message: 'no hay deals con fecha' });
+    // Pasada diaria: solo los ultimos 45 dias (lo anterior ya esta guardado). ?full=1 rehace toda la serie.
+    const recent = new Date(Date.now() - 45 * 86400000).toISOString().split('T')[0];
+    const from = req.query && req.query.full === '1' ? oldest : (oldest > recent ? oldest : recent);
 
     const to = new Date().toISOString().split('T')[0];
 

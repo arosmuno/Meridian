@@ -181,21 +181,8 @@ export default async function handler(req, res) {
     if (!deals || deals.length === 0) {
       // Un ciclo sin noticias es un resultado valido. No se rellena con nada.
       const backfilled = await runBackfill(backfillBudget());
-    // Guarda los titulares que el modelo ya ha visto para no reenviarselos durante 7 dias.
-async function markSeen(links) {
-  if (!links || !links.length) return;
-  try {
-    const now = new Date().toISOString();
-    const rows = [...new Set(links.map(normLink))].map((link) => ({ link, seen_at: now }));
-    const { error } = await supabaseAdmin.from('headlines_seen').upsert(rows, { onConflict: 'link' });
-    if (error) console.error('[CRON] headlines_seen:', error.message);
-    // Limpieza: lo de mas de 14 dias ya no se consulta.
-    await supabaseAdmin.from('headlines_seen').delete().lt('seen_at', new Date(Date.now() - 14 * 86400000).toISOString());
-  } catch (e) { console.error('[CRON] headlines_seen:', e.message); }
-}
-
-// Dataroom: rematar documentos a medio indexar y borrar copias con marca de agua caducadas.
-    await dataroomMaintenance();
+      // Dataroom: rematar documentos a medio indexar y borrar copias con marca de agua caducadas.
+      await dataroomMaintenance();
       await logRun({ fetched: 0, saved: 0, backfilled, headlines: fetchStats.headlines, message: fetchStats.reason || 'sin titulares anclables' });
       return res.status(200).json({ ok: true, saved: 0, message: 'No deals found' });
     }

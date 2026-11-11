@@ -7,6 +7,10 @@
     {
       "path": "/api/newsletter",
       "schedule": "13 7 * * 1"
+    },
+    {
+      "path": "/api/fx",
+      "schedule": "37 16 * * *"
     }
   ]
 }
