@@ -85,13 +85,22 @@ export default async function handler(req, res) {
   const today = new Date().toISOString().slice(0, 10);
   const { data: already } = await supabaseAdmin.from('newsletter_sends').select('id').eq('issue_date', today).maybeSingle();
   if (already) return res.status(200).json({ skipped: 'already sent today' });
-  if (!issue.count) return res.status(200).json({ skipped: 'no deals this week' });
-  if (!process.env.RESEND_API_KEY) return res.status(200).json({ skipped: 'RESEND_API_KEY not set', deals: issue.count });
+  // Las semanas sin envio tambien dejan fila (status 'skipped') para poder vigilarlas.
+  const logSkip = async (reason) => {
+    try {
+      await supabaseAdmin.from('newsletter_sends').insert({
+        issue_date: today, subject: 'skipped: ' + reason, recipients: 0, deals_included: issue.count || 0, status: 'skipped',
+      });
+    } catch (e) { console.error('[newsletter] log skip', e); }
+    return res.status(200).json({ skipped: reason, deals: issue.count || 0 });
+  };
+  if (!issue.count) return logSkip('no deals this week');
+  if (!process.env.RESEND_API_KEY) return logSkip('RESEND_API_KEY not set');
 
   const { data: subs } = await supabaseAdmin.from('subscribers')
     .select('email, unsubscribe_token').is('unsubscribed_at', null).limit(3000);
-  // Sin suscriptores no es un fallo de envio: no se registra el numero.
-  if (!subs || !subs.length) return res.status(200).json({ skipped: 'no subscribers', deals: issue.count });
+  // Sin suscriptores no es un fallo de envio, pero se registra como 'skipped'.
+  if (!subs || !subs.length) return logSkip('no subscribers');
 
   const subject = `Meridian Weekly · ${issue.count} deals · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
   let sent = 0;
