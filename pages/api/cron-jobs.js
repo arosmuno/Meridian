@@ -44,7 +44,18 @@ export default async function handler(req, res) {
   try {
     // Vercel kills background work once you respond, so everything must finish
     // BEFORE res.json(). Learned the hard way on the deals cron.
-    const { jobs, healthyFirms, failedFirms, perFirm } = await fetchAllJobs();
+    // Pausa de Workday: si en los ultimos WORKDAY_PAUSE_DAYS dias Workday respondio 429, hoy no
+    // se le llama (sus ofertas no caducan porque no cuentan como empresa sana). Pasado ese plazo
+    // se vuelve a probar; si sigue bloqueando, se pausa otra vez.
+    const WORKDAY_PAUSE_DAYS = 7;
+    const since = new Date(Date.now() - WORKDAY_PAUSE_DAYS * 864e5).toISOString().slice(0, 10);
+    const { data: recent } = await supabase.from('cron_runs')
+      .select('run_date,result').eq('job_name', 'jobs').gt('run_date', since).lt('run_date', today);
+    const wasBlocked = (r) => r && r.result && (r.result.workday === 'blocked'
+      || (!r.result.workday && (r.result.failedFirms || []).some((f) => /workday .* HTTP 429/.test(f))));
+    const skipWorkday = !req.query.workday && (recent || []).some(wasBlocked);
+
+    const { jobs, healthyFirms, failedFirms, perFirm, workday } = await fetchAllJobs({ skipWorkday });
     const { upserted } = await upsertJobs(supabase, jobs, healthyFirms);
 
     // Expiry sweep. Pure SQL, no tokens. Without it nothing ever expires.
@@ -64,6 +75,7 @@ export default async function handler(req, res) {
       expired: (expired && expired[0] && expired[0].expired_count) || 0,
       failedFirms,
       perFirm,
+      workday,
     };
 
     await supabase.from('cron_runs')
